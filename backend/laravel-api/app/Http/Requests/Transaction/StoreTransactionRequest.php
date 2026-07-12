@@ -19,7 +19,6 @@ class StoreTransactionRequest extends FormRequest
             'items' => ['required', 'array', 'min:1'],
             'items.*.id_produk' => ['required', 'integer', 'exists:produk,id_produk'],
             'items.*.qty' => ['required', 'integer', 'min:1'],
-            'items.*.harga' => ['required', 'numeric', 'min:0'],
             'items.*.catatan' => ['nullable', 'string'],
         ];
     }

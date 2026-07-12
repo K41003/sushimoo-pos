@@ -3,40 +3,52 @@
 namespace App\Services;
 
 use App\Models\Payment;
+use App\Models\PaymentMethod;
 use App\Models\Transaction;
 use App\Repositories\Eloquent\PaymentRepository;
-use App\Repositories\Eloquent\TransactionRepository;
+use Illuminate\Support\Facades\DB;
 
 class PaymentService
 {
     public function __construct(
         private PaymentRepository $payments,
-        private TransactionRepository $transactions,
     ) {}
 
     public function pay(int $transactionId, int $methodId, ?float $uangDiterima): Payment
     {
-        $transaction = $this->transactions->findOrFail($transactionId);
+        return DB::transaction(function () use ($transactionId, $methodId, $uangDiterima) {
+            $transaction = Transaction::query()
+                ->whereKey($transactionId)
+                ->lockForUpdate()
+                ->firstOrFail();
 
-        if ($transaction->status === 'paid') {
-            throw new \RuntimeException('Transaction already paid.');
-        }
+            if ($transaction->status === 'paid') {
+                throw new \RuntimeException('Transaction already paid.');
+            }
 
-        $uangDiterima = $uangDiterima ?? (float) $transaction->total;
-        $kembalian = max(0, $uangDiterima - (float) $transaction->total);
+            $method = PaymentMethod::findOrFail($methodId);
+            $total = (float) $transaction->total;
+            $uangDiterima = $uangDiterima ?? $total;
 
-        $payment = $this->payments->create([
-            'id_transaksi' => $transaction->id_transaksi,
-            'id_metode' => $methodId,
-            'total_bayar' => $transaction->total,
-            'uang_diterima' => $uangDiterima,
-            'kembalian' => $kembalian,
-            'waktu_bayar' => now(),
-            'status' => 'success',
-        ]);
+            if (strtolower($method->nama_metode) === 'cash' && $uangDiterima < $total) {
+                throw new \RuntimeException('Received cash is less than transaction total.');
+            }
 
-        $this->transactions->update($transaction, ['status' => 'paid']);
+            $kembalian = max(0, $uangDiterima - $total);
 
-        return $payment->load('transaction', 'method');
+            $payment = $this->payments->create([
+                'id_transaksi' => $transaction->id_transaksi,
+                'id_metode' => $methodId,
+                'total_bayar' => $transaction->total,
+                'uang_diterima' => $uangDiterima,
+                'kembalian' => $kembalian,
+                'waktu_bayar' => now(),
+                'status' => 'success',
+            ]);
+
+            $transaction->update(['status' => 'paid']);
+
+            return $payment->load('transaction', 'method');
+        });
     }
 }

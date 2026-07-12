@@ -57,7 +57,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // Transactions
     Route::get('/transaksi', [TransactionController::class, 'index'])->middleware('role:Admin');
     Route::post('/transaksi', [TransactionController::class, 'store'])->middleware('role:Kasir');
-    Route::get('/transaksi/{id}', [TransactionController::class, 'show']);
+    Route::get('/transaksi/{id}', [TransactionController::class, 'show'])->middleware('role:Admin,Kasir');
     Route::put('/transaksi/{id}', [TransactionController::class, 'update'])->middleware('role:Kasir');
     Route::post('/transaksi/{id}/void', [TransactionController::class, 'void'])->middleware('role:Admin');
 

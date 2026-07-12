@@ -1,0 +1,36 @@
+# Flutter
+mobile/flutter-pos/.dart_tool/
+mobile/flutter-pos/.packages
+mobile/flutter-pos/.pub/
+mobile/flutter-pos/build/
+mobile/flutter-pos/coverage/
+
+# Android
+mobile/flutter-pos/android/.gradle/
+mobile/flutter-pos/android/local.properties
+mobile/flutter-pos/android/build/
+mobile/flutter-pos/android/app/debug/
+mobile/flutter-pos/android/app/profile/
+mobile/flutter-pos/android/app/release/
+
+# Laravel
+backend/laravel-api/vendor/
+backend/laravel-api/node_modules/
+backend/laravel-api/public/build/
+backend/laravel-api/public/hot
+backend/laravel-api/public/storage/
+backend/laravel-api/storage/*.key
+backend/laravel-api/storage/pail/
+
+# Environment
+.env
+.env.*
+backend/laravel-api/.env
+backend/laravel-api/.env.*
+
+# IDE
+.idea/
+.vscode/
+
+# Logs
+*.log

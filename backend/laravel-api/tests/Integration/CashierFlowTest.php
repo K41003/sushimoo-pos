@@ -86,4 +86,31 @@ class CashierFlowTest extends TestCase
         $this->assertEquals(90000, $closing->json('data.total_penjualan'));
         $this->assertEquals(20000, $closing->json('data.total_pengeluaran'));
     }
+
+    public function test_cash_payment_rejects_insufficient_received_amount(): void
+    {
+        $this->actingAs($this->kasir, 'sanctum');
+
+        $this->postJson('/api/shifts/open', ['petty_cash' => 100000])->assertCreated();
+
+        $productId = \DB::table('produk')->insertGetId([
+            'id_kategori' => \DB::table('kategori_produk')->insertGetId([
+                'nama_kategori' => 'Sushi', 'deskripsi' => null, 'status' => 1,
+                'created_at' => now(), 'updated_at' => now(),
+            ]),
+            'nama_produk' => 'Salmon Roll', 'harga' => 45000, 'gambar' => null, 'status' => 1,
+            'created_at' => now(), 'updated_at' => now(),
+        ]);
+
+        $trx = $this->postJson('/api/transaksi', [
+            'id_meja' => 1,
+            'items' => [['id_produk' => $productId, 'qty' => 2]],
+        ]);
+        $trx->assertCreated();
+
+        $this->postJson('/api/transaksi/' . $trx->json('data.id_transaksi') . '/pembayaran', [
+            'id_metode' => 1,
+            'uang_diterima' => 1000,
+        ])->assertStatus(422);
+    }
 }

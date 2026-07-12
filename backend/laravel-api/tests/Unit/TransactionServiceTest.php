@@ -34,7 +34,8 @@ class TransactionServiceTest extends TestCase
         $service = new TransactionService(
             new TransactionRepository(),
             new TransactionDetailRepository(),
-            new TableRepository()
+            new TableRepository(),
+            new ProductRepository()
         );
 
         $transaction = $service->create([
@@ -45,5 +46,32 @@ class TransactionServiceTest extends TestCase
         $this->assertEquals(30000, $transaction->total);
         $this->assertEquals('occupied', $table->fresh()->status);
         $this->assertCount(1, $transaction->details);
+    }
+
+    public function test_create_uses_database_price_instead_of_client_price(): void
+    {
+        Role::insert([
+            ['nama_role' => 'Admin', 'deskripsi' => 'Administrator', 'created_at' => now(), 'updated_at' => now()],
+        ]);
+        $user = User::factory()->create();
+        Shift::create(['id_user' => $user->id_user, 'open_time' => now(), 'petty_cash' => 0, 'status' => 'open']);
+        $table = Table::create(['nomor_meja' => 'M01', 'kapasitas' => 4, 'status' => 'available']);
+        $category = Category::create(['nama_kategori' => 'Sushi', 'status' => 1]);
+        $product = Product::create(['id_kategori' => $category->id_kategori, 'nama_produk' => 'A', 'harga' => 10000, 'status' => 1]);
+
+        $service = new TransactionService(
+            new TransactionRepository(),
+            new TransactionDetailRepository(),
+            new TableRepository(),
+            new ProductRepository()
+        );
+
+        $transaction = $service->create([
+            'id_meja' => $table->id_meja,
+            'items' => [['id_produk' => $product->id_produk, 'qty' => 3, 'harga' => 1]],
+        ], $user->id_user);
+
+        $this->assertEquals(30000, $transaction->total);
+        $this->assertEquals(10000, $transaction->details->first()->harga);
     }
 }

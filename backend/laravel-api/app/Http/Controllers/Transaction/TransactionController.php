@@ -35,7 +35,15 @@ class TransactionController extends Controller
 
     public function show(int $id): JsonResponse
     {
-        return $this->ok($this->service->find($id));
+        $transaction = $this->service->find($id);
+        $user = auth()->user();
+        $role = optional($user?->role)->nama_role;
+
+        if ($role !== 'Admin' && (int) $transaction->id_user !== (int) $user?->id_user) {
+            return $this->error('Forbidden.', 403);
+        }
+
+        return $this->ok($transaction);
     }
 
     public function update(int $id, UpdateTransactionRequest $request): JsonResponse
