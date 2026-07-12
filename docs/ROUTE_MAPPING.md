@@ -20,9 +20,9 @@
 | /shifts/{id}/close | POST | ShiftController@close | ShiftService, ClosingService | ShiftRepository, ClosingRepository |
 | /shifts/history | GET | ShiftController@history | ShiftService | ShiftRepository |
 | /transaksi (store/index/show) | POST/GET/GET | TransactionController | TransactionService | TransactionRepository, DetailRepository, ProductRepository |
-| /transaksi/{id} (update) | PUT | TransactionController@update | TransactionService | TransactionRepository, DetailRepository |
+| /transaksi/{id} (update) | PUT | TransactionController@update | TransactionService | TransactionRepository, DetailRepository, ProductRepository |
 | /transaksi/{id}/void | POST | TransactionController@void | TransactionService | TransactionRepository |
-| /transaksi/{id}/pembayaran | POST | PaymentController@pay | PaymentService | PaymentRepository, TransactionRepository |
+| /transaksi/{id}/pembayaran | POST | PaymentController@pay | PaymentService | PaymentRepository, Transaction model lock, PaymentMethod |
 | /pengeluaran (CRUD) | GET/POST/GET/PUT/DELETE | ExpenseController | ExpenseService | ExpenseRepository |
 | /shifts/{id}/closing | POST | ClosingController@store | ClosingService | ClosingRepository, ShiftRepository |
 | /closing/history | GET | ClosingController@history | ClosingService | ClosingRepository |
@@ -35,6 +35,7 @@
 - `auth:sanctum` → all except login.
 - `role:Admin` → categories, products, bahan-baku, stok-bahan, meja, transaksi index/show (monitor), void, reports/admin, dashboard/admin, closing/history, shifts/history.
 - `role:Kasir` → shifts open/close/petty, transaksi store/update, pembayaran, pengeluaran, reports/daily, last-7-days, dashboard/cashier.
+- `GET /transaksi/{id}` → Admin dapat melihat semua; Kasir hanya dapat melihat transaksi miliknya sendiri.
 
 ## Dependency Injection
 `RepositoryServiceProvider` binds each `*RepositoryInterface` → `*Repository` (Eloquent). Services receive repositories via constructor injection. Controllers receive services via constructor injection. Registered in `AppServiceProvider` / `bootstrap/app.php` route/scan groups.

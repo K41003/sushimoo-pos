@@ -19,63 +19,130 @@ class CartTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    return Card(
-      margin: EdgeInsets.only(bottom: 8.h),
+    return Container(
+      margin: EdgeInsets.only(bottom: 12.h),
+      decoration: BoxDecoration(
+        color: scheme.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(AppDimensions.radiusLg.r),
+        border: Border.all(color: scheme.outlineVariant.withValues(alpha: 0.7)),
+      ),
       child: Padding(
-        padding: EdgeInsets.all(12.r),
+        padding: EdgeInsets.all(14.r),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Expanded(
-                  child: Text(item.product.namaProduk,
-                      style: Theme.of(context).textTheme.bodyLarge),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        item.product.namaProduk,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                              fontWeight: FontWeight.w700,
+                              height: 1.18,
+                            ),
+                      ),
+                      SizedBox(height: 4.h),
+                      Text(
+                        'Rp ${item.product.harga.toStringAsFixed(0)} each',
+                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                              color: scheme.onSurfaceVariant,
+                            ),
+                      ),
+                    ],
+                  ),
                 ),
                 IconButton(
-                  icon: const Icon(Icons.delete_outline, color: Colors.red),
+                  tooltip: 'Remove item',
+                  icon: Icon(Icons.close, color: scheme.onSurfaceVariant),
                   onPressed: () => controller.removeItem(index),
                 ),
               ],
             ),
-            SizedBox(height: 6.h),
+            SizedBox(height: 12.h),
             Row(
               children: [
-                IconButton(
-                  onPressed: () => controller.decQty(index),
-                  icon: const Icon(Icons.remove_circle_outline),
-                  constraints: const BoxConstraints(
-                      minWidth: AppDimensions.touchTarget,
-                      minHeight: AppDimensions.touchTarget),
+                _StepperButton(
+                  icon: Icons.remove,
+                  onTap: () => controller.decQty(index),
                 ),
-                Text('${item.qty}', style: Theme.of(context).textTheme.titleMedium),
-                IconButton(
-                  onPressed: () => controller.incQty(index),
-                  icon: const Icon(Icons.add_circle_outline),
-                  constraints: const BoxConstraints(
-                      minWidth: AppDimensions.touchTarget,
-                      minHeight: AppDimensions.touchTarget),
+                SizedBox(
+                  width: 44.w,
+                  child: Text(
+                    '${item.qty}',
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.headlineMedium,
+                  ),
+                ),
+                _StepperButton(
+                  icon: Icons.add,
+                  onTap: () => controller.incQty(index),
                 ),
                 const Spacer(),
-                Text('Rp ${item.subtotal.toStringAsFixed(0)}',
-                    style: Theme.of(context).textTheme.bodyLarge),
+                Text(
+                  'Rp ${item.subtotal.toStringAsFixed(0)}',
+                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                        fontWeight: FontWeight.w800,
+                      ),
+                ),
               ],
             ),
-            SizedBox(height: 6.h),
+            SizedBox(height: 12.h),
             TextField(
               onChanged: (v) => controller.updateNote(index, v),
               decoration: InputDecoration(
                 hintText: 'Note (optional)',
                 isDense: true,
                 filled: true,
-                fillColor: scheme.surfaceContainerLow,
+                prefixIcon: const Icon(Icons.edit_note_outlined),
+                fillColor: scheme.surfaceContainerLowest,
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(AppDimensions.radiusSm.r),
+                  borderRadius: BorderRadius.circular(AppDimensions.radiusMd.r),
+                  borderSide: BorderSide(color: scheme.outlineVariant),
                 ),
               ),
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _StepperButton extends StatelessWidget {
+  final IconData icon;
+  final VoidCallback onTap;
+
+  const _StepperButton({
+    required this.icon,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return SizedBox(
+      width: AppDimensions.touchTarget.w,
+      height: AppDimensions.touchTarget.h,
+      child: OutlinedButton(
+        onPressed: onTap,
+        style: OutlinedButton.styleFrom(
+          padding: EdgeInsets.zero,
+          minimumSize: Size(
+            AppDimensions.touchTarget.w,
+            AppDimensions.touchTarget.h,
+          ),
+          side: BorderSide(color: scheme.outlineVariant),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppDimensions.radiusSm.r),
+          ),
+        ),
+        child: Icon(icon, size: 20.sp),
       ),
     );
   }

@@ -73,10 +73,10 @@ Base URL: `/api` · Auth: `Authorization: Bearer <sanctum_token>` · Format: `ap
 ## Transaction (`/transaksi`) — Kasir create, Admin monitor
 | Method | Path | Auth | Request | Response |
 |---|---|---|---|---|
-| POST | `/transaksi` | ✅ | `{id_meja, items:[{id_produk,qty,harga,catatan?}], tanggal?}` | item (+details) |
+| POST | `/transaksi` | ✅ | `{id_meja, items:[{id_produk,qty,catatan?}], tanggal?}` | item (+details). Harga dihitung di backend dari data produk. |
 | GET | `/transaksi` | ✅ | `status?, id_meja?, page?, perPage?` | list |
 | GET | `/transaksi/{id}` | ✅ | – | item (+details) |
-| PUT | `/transaksi/{id}` | ✅ | `{items:[...]}` | updated item |
+| PUT | `/transaksi/{id}` | ✅ | `{items:[{id_produk,qty,catatan?}]}` | updated item. Transaksi `paid` tidak dapat diubah. |
 | POST | `/transaksi/{id}/void` | ✅(Admin) | `{alasan}` | voided item |
 
 ## Payment (`/pembayaran`)
