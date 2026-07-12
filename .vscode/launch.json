@@ -1,0 +1,28 @@
+{
+    // Gunakan IntelliSense untuk informasi tentang kemungkinan atribut.
+    // Arahkan kursor untuk melihat deskripsi atribut yang ada.
+    // Informasi lebih lanjut dapat ditemukan di sini: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "flutter-pos",
+            "cwd": "mobile\\flutter-pos",
+            "request": "launch",
+            "type": "dart"
+        },
+        {
+            "name": "flutter-pos (profile mode)",
+            "cwd": "mobile\\flutter-pos",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "profile"
+        },
+        {
+            "name": "flutter-pos (release mode)",
+            "cwd": "mobile\\flutter-pos",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "release"
+        }
+    ]
+}
