@@ -43,6 +43,10 @@ class SettingPage extends GetView<SettingController> {
                             ? 'Connected'
                             : 'Connect',
                         onPressed: controller.connectPrinter,
+                        // FIX: tombol ini ada langsung di dalam Row
+                        // (tanpa Expanded), jadi wajib fullWidth:false
+                        // supaya tidak kena BoxConstraints infinite width.
+                        fullWidth: false,
                       )),
                 ],
               ),

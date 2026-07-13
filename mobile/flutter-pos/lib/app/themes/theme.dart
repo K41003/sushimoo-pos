@@ -77,7 +77,7 @@ class AppTypography {
         fontSize: 28.sp,
         fontWeight: FontWeight.w700,
         letterSpacing: -0.01,
-        color: isDark ? AppColors.dark.primary : AppColors.light.secondary,
+        color: isDark ? AppColors.dark.secondary : AppColors.light.secondary,
       );
 }
 
@@ -95,6 +95,27 @@ class AppTheme {
       fontFamily: AppTypography.fontFamily,
       textTheme: AppTypography.build(isDark),
       scaffoldBackgroundColor: scheme.surface,
+      floatingActionButtonTheme: FloatingActionButtonThemeData(
+        backgroundColor: scheme.secondary,
+        foregroundColor: scheme.onSecondary,
+        extendedTextStyle: TextStyle(
+          fontFamily: AppTypography.fontFamily,
+          color: scheme.onSecondary,
+          fontWeight: FontWeight.w700,
+          fontSize: 14.sp,
+        ),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppDimensions.radiusFull),
+        ),
+      ),
+      textSelectionTheme: TextSelectionThemeData(
+        cursorColor: scheme.secondary,
+        selectionColor: scheme.secondary.withValues(alpha: 0.18),
+        selectionHandleColor: scheme.secondary,
+      ),
+      progressIndicatorTheme: ProgressIndicatorThemeData(
+        color: scheme.secondary,
+      ),
       cardTheme: CardThemeData(
         color: scheme.surfaceContainerLow,
         elevation: 0,
@@ -148,10 +169,9 @@ class AppTheme {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppDimensions.radiusMd.r),
-          borderSide: BorderSide(color: scheme.primary, width: 1.5),
+          borderSide: BorderSide(color: scheme.secondary, width: 1.5),
         ),
-        contentPadding:
-            EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
+        contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
       ),
       chipTheme: ChipThemeData(
         backgroundColor: scheme.surfaceContainerHigh,

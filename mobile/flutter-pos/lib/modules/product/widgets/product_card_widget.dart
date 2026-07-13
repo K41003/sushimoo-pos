@@ -34,17 +34,18 @@ class ProductCardWidget extends StatelessWidget {
                 Expanded(
                   child: Container(
                     width: double.infinity,
-                    decoration: BoxDecoration(
-                      color: scheme.surfaceContainerHigh,
-                      borderRadius: BorderRadius.circular(12.r),
-                      image: product.gambar != null
-                          ? DecorationImage(
-                              image: NetworkImage(product.gambar!),
-                              fit: BoxFit.cover,
-                              onError: (_, __) {},
-                            )
-                          : null,
-                    ),
+                 decoration: BoxDecoration(
+                  color: scheme.surfaceContainerHigh,
+                  borderRadius: BorderRadius.circular(12.r),
+                  image: (product.gambar != null &&
+                          product.gambar!.trim().isNotEmpty)
+                      ? DecorationImage(
+                          image: NetworkImage(product.gambar!.trim()),
+                          fit: BoxFit.cover,
+                          onError: (_, __) {},
+                        )
+                      : null,
+                ),
                     child: product.gambar == null
                         ? Center(
                             child: Icon(Icons.fastfood,

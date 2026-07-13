@@ -10,8 +10,6 @@ class NavItem {
   const NavItem(this.label, this.icon, this.route);
 }
 
-/// Persistent navigation rail for tablet / landscape POS, and a drawer for
-/// mobile. Implements the Design.md Navigation Rail (fixed 80px) pattern.
 class AppSidebar extends StatelessWidget {
   final List<NavItem> items;
   final String currentRoute;
@@ -27,55 +25,59 @@ class AppSidebar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    return Container(
-      width: AppDimensions.railWidth.w,
+    return Material(
       color: scheme.surfaceContainerLow,
-      child: Column(
-        children: [
-          SizedBox(height: 24.h),
-          Icon(Icons.restaurant_menu, size: 32.sp, color: scheme.primary),
-          SizedBox(height: 24.h),
-          Expanded(
-            child: ListView(
-              children: items.map((item) {
-                final active = item.route == currentRoute;
-                return InkWell(
-                  onTap: () => _navigate(context, item.route),
-                  child: Container(
-                    margin: EdgeInsets.symmetric(vertical: 4.h, horizontal: 8.w),
-                    padding: EdgeInsets.symmetric(vertical: 10.h),
-                    decoration: BoxDecoration(
-                      color: active ? scheme.primaryContainer : null,
-                      borderRadius: BorderRadius.circular(12.r),
+      child: Container(
+        width: AppDimensions.railWidth.w,
+        color: scheme.surfaceContainerLow,
+        child: Column(
+          children: [
+            SizedBox(height: 24.h),
+            Icon(Icons.restaurant_menu, size: 32.sp, color: scheme.primary),
+            SizedBox(height: 24.h),
+            Expanded(
+              child: ListView(
+                children: items.map((item) {
+                  final active = item.route == currentRoute;
+                  return InkWell(
+                    onTap: () => _navigate(context, item.route),
+                    child: Container(
+                      margin:
+                          EdgeInsets.symmetric(vertical: 4.h, horizontal: 8.w),
+                      padding: EdgeInsets.symmetric(vertical: 10.h),
+                      decoration: BoxDecoration(
+                        color: active ? scheme.primaryContainer : null,
+                        borderRadius: BorderRadius.circular(12.r),
+                      ),
+                      child: Column(
+                        children: [
+                          Icon(item.icon,
+                              size: 24.sp,
+                              color: active
+                                  ? scheme.onPrimaryContainer
+                                  : scheme.onSurfaceVariant),
+                          SizedBox(height: 4.h),
+                          Text(item.label,
+                              style: TextStyle(
+                                  fontSize: 11.sp,
+                                  color: active
+                                      ? scheme.onPrimaryContainer
+                                      : scheme.onSurfaceVariant)),
+                        ],
+                      ),
                     ),
-                    child: Column(
-                      children: [
-                        Icon(item.icon,
-                            size: 24.sp,
-                            color: active
-                                ? scheme.onPrimaryContainer
-                                : scheme.onSurfaceVariant),
-                        SizedBox(height: 4.h),
-                        Text(item.label,
-                            style: TextStyle(
-                                fontSize: 11.sp,
-                                color: active
-                                    ? scheme.onPrimaryContainer
-                                    : scheme.onSurfaceVariant)),
-                      ],
-                    ),
-                  ),
-                );
-              }).toList(),
+                  );
+                }).toList(),
+              ),
             ),
-          ),
-          if (onLogout != null)
-            IconButton(
-              icon: Icon(Icons.logout, color: scheme.error),
-              onPressed: onLogout,
-            ),
-          SizedBox(height: 12.h),
-        ],
+            if (onLogout != null)
+              IconButton(
+                icon: Icon(Icons.logout, color: scheme.error),
+                onPressed: onLogout,
+              ),
+            SizedBox(height: 12.h),
+          ],
+        ),
       ),
     );
   }

@@ -56,21 +56,27 @@ class PosPage extends GetView<PosController> {
   }
 
   Widget _portrait(BuildContext context) {
-    return Scaffold(
-      body: Column(
-        children: [
-          _mobileHeader(context),
-          _categoryStrip(context),
-          Expanded(child: _menuPanel(context, crossAxisCount: 2)),
-        ],
-      ),
-      floatingActionButton: Obx(
-        () => FloatingActionButton.extended(
-          onPressed: () => _showCartSheet(context),
-          label: Text('Cart (${controller.cart.length})'),
-          icon: const Icon(Icons.shopping_cart_outlined),
+    return Stack(
+      children: [
+        Column(
+          children: [
+            _mobileHeader(context),
+            _categoryStrip(context),
+            Expanded(child: _menuPanel(context, crossAxisCount: 2)),
+          ],
         ),
-      ),
+        Positioned(
+          right: 16.w,
+          bottom: 16.h,
+          child: Obx(
+            () => FloatingActionButton.extended(
+              onPressed: () => _showCartSheet(context),
+              label: Text('Cart (${controller.cart.length})'),
+              icon: const Icon(Icons.shopping_cart_outlined),
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -108,8 +114,8 @@ class PosPage extends GetView<PosController> {
                 separatorBuilder: (_, __) => SizedBox(height: 10.h),
                 itemBuilder: (_, index) {
                   final category = controller.categories[index];
-                  final selected =
-                      controller.selectedCategoryId.value == category.idKategori;
+                  final selected = controller.selectedCategoryId.value ==
+                      category.idKategori;
                   return _CategoryButton(
                     label: category.namaKategori,
                     selected: selected,
@@ -233,16 +239,25 @@ class PosPage extends GetView<PosController> {
                     Text(
                       '${controller.products.length} items available',
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: Theme.of(context).colorScheme.onSurfaceVariant,
+                            color:
+                                Theme.of(context).colorScheme.onSurfaceVariant,
                           ),
                     ),
                   ],
                 ),
               ),
-              OutlinedButton.icon(
-                onPressed: controller.loadTables,
-                icon: const Icon(Icons.sync_outlined),
-                label: const Text('Refresh'),
+              SizedBox(
+                width: 128.w,
+                height: AppDimensions.buttonHeight.h,
+                child: OutlinedButton.icon(
+                  onPressed: controller.loadTables,
+                  style: OutlinedButton.styleFrom(
+                    minimumSize: Size(128.w, AppDimensions.buttonHeight.h),
+                    padding: EdgeInsets.symmetric(horizontal: 12.w),
+                  ),
+                  icon: const Icon(Icons.sync_outlined),
+                  label: const Text('Refresh'),
+                ),
               ),
             ],
           ),
@@ -301,8 +316,9 @@ class PosPage extends GetView<PosController> {
                       ),
                       IconButton(
                         tooltip: 'Clear cart',
-                        onPressed:
-                            controller.cart.isEmpty ? null : controller.clearCart,
+                        onPressed: controller.cart.isEmpty
+                            ? null
+                            : controller.clearCart,
                         icon: const Icon(Icons.delete_sweep_outlined),
                       ),
                     ],
@@ -313,7 +329,9 @@ class PosPage extends GetView<PosController> {
                     borderRadius:
                         BorderRadius.circular(AppDimensions.radiusMd.r),
                     child: Container(
-                      minHeight: AppDimensions.buttonHeight.h,
+                      constraints: BoxConstraints(
+                        minHeight: AppDimensions.buttonHeight.h,
+                      ),
                       padding: EdgeInsets.symmetric(
                           horizontal: 14.w, vertical: 10.h),
                       decoration: BoxDecoration(
@@ -431,12 +449,12 @@ class PosPage extends GetView<PosController> {
                 ],
               ),
               SizedBox(height: 14.h),
-              AppButton(
-                label: 'Place Order',
-                icon: Icons.receipt_long_outlined,
-                loading: controller.loading.value,
-                onPressed: controller.cart.isEmpty ? null : controller.placeOrder,
-              ),
+              Obx(() => AppButton(
+                    label: 'Place Order',
+                    icon: Icons.receipt_long_outlined,
+                    loading: controller.loading.value,
+                    onPressed: controller.cart.isEmpty ? null : controller.placeOrder,
+                  )),
             ],
           )),
     );
@@ -558,7 +576,8 @@ class _ProductTile extends StatelessWidget {
         decoration: BoxDecoration(
           color: scheme.surfaceContainerLowest,
           borderRadius: BorderRadius.circular(AppDimensions.radiusLg.r),
-          border: Border.all(color: scheme.outlineVariant.withValues(alpha: 0.7)),
+          border:
+              Border.all(color: scheme.outlineVariant.withValues(alpha: 0.7)),
           boxShadow: [
             BoxShadow(
               color: scheme.shadow.withValues(alpha: isDark ? 0.16 : 0.05),
@@ -609,8 +628,12 @@ class _ProductTile extends StatelessWidget {
                           _money(product.harga),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                                color: isDark ? scheme.primary : scheme.secondary,
+                          style: Theme.of(context)
+                              .textTheme
+                              .labelLarge
+                              ?.copyWith(
+                                color:
+                                    isDark ? scheme.primary : scheme.secondary,
                                 fontWeight: FontWeight.w800,
                               ),
                         ),
@@ -619,12 +642,12 @@ class _ProductTile extends StatelessWidget {
                         width: 36.r,
                         height: 36.r,
                         decoration: BoxDecoration(
-                          color: scheme.primary,
+                          color: scheme.secondary,
                           borderRadius:
                               BorderRadius.circular(AppDimensions.radiusSm.r),
                         ),
                         child: Icon(Icons.add,
-                            size: 20.sp, color: scheme.onPrimary),
+                            size: 20.sp, color: scheme.onSecondary),
                       ),
                     ],
                   ),
@@ -648,6 +671,7 @@ class _CartBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     return Container(
+      constraints: BoxConstraints(maxWidth: 188.w),
       padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
       decoration: BoxDecoration(
         color: scheme.primary,
@@ -656,14 +680,19 @@ class _CartBadge extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.shopping_cart_outlined, size: 18.sp, color: scheme.onPrimary),
+          Icon(Icons.shopping_cart_outlined,
+              size: 18.sp, color: scheme.onPrimary),
           SizedBox(width: 8.w),
-          Text(
-            '$count - ${_money(total)}',
-            style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                  color: scheme.onPrimary,
-                  fontWeight: FontWeight.w800,
-                ),
+          Flexible(
+            child: Text(
+              '$count - ${_money(total)}',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                    color: scheme.onPrimary,
+                    fontWeight: FontWeight.w800,
+                  ),
+            ),
           ),
         ],
       ),

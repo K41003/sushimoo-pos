@@ -5,40 +5,47 @@ import 'package:flutter/material.dart';
 class AppColors {
   AppColors._();
 
+  static const Color sumieBlack = Color(0xFF1A1C1C);
+  static const Color sushiRed = Color(0xFFE63946);
+  static const Color sushiRedDark = Color(0xFFB7102A);
+  static const Color riceWhite = Color(0xFFFDFDFD);
+  static const Color inkGray = Color(0xFF757575);
+  static const Color matcha = Color(0xFFA8DADC);
+
   static const ColorScheme light = ColorScheme(
     brightness: Brightness.light,
-    primary: Color(0xFF000000),
+    primary: sumieBlack,
     onPrimary: Color(0xFFFFFFFF),
-    primaryContainer: Color(0xFF1C1B1B),
-    onPrimaryContainer: Color(0xFF858383),
+    primaryContainer: Color(0xFF303232),
+    onPrimaryContainer: Color(0xFFE8E8E8),
     inversePrimary: Color(0xFFC8C6C5),
-    secondary: Color(0xFFB7102A),
+    secondary: sushiRed,
     onSecondary: Color(0xFFFFFFFF),
-    secondaryContainer: Color(0xFFDB313F),
-    onSecondaryContainer: Color(0xFFFFFBFF),
-    tertiary: Color(0xFF000000),
+    secondaryContainer: Color(0xFFFFDAD8),
+    onSecondaryContainer: Color(0xFF5B000E),
+    tertiary: sumieBlack,
     onTertiary: Color(0xFFFFFFFF),
-    tertiaryContainer: Color(0xFF1A1C1C),
-    onTertiaryContainer: Color(0xFF838484),
-    error: Color(0xFFBA1A1A),
+    tertiaryContainer: Color(0xFFE2E2E2),
+    onTertiaryContainer: sumieBlack,
+    error: sushiRedDark,
     onError: Color(0xFFFFFFFF),
     errorContainer: Color(0xFFFFDAD6),
     onErrorContainer: Color(0xFF93000A),
-    surface: Color(0xFFF9F9F9),
-    onSurface: Color(0xFF1A1C1C),
+    surface: riceWhite,
+    onSurface: sumieBlack,
     onSurfaceVariant: Color(0xFF444748),
-    outline: Color(0xFF747878),
-    outlineVariant: Color(0xFFC4C7C7),
+    outline: inkGray,
+    outlineVariant: Color(0xFFE1E4E4),
     surfaceContainerLowest: Color(0xFFFFFFFF),
-    surfaceContainerLow: Color(0xFFF3F3F3),
-    surfaceContainer: Color(0xFFEEEEEE),
-    surfaceContainerHigh: Color(0xFFE8E8E8),
+    surfaceContainerLow: Color(0xFFF7F7F7),
+    surfaceContainer: Color(0xFFF1F1F1),
+    surfaceContainerHigh: Color(0xFFEDEDED),
     surfaceContainerHighest: Color(0xFFE2E2E2),
     inverseSurface: Color(0xFF2F3131),
     onInverseSurface: Color(0xFFF1F1F1),
     shadow: Color(0xFF000000),
     scrim: Color(0xFF000000),
-    surfaceTint: Color(0xFF5F5E5E),
+    surfaceTint: sushiRed,
   );
 
   static const ColorScheme dark = ColorScheme(
@@ -48,10 +55,10 @@ class AppColors {
     primaryContainer: Color(0xFFFF535B),
     onPrimaryContainer: Color(0xFF5B000E),
     inversePrimary: Color(0xFFBB152C),
-    secondary: Color(0xFFC8C6C5),
-    onSecondary: Color(0xFF313030),
-    secondaryContainer: Color(0xFF474746),
-    onSecondaryContainer: Color(0xFFB7B5B4),
+    secondary: Color(0xFFFF535B),
+    onSecondary: Color(0xFF410007),
+    secondaryContainer: Color(0xFF92001C),
+    onSecondaryContainer: Color(0xFFFFDAD8),
     tertiary: Color(0xFFC6C6C7),
     onTertiary: Color(0xFF2F3131),
     tertiaryContainer: Color(0xFF909191),
@@ -78,7 +85,6 @@ class AppColors {
   );
 
   /// Functional accents used by status chips and indicators.
-  static const Color success = Color(0xFFA8DADC);
+  static const Color success = matcha;
   static const Color warning = Color(0xFFFFB74D);
-  static const Color matcha = Color(0xFFA8DADC);
 }

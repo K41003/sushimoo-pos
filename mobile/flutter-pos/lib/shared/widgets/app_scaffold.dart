@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:get/get.dart';
 import '../../app/routes/app_routes.dart';
 import '../../app/services/auth_service.dart';
@@ -69,8 +70,12 @@ class AppScaffold extends StatelessWidget {
     return content;
   }
 
-  void _logout() async {
-    await AuthService.to.logout();
-    Get.offAllNamed(AppRoutes.login);
+  Future<void> _logout() async {
+    try {
+      await AuthService.to.logout();
+      Get.offAllNamed(AppRoutes.login);
+    } catch (e) {
+      EasyLoading.showError('Logout failed');
+    }
   }
 }
