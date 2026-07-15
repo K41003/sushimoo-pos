@@ -25,10 +25,18 @@ class PosController extends GetxController {
   final loading = false.obs;
   final taxRate = AppConstants.taxRate;
 
+  /// Free-text product search. When non-empty this searches across ALL
+  /// categories (the cashier doesn't need to tap a category chip first),
+  /// and category selection is temporarily ignored until search is cleared.
+  final searchQuery = ''.obs;
+  int _searchToken = 0;
+
   double get subtotal =>
       cart.fold(0, (sum, e) => sum + e.subtotal);
   double get tax => subtotal * taxRate;
   double get grandTotal => subtotal + tax;
+
+  bool get isSearching => searchQuery.value.trim().isNotEmpty;
 
   @override
   void onInit() {
@@ -62,6 +70,11 @@ class PosController extends GetxController {
 
   Future<void> selectCategory(int id) async {
     selectedCategoryId.value = id;
+    // Picking a category explicitly cancels any active search so the
+    // grid reflects the tapped category right away.
+    if (isSearching) {
+      searchQuery.value = '';
+    }
     loading.value = true;
     final res = await _api.get('/products',
         query: {'id_kategori': id, 'perPage': 100}, fromData: (d) => d);
@@ -70,6 +83,42 @@ class PosController extends GetxController {
       final pag = Paginated<Product>.fromJson(
           {'data': res.data}, Product.fromJson);
       products.assignAll(pag.items);
+    }
+  }
+
+  /// Called from the search bar on every keystroke. Empty text restores
+  /// the currently selected category's product list.
+  void onSearchChanged(String value) {
+    searchQuery.value = value;
+    final query = value.trim();
+    if (query.isEmpty) {
+      if (selectedCategoryId.value != null) {
+        selectCategory(selectedCategoryId.value!);
+      }
+      return;
+    }
+    _searchProducts(query);
+  }
+
+  void clearSearch() {
+    onSearchChanged('');
+  }
+
+  Future<void> _searchProducts(String query) async {
+    // Token guard so a slow earlier request can't overwrite a newer one
+    // if the cashier keeps typing quickly.
+    final token = ++_searchToken;
+    loading.value = true;
+    final res = await _api.get('/products',
+        query: {'q': query, 'perPage': 100}, fromData: (d) => d);
+    if (token != _searchToken) return; // a newer search superseded this one
+    loading.value = false;
+    if (res.success && res.data != null) {
+      final pag = Paginated<Product>.fromJson(
+          {'data': res.data}, Product.fromJson);
+      products.assignAll(pag.items);
+    } else {
+      EasyLoading.showError(res.message);
     }
   }
 

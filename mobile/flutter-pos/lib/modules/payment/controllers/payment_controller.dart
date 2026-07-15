@@ -3,7 +3,6 @@ import 'package:get/get.dart';
 import 'package:flutter/material.dart';
 import '../../../app/routes/app_routes.dart';
 import '../../../app/services/api_client.dart';
-import '../../../app/services/printer_service.dart';
 import '../../../data/models/transaction.dart';
 import '../../../data/models/payment.dart';
 
@@ -20,10 +19,35 @@ class PaymentController extends GetxController {
   final receivedController = TextEditingController();
   final loading = false.obs;
 
+  /// Mirrors [receivedController].text as an observable.
+  ///
+  /// BUG FIX: `Obx(() => ... controller.change ...)` in payment_page.dart
+  /// only rebuilds when an `.obs` value is *read* inside its builder.
+  /// A plain `TextEditingController` is NOT observable by GetX, so typing
+  /// into the "Received Amount" field never triggered a rebuild and the
+  /// "Change" label stayed frozen at its very first computed value
+  /// (Rp 0, before anything was typed). Listening to the controller and
+  /// mirroring its text into this Rx makes `change` reactive again.
+  final receivedText = ''.obs;
+
   PaymentController({required this.transaction});
 
+  @override
+  void onInit() {
+    super.onInit();
+    receivedController.addListener(() {
+      receivedText.value = receivedController.text;
+    });
+  }
+
+  @override
+  void onClose() {
+    receivedController.dispose();
+    super.onClose();
+  }
+
   double get change {
-    final received = double.tryParse(receivedController.text) ?? 0;
+    final received = double.tryParse(receivedText.value) ?? 0;
     return (received - transaction.total).clamp(0, double.infinity);
   }
 
@@ -54,10 +78,19 @@ class PaymentController extends GetxController {
     loading.value = false;
     EasyLoading.dismiss();
 
-    if (res.success) {
-      await PrinterService.to.printCustomerReceipt(transaction);
+    if (res.success && res.data != null) {
       EasyLoading.showSuccess('Payment success');
-      Get.offAllNamed(AppRoutes.dashboard);
+      // Show the receipt/bill screen with full order + payment details
+      // instead of jumping straight back to the dashboard. Printing the
+      // physical receipt now happens from that screen (with a manual
+      // "Print Receipt" button), not automatically here.
+      Get.offAndToNamed(
+        AppRoutes.receipt,
+        arguments: {
+          'transaction': transaction,
+          'payment': res.data as Payment,
+        },
+      );
     } else {
       EasyLoading.showError(res.message);
     }

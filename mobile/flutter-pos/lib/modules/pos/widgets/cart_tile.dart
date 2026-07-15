@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import '../../../app/constants/colors.dart';
 import '../../../app/constants/dimensions.dart';
 import '../controllers/cart_item.dart';
 import '../controllers/pos_controller.dart';
@@ -18,97 +19,85 @@ class CartTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
     return Container(
-      margin: EdgeInsets.only(bottom: 12.h),
+      margin: EdgeInsets.only(bottom: 14.h),
+      padding: EdgeInsets.all(14.r),
       decoration: BoxDecoration(
-        color: scheme.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(AppDimensions.radiusLg.r),
-        border: Border.all(color: scheme.outlineVariant.withValues(alpha: 0.7)),
+        color: AppColors.surfaceAlt,
+        borderRadius: BorderRadius.circular(AppDimensions.radiusMd.r),
       ),
-      child: Padding(
-        padding: EdgeInsets.all(14.r),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        item.product.namaProduk,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                              fontWeight: FontWeight.w700,
-                              height: 1.18,
-                            ),
-                      ),
-                      SizedBox(height: 4.h),
-                      Text(
-                        'Rp ${item.product.harga.toStringAsFixed(0)} each',
-                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                              color: scheme.onSurfaceVariant,
-                            ),
-                      ),
-                    ],
-                  ),
-                ),
-                IconButton(
-                  tooltip: 'Remove item',
-                  icon: Icon(Icons.close, color: scheme.onSurfaceVariant),
-                  onPressed: () => controller.removeItem(index),
-                ),
-              ],
-            ),
-            SizedBox(height: 12.h),
-            Row(
-              children: [
-                _StepperButton(
-                  icon: Icons.remove,
-                  onTap: () => controller.decQty(index),
-                ),
-                SizedBox(
-                  width: 44.w,
-                  child: Text(
-                    '${item.qty}',
-                    textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.headlineMedium,
-                  ),
-                ),
-                _StepperButton(
-                  icon: Icons.add,
-                  onTap: () => controller.incQty(index),
-                ),
-                const Spacer(),
-                Text(
-                  'Rp ${item.subtotal.toStringAsFixed(0)}',
-                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                        fontWeight: FontWeight.w800,
-                      ),
-                ),
-              ],
-            ),
-            SizedBox(height: 12.h),
-            TextField(
-              onChanged: (v) => controller.updateNote(index, v),
-              decoration: InputDecoration(
-                hintText: 'Note (optional)',
-                isDense: true,
-                filled: true,
-                prefixIcon: const Icon(Icons.edit_note_outlined),
-                fillColor: scheme.surfaceContainerLowest,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(AppDimensions.radiusMd.r),
-                  borderSide: BorderSide(color: scheme.outlineVariant),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      item.product.namaProduk,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(fontSize: 15.sp, fontWeight: FontWeight.w700, color: AppColors.ink),
+                    ),
+                    SizedBox(height: 3.h),
+                    Text(
+                      'Rp ${item.product.harga.toStringAsFixed(0)} each',
+                      style: TextStyle(fontSize: 12.sp, color: AppColors.inkMuted),
+                    ),
+                  ],
                 ),
               ),
+              InkWell(
+                borderRadius: BorderRadius.circular(999),
+                onTap: () => controller.removeItem(index),
+                child: Padding(
+                  padding: EdgeInsets.all(4.r),
+                  child: Icon(Icons.close, size: 18.sp, color: AppColors.inkFaint),
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 12.h),
+          Row(
+            children: [
+              _StepperButton(icon: Icons.remove, onTap: () => controller.decQty(index)),
+              SizedBox(
+                width: 40.w,
+                child: Text(
+                  '${item.qty}',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w700, color: AppColors.ink),
+                ),
+              ),
+              _StepperButton(icon: Icons.add, onTap: () => controller.incQty(index)),
+              const Spacer(),
+              Text(
+                'Rp ${item.subtotal.toStringAsFixed(0)}',
+                style: TextStyle(fontSize: 15.sp, fontWeight: FontWeight.w800, color: AppColors.ink),
+              ),
+            ],
+          ),
+          SizedBox(height: 10.h),
+          TextField(
+            onChanged: (v) => controller.updateNote(index, v),
+            style: TextStyle(fontSize: 13.sp),
+            decoration: InputDecoration(
+              hintText: 'Add a note',
+              isDense: true,
+              filled: true,
+              fillColor: AppColors.surface,
+              prefixIcon: Icon(Icons.edit_note_outlined, size: 18.sp, color: AppColors.inkFaint),
+              contentPadding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(AppDimensions.radiusSm.r),
+                borderSide: const BorderSide(color: AppColors.hairline),
+              ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -118,31 +107,23 @@ class _StepperButton extends StatelessWidget {
   final IconData icon;
   final VoidCallback onTap;
 
-  const _StepperButton({
-    required this.icon,
-    required this.onTap,
-  });
+  const _StepperButton({required this.icon, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    return SizedBox(
-      width: AppDimensions.touchTarget.w,
-      height: AppDimensions.touchTarget.h,
-      child: OutlinedButton(
-        onPressed: onTap,
-        style: OutlinedButton.styleFrom(
-          padding: EdgeInsets.zero,
-          minimumSize: Size(
-            AppDimensions.touchTarget.w,
-            AppDimensions.touchTarget.h,
-          ),
-          side: BorderSide(color: scheme.outlineVariant),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppDimensions.radiusSm.r),
-          ),
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(AppDimensions.radiusSm.r),
+      child: Container(
+        width: 36.r,
+        height: 36.r,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(AppDimensions.radiusSm.r),
+          border: Border.all(color: AppColors.hairline),
         ),
-        child: Icon(icon, size: 20.sp),
+        child: Icon(icon, size: 16.sp, color: AppColors.ink),
       ),
     );
   }

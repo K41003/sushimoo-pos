@@ -1,16 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import '../../app/constants/colors.dart';
 import '../../app/constants/dimensions.dart';
 
-/// Tombol standar aplikasi.
+/// Standard button.
 ///
-/// FIX: menambahkan [fullWidth]. Style default ElevatedButton di
-/// `theme.dart` memakai `minimumSize: Size(double.infinity, ...)`, yang
-/// aman jika tombol dibungkus SizedBox/Column (lebar sudah dibatasi
-/// parent), tetapi menyebabkan crash
-/// `BoxConstraints forces an infinite width` jika tombol ini dipasang
-/// langsung di dalam `Row` tanpa Expanded (mis. tombol "Connect" di
-/// halaman Setting). Set `fullWidth: false` untuk kasus seperti itu.
+/// `primary: true` -> solid emerald CTA (reserved for the one loud action
+/// per screen, e.g. "Bayar" / "Place Order").
+/// `primary: false` -> quiet ink-outline secondary action.
+/// `fullWidth: false` -> shrinks to content, safe inside a Row without
+/// Expanded (theme's minimumSize width is otherwise double.infinity).
 class AppButton extends StatelessWidget {
   final String label;
   final VoidCallback? onPressed;
@@ -33,25 +32,25 @@ class AppButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final spinnerColor = primary ? Colors.white : AppColors.ink;
     final child = loading
-        ? const SizedBox(
-            width: 20,
-            height: 20,
-            child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+        ? SizedBox(
+            width: 20.r,
+            height: 20.r,
+            child: CircularProgressIndicator(strokeWidth: 2.2, color: spinnerColor),
           )
         : Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              if (icon != null) Icon(icon, size: 20.sp),
-              if (icon != null) SizedBox(width: 8.w),
+              if (icon != null) ...[
+                Icon(icon, size: 20.sp),
+                SizedBox(width: 8.w),
+              ],
               Text(label),
             ],
           );
 
-    // Saat fullWidth = false, override minimumSize width dari theme
-    // (yang infinity) menjadi 0 agar tombol menyesuaikan isinya dan
-    // aman dipakai di dalam Row.
-    final ButtonStyle? buttonStyle = fullWidth
+    final ButtonStyle? sizeOverride = fullWidth
         ? null
         : ButtonStyle(
             minimumSize: WidgetStateProperty.all(
@@ -59,23 +58,12 @@ class AppButton extends StatelessWidget {
             ),
           );
 
-    if (primary) {
-      return SizedBox(
-        height: (height ?? AppDimensions.buttonHeight).h,
-        child: ElevatedButton(
-          style: buttonStyle,
-          onPressed: loading ? null : onPressed,
-          child: child,
-        ),
-      );
-    }
-    return SizedBox(
+    final box = SizedBox(
       height: (height ?? AppDimensions.buttonHeight).h,
-      child: OutlinedButton(
-        style: buttonStyle,
-        onPressed: loading ? null : onPressed,
-        child: child,
-      ),
+      child: primary
+          ? ElevatedButton(style: sizeOverride, onPressed: loading ? null : onPressed, child: child)
+          : OutlinedButton(style: sizeOverride, onPressed: loading ? null : onPressed, child: child),
     );
+    return box;
   }
 }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import '../../../app/constants/colors.dart';
 import '../../../app/constants/dimensions.dart';
 import '../../../app/routes/app_routes.dart';
 import '../../../shared/widgets/app_button.dart';
@@ -24,37 +25,27 @@ class SettingPage extends GetView<SettingController> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text('Dark Theme'),
-                  Obx(() => Switch(
-                        value: controller.isDark.value,
-                        onChanged: controller.toggleTheme,
-                      )),
-                ],
-              ),
-            ),
-            SizedBox(height: 12.h),
-            AppCard(
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text('Thermal Printer'),
+                  Row(
+                    children: [
+                      Icon(Icons.print_outlined, color: AppColors.ink, size: 20.sp),
+                      SizedBox(width: 12.w),
+                      const Text('Thermal Printer'),
+                    ],
+                  ),
                   Obx(() => AppButton(
-                        label: controller.printerConnected.value
-                            ? 'Connected'
-                            : 'Connect',
+                        label: controller.printerConnected.value ? 'Connected' : 'Connect',
                         onPressed: controller.connectPrinter,
-                        // FIX: tombol ini ada langsung di dalam Row
-                        // (tanpa Expanded), jadi wajib fullWidth:false
-                        // supaya tidak kena BoxConstraints infinite width.
+                        primary: !controller.printerConnected.value,
                         fullWidth: false,
                       )),
                 ],
               ),
             ),
-            SizedBox(height: 12.h),
+            SizedBox(height: 14.h),
             AppButton(
               label: 'Logout',
               primary: false,
+              icon: Icons.logout,
               onPressed: controller.logout,
             ),
           ],

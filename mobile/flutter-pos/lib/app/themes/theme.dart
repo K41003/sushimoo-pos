@@ -3,185 +3,242 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../constants/colors.dart';
 import '../constants/dimensions.dart';
 
-/// Typography scale from Design.md (Inter, at-a-glance hierarchy).
+/// Clean sans-serif type scale. Prices get their own bold/oversized style
+/// so the number a cashier cares about most is always the loudest thing
+/// on screen.
 class AppTypography {
   AppTypography._();
 
   static const String fontFamily = 'Inter';
 
-  static TextTheme build(bool isDark) {
-    final Color onSurface =
-        isDark ? AppColors.dark.onSurface : AppColors.light.onSurface;
-    final Color onVariant = isDark
-        ? AppColors.dark.onSurfaceVariant
-        : AppColors.light.onSurfaceVariant;
-
-    return TextTheme(
-      displayLarge: TextStyle(
-        fontFamily: fontFamily,
-        fontSize: 48.sp,
-        fontWeight: FontWeight.w700,
-        height: 56 / 48,
-        letterSpacing: -0.02,
-        color: onSurface,
-      ),
-      headlineLarge: TextStyle(
-        fontFamily: fontFamily,
-        fontSize: 32.sp,
-        fontWeight: FontWeight.w600,
-        height: 40 / 32,
-        color: onSurface,
-      ),
-      headlineMedium: TextStyle(
-        fontFamily: fontFamily,
-        fontSize: 24.sp,
-        fontWeight: FontWeight.w600,
-        height: 32 / 24,
-        color: onSurface,
-      ),
-      bodyLarge: TextStyle(
-        fontFamily: fontFamily,
-        fontSize: 18.sp,
-        fontWeight: FontWeight.w400,
-        height: 28 / 18,
-        color: onSurface,
-      ),
-      bodyMedium: TextStyle(
-        fontFamily: fontFamily,
-        fontSize: 16.sp,
-        fontWeight: FontWeight.w400,
-        height: 24 / 16,
-        color: onSurface,
-      ),
-      labelLarge: TextStyle(
-        fontFamily: fontFamily,
-        fontSize: 14.sp,
-        fontWeight: FontWeight.w600,
-        height: 20 / 14,
-        letterSpacing: 0.05,
-        color: onVariant,
-      ),
-      labelSmall: TextStyle(
-        fontFamily: fontFamily,
-        fontSize: 12.sp,
-        fontWeight: FontWeight.w500,
-        letterSpacing: 0.02,
-        color: onVariant,
-      ),
-    );
-  }
-
-  /// Specialized numeric style for prices / quantities.
-  static TextStyle price(bool isDark) => TextStyle(
-        fontFamily: fontFamily,
-        fontSize: 28.sp,
-        fontWeight: FontWeight.w700,
-        letterSpacing: -0.01,
-        color: isDark ? AppColors.dark.secondary : AppColors.light.secondary,
+  static TextTheme get textTheme => TextTheme(
+        displayLarge: TextStyle(
+          fontFamily: fontFamily,
+          fontSize: 44.sp,
+          fontWeight: FontWeight.w800,
+          height: 1.1,
+          letterSpacing: -0.5,
+          color: AppColors.ink,
+        ),
+        headlineLarge: TextStyle(
+          fontFamily: fontFamily,
+          fontSize: 30.sp,
+          fontWeight: FontWeight.w700,
+          height: 1.2,
+          letterSpacing: -0.3,
+          color: AppColors.ink,
+        ),
+        headlineMedium: TextStyle(
+          fontFamily: fontFamily,
+          fontSize: 22.sp,
+          fontWeight: FontWeight.w700,
+          height: 1.25,
+          letterSpacing: -0.2,
+          color: AppColors.ink,
+        ),
+        bodyLarge: TextStyle(
+          fontFamily: fontFamily,
+          fontSize: 17.sp,
+          fontWeight: FontWeight.w500,
+          height: 1.4,
+          color: AppColors.ink,
+        ),
+        bodyMedium: TextStyle(
+          fontFamily: fontFamily,
+          fontSize: 15.sp,
+          fontWeight: FontWeight.w400,
+          height: 1.4,
+          color: AppColors.inkMuted,
+        ),
+        labelLarge: TextStyle(
+          fontFamily: fontFamily,
+          fontSize: 13.sp,
+          fontWeight: FontWeight.w700,
+          height: 1.3,
+          letterSpacing: 0.3,
+          color: AppColors.inkMuted,
+        ),
+        labelSmall: TextStyle(
+          fontFamily: fontFamily,
+          fontSize: 11.5.sp,
+          fontWeight: FontWeight.w600,
+          letterSpacing: 0.2,
+          color: AppColors.inkMuted,
+        ),
       );
+
+  /// Big bold price/quantity numerals — the loudest text on the screen.
+  static TextStyle price = TextStyle(
+    fontFamily: fontFamily,
+    fontSize: 30.sp,
+    fontWeight: FontWeight.w800,
+    letterSpacing: -0.5,
+    color: AppColors.ink,
+  );
+
+  static TextStyle priceCompact = TextStyle(
+    fontFamily: fontFamily,
+    fontSize: 18.sp,
+    fontWeight: FontWeight.w800,
+    letterSpacing: -0.2,
+    color: AppColors.ink,
+  );
 }
 
 class AppTheme {
   AppTheme._();
 
-  static ThemeData get light => _build(AppColors.light, false);
-  static ThemeData get dark => _build(AppColors.dark, true);
+  /// A single light theme — the brief is explicitly a white, minimal
+  /// aesthetic, so there is no dark variant to keep contrast honest.
+  static ThemeData get light => _build();
 
-  static ThemeData _build(ColorScheme scheme, bool isDark) {
+  static ThemeData _build() {
+    final scheme = AppColors.scheme;
     return ThemeData(
       useMaterial3: true,
-      brightness: scheme.brightness,
+      brightness: Brightness.light,
       colorScheme: scheme,
+      scaffoldBackgroundColor: AppColors.surface,
       fontFamily: AppTypography.fontFamily,
-      textTheme: AppTypography.build(isDark),
-      scaffoldBackgroundColor: scheme.surface,
-      floatingActionButtonTheme: FloatingActionButtonThemeData(
-        backgroundColor: scheme.secondary,
-        foregroundColor: scheme.onSecondary,
-        extendedTextStyle: TextStyle(
-          fontFamily: AppTypography.fontFamily,
-          color: scheme.onSecondary,
-          fontWeight: FontWeight.w700,
-          fontSize: 14.sp,
-        ),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppDimensions.radiusFull),
-        ),
-      ),
-      textSelectionTheme: TextSelectionThemeData(
-        cursorColor: scheme.secondary,
-        selectionColor: scheme.secondary.withValues(alpha: 0.18),
-        selectionHandleColor: scheme.secondary,
-      ),
-      progressIndicatorTheme: ProgressIndicatorThemeData(
-        color: scheme.secondary,
-      ),
+      textTheme: AppTypography.textTheme,
+      splashFactory: InkRipple.splashFactory,
+      visualDensity: VisualDensity.standard,
+
+      // Shadows are replaced almost entirely by hairline borders.
       cardTheme: CardThemeData(
-        color: scheme.surfaceContainerLow,
+        color: AppColors.surface,
         elevation: 0,
+        margin: EdgeInsets.zero,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppDimensions.radiusLg.r),
-          side: BorderSide(
-            color: scheme.outlineVariant.withValues(alpha: 0.5),
-            width: 1,
-          ),
+          side: const BorderSide(color: AppColors.hairline, width: 1),
         ),
-        margin: EdgeInsets.zero,
       ),
+
       appBarTheme: AppBarTheme(
-        backgroundColor: scheme.surface,
-        foregroundColor: scheme.onSurface,
+        backgroundColor: AppColors.surface,
+        foregroundColor: AppColors.ink,
         elevation: 0,
+        scrolledUnderElevation: 0,
         centerTitle: false,
-        titleTextStyle: AppTypography.build(isDark).headlineMedium,
+        surfaceTintColor: Colors.transparent,
+        titleTextStyle: AppTypography.textTheme.headlineMedium,
+        iconTheme: const IconThemeData(color: AppColors.ink),
       ),
+
+      // Primary CTA — solid salmon, the one loud color on screen.
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: scheme.primary,
-          foregroundColor: scheme.onPrimary,
+          backgroundColor: AppColors.salmon,
+          foregroundColor: Colors.white,
+          disabledBackgroundColor: AppColors.salmon.withValues(alpha: 0.35),
+          disabledForegroundColor: Colors.white,
+          elevation: 0,
           minimumSize: Size(double.infinity, AppDimensions.buttonHeight.h),
+          padding: EdgeInsets.symmetric(horizontal: 20.w),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppDimensions.radiusMd.r),
           ),
-          textStyle: const TextStyle(
+          textStyle: TextStyle(
             fontFamily: AppTypography.fontFamily,
-            fontWeight: FontWeight.w600,
-            fontSize: 16,
+            fontWeight: FontWeight.w700,
+            fontSize: 16.sp,
+            letterSpacing: -0.1,
           ),
         ),
       ),
+
+      // Secondary action — quiet ink outline, no fill.
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
-          foregroundColor: scheme.onSurface,
+          foregroundColor: AppColors.ink,
+          disabledForegroundColor: AppColors.inkFaint,
           minimumSize: Size(double.infinity, AppDimensions.buttonHeight.h),
-          side: BorderSide(color: scheme.outline),
+          side: const BorderSide(color: AppColors.hairline, width: 1.4),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppDimensions.radiusMd.r),
           ),
+          textStyle: TextStyle(
+            fontFamily: AppTypography.fontFamily,
+            fontWeight: FontWeight.w700,
+            fontSize: 16.sp,
+          ),
         ),
       ),
+
+      textButtonTheme: TextButtonThemeData(
+        style: TextButton.styleFrom(
+          foregroundColor: AppColors.inkMuted,
+          textStyle: TextStyle(
+            fontFamily: AppTypography.fontFamily,
+            fontWeight: FontWeight.w600,
+            fontSize: 15.sp,
+          ),
+        ),
+      ),
+
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: scheme.surfaceContainerLow,
+        fillColor: AppColors.surfaceAlt,
+        hintStyle: TextStyle(color: AppColors.inkFaint, fontSize: 15.sp),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppDimensions.radiusMd.r),
-          borderSide: BorderSide(color: scheme.outlineVariant),
+          borderSide: const BorderSide(color: AppColors.hairline, width: 1),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppDimensions.radiusMd.r),
+          borderSide: const BorderSide(color: AppColors.hairline, width: 1),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppDimensions.radiusMd.r),
-          borderSide: BorderSide(color: scheme.secondary, width: 1.5),
+          borderSide: const BorderSide(color: AppColors.ink, width: 1.6),
         ),
-        contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
+        contentPadding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 16.h),
       ),
+
       chipTheme: ChipThemeData(
-        backgroundColor: scheme.surfaceContainerHigh,
-        labelStyle: TextStyle(color: scheme.onSurface),
+        backgroundColor: AppColors.surfaceAlt,
+        selectedColor: AppColors.ink,
+        labelStyle: const TextStyle(color: AppColors.ink),
+        secondaryLabelStyle: const TextStyle(color: Colors.white),
+        side: const BorderSide(color: AppColors.hairline),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppDimensions.radiusFull),
         ),
       ),
-      dividerTheme:
-          DividerThemeData(color: scheme.outlineVariant, thickness: 1),
+
+      floatingActionButtonTheme: FloatingActionButtonThemeData(
+        backgroundColor: AppColors.salmon,
+        foregroundColor: Colors.white,
+        elevation: 0,
+        extendedTextStyle: TextStyle(
+          fontFamily: AppTypography.fontFamily,
+          fontWeight: FontWeight.w700,
+          fontSize: 15.sp,
+          color: Colors.white,
+        ),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppDimensions.radiusFull),
+        ),
+      ),
+
+      dividerTheme: const DividerThemeData(
+        color: AppColors.hairline,
+        thickness: 1,
+        space: 1,
+      ),
+
+      textSelectionTheme: const TextSelectionThemeData(
+        cursorColor: AppColors.ink,
+        selectionColor: Color(0x33FA8072),
+        selectionHandleColor: AppColors.salmon,
+      ),
+
+      progressIndicatorTheme: const ProgressIndicatorThemeData(
+        color: AppColors.salmon,
+      ),
+
+      iconTheme: const IconThemeData(color: AppColors.ink),
     );
   }
 }

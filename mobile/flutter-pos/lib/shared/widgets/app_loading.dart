@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import '../../app/constants/colors.dart';
 
 class AppLoading extends StatelessWidget {
   final String? message;
@@ -11,9 +12,9 @@ class AppLoading extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const CircularProgressIndicator(),
+          const CircularProgressIndicator(strokeWidth: 2.4),
           if (message != null) ...[
-            SizedBox(height: 12.h),
+            SizedBox(height: 14.h),
             Text(message!, style: Theme.of(context).textTheme.bodyMedium),
           ]
         ],
@@ -37,8 +38,16 @@ class AppEmptyState extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 64.sp, color: Theme.of(context).colorScheme.outline),
-          SizedBox(height: 12.h),
+          Container(
+            width: 64.r,
+            height: 64.r,
+            decoration: BoxDecoration(
+              color: AppColors.surfaceAlt,
+              borderRadius: BorderRadius.circular(20.r),
+            ),
+            child: Icon(icon, size: 28.sp, color: AppColors.inkFaint),
+          ),
+          SizedBox(height: 14.h),
           Text(message, style: Theme.of(context).textTheme.bodyMedium),
         ],
       ),

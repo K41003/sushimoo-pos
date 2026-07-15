@@ -1,90 +1,77 @@
 import 'package:flutter/material.dart';
 
-/// Color palettes sourced from Design.md (Light = Sushi Red / Sumie / Rice White,
-/// Dark = Zen Precision / Crimson / Ink). Both are Material 3 tonal sets.
+/// "Minimalis Putih" premium palette — salmon-only accent system.
+///
+/// Design tokens (single source of truth — do not hardcode hex elsewhere):
+///  - ink        #111315  primary text / high-contrast elements
+///  - inkMuted   #8A8F98  secondary text, icons, placeholders
+///  - inkFaint   #B9BCC2  disabled / tertiary text
+///  - surface    #FFFFFF  page background
+///  - surfaceAlt #FAFAFA  subtle secondary surface (strips, headers)
+///  - salmon     #FA8072  PRIMARY accent — used for CTAs, badges, active
+///                        states, AND card/container tints (single accent
+///                        family, varied by tone/opacity, not by hue)
+///  - salmonDark #D8695C  pressed/hover state, high-contrast salmon text
+///  - salmonSoft #FFEDE8  salmon tint used as card/container background
+///  - salmonBorder #FAD3CB  salmon-tinted 1px borders
+///  - hairline   #ECECEE  neutral 1px borders replacing heavy shadows
 class AppColors {
   AppColors._();
 
-  static const Color sumieBlack = Color(0xFF1A1C1C);
-  static const Color sushiRed = Color(0xFFE63946);
-  static const Color sushiRedDark = Color(0xFFB7102A);
-  static const Color riceWhite = Color(0xFFFDFDFD);
-  static const Color inkGray = Color(0xFF757575);
-  static const Color matcha = Color(0xFFA8DADC);
+  static const Color ink = Color(0xFF111315);
+  static const Color inkMuted = Color(0xFF8A8F98);
+  static const Color inkFaint = Color(0xFFB9BCC2);
 
-  static const ColorScheme light = ColorScheme(
+  static const Color surface = Color(0xFFFFFFFF);
+  static const Color surfaceAlt = Color(0xFFFAFAFA);
+  static const Color hairline = Color(0xFFECECEE);
+
+  /// Primary (and only) accent — Salmon. Used for CTAs (Bayar/Pay),
+  /// active states, selected chips, badges, and card/container tints.
+  static const Color salmon = Color(0xFFFA8072);
+  static const Color salmonDark =
+      Color(0xFFD8695C); // pressed state, on-light text
+  static const Color salmonSoft = Color(0xFFFFEDE8); // container / tint bg
+  static const Color salmonBorder = Color(0xFFFAD3CB); // tinted hairline
+
+  // Neutral semantic colors (kept minimal, low-chroma, not "bright")
+  static const Color danger = Color(0xFFE23744);
+  static const Color dangerSoft = Color(0xFFFCE9EA);
+  static const Color warning = Color(0xFFB9812A);
+
+  static const ColorScheme scheme = ColorScheme(
     brightness: Brightness.light,
-    primary: sumieBlack,
-    onPrimary: Color(0xFFFFFFFF),
-    primaryContainer: Color(0xFF303232),
-    onPrimaryContainer: Color(0xFFE8E8E8),
-    inversePrimary: Color(0xFFC8C6C5),
-    secondary: sushiRed,
-    onSecondary: Color(0xFFFFFFFF),
-    secondaryContainer: Color(0xFFFFDAD8),
-    onSecondaryContainer: Color(0xFF5B000E),
-    tertiary: sumieBlack,
-    onTertiary: Color(0xFFFFFFFF),
-    tertiaryContainer: Color(0xFFE2E2E2),
-    onTertiaryContainer: sumieBlack,
-    error: sushiRedDark,
-    onError: Color(0xFFFFFFFF),
-    errorContainer: Color(0xFFFFDAD6),
-    onErrorContainer: Color(0xFF93000A),
-    surface: riceWhite,
-    onSurface: sumieBlack,
-    onSurfaceVariant: Color(0xFF444748),
-    outline: inkGray,
-    outlineVariant: Color(0xFFE1E4E4),
-    surfaceContainerLowest: Color(0xFFFFFFFF),
-    surfaceContainerLow: Color(0xFFF7F7F7),
-    surfaceContainer: Color(0xFFF1F1F1),
-    surfaceContainerHigh: Color(0xFFEDEDED),
-    surfaceContainerHighest: Color(0xFFE2E2E2),
-    inverseSurface: Color(0xFF2F3131),
-    onInverseSurface: Color(0xFFF1F1F1),
-    shadow: Color(0xFF000000),
-    scrim: Color(0xFF000000),
-    surfaceTint: sushiRed,
+    primary: salmon,
+    onPrimary: Colors.white,
+    primaryContainer: salmonSoft,
+    onPrimaryContainer: salmonDark,
+    inversePrimary: salmonSoft,
+    secondary: salmonDark,
+    onSecondary: Colors.white,
+    secondaryContainer: salmonSoft,
+    onSecondaryContainer: ink,
+    tertiary: ink,
+    onTertiary: Colors.white,
+    tertiaryContainer: surfaceAlt,
+    onTertiaryContainer: ink,
+    error: danger,
+    onError: Colors.white,
+    errorContainer: dangerSoft,
+    onErrorContainer: danger,
+    surface: surface,
+    onSurface: ink,
+    onSurfaceVariant: inkMuted,
+    outline: hairline,
+    outlineVariant: salmonBorder,
+    surfaceContainerLowest: surface,
+    surfaceContainerLow: surfaceAlt,
+    surfaceContainer: surfaceAlt,
+    surfaceContainerHigh: salmonSoft,
+    surfaceContainerHighest: Color(0xFFF3F3F4),
+    inverseSurface: ink,
+    onInverseSurface: surface,
+    shadow: Color(0x14111315),
+    scrim: Color(0x66111315),
+    surfaceTint: salmon,
   );
-
-  static const ColorScheme dark = ColorScheme(
-    brightness: Brightness.dark,
-    primary: Color(0xFFFFB3B1),
-    onPrimary: Color(0xFF680011),
-    primaryContainer: Color(0xFFFF535B),
-    onPrimaryContainer: Color(0xFF5B000E),
-    inversePrimary: Color(0xFFBB152C),
-    secondary: Color(0xFFFF535B),
-    onSecondary: Color(0xFF410007),
-    secondaryContainer: Color(0xFF92001C),
-    onSecondaryContainer: Color(0xFFFFDAD8),
-    tertiary: Color(0xFFC6C6C7),
-    onTertiary: Color(0xFF2F3131),
-    tertiaryContainer: Color(0xFF909191),
-    onTertiaryContainer: Color(0xFF282A2A),
-    error: Color(0xFFFFB4AB),
-    onError: Color(0xFF690005),
-    errorContainer: Color(0xFF93000A),
-    onErrorContainer: Color(0xFFFFDAD6),
-    surface: Color(0xFF131313),
-    onSurface: Color(0xFFE4E2E1),
-    onSurfaceVariant: Color(0xFFE4BEBC),
-    outline: Color(0xFFAB8987),
-    outlineVariant: Color(0xFF5B403F),
-    surfaceContainerLowest: Color(0xFF0E0E0E),
-    surfaceContainerLow: Color(0xFF1B1C1C),
-    surfaceContainer: Color(0xFF1F2020),
-    surfaceContainerHigh: Color(0xFF2A2A2A),
-    surfaceContainerHighest: Color(0xFF353535),
-    inverseSurface: Color(0xFFE4E2E1),
-    onInverseSurface: Color(0xFF303030),
-    shadow: Color(0xFF000000),
-    scrim: Color(0xFF000000),
-    surfaceTint: Color(0xFFFFB3B1),
-  );
-
-  /// Functional accents used by status chips and indicators.
-  static const Color success = matcha;
-  static const Color warning = Color(0xFFFFB74D);
 }

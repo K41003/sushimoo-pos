@@ -31,8 +31,7 @@ class StatCard extends StatelessWidget {
               ],
             ),
             SizedBox(height: 12.h),
-            Text(value, style: AppTypography.price(
-                Theme.of(context).brightness == Brightness.dark)),
+            Text(value, style: AppTypography.price),
             SizedBox(height: 4.h),
             Text(label, style: Theme.of(context).textTheme.labelLarge),
           ],

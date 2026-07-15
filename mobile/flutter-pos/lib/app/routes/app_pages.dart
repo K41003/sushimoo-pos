@@ -21,6 +21,8 @@ import '../../modules/pos/bindings/pos_binding.dart';
 import '../../modules/pos/views/pos_page.dart';
 import '../../modules/payment/bindings/payment_binding.dart';
 import '../../modules/payment/views/payment_page.dart';
+import '../../modules/receipt/bindings/receipt_binding.dart';
+import '../../modules/receipt/views/receipt_page.dart';
 import '../../modules/expense/bindings/expense_binding.dart';
 import '../../modules/expense/views/expense_page.dart';
 import '../../modules/report/bindings/report_binding.dart';
@@ -89,6 +91,11 @@ class AppPages {
       name: AppRoutes.payment,
       page: () => const PaymentPage(),
       binding: PaymentBinding(),
+    ),
+    GetPage(
+      name: AppRoutes.receipt,
+      page: () => const ReceiptPage(),
+      binding: ReceiptBinding(),
     ),
     GetPage(
       name: AppRoutes.expense,

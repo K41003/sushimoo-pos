@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import '../../app/constants/colors.dart';
 
 class AppChip extends StatelessWidget {
   final String label;
@@ -17,25 +18,25 @@ class AppChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(9999),
-      child: Container(
-        padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 8.h),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 140),
+        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 10.h),
         decoration: BoxDecoration(
-          color: selected
-              ? (color ?? scheme.primary)
-              : (color ?? scheme.surfaceContainerHigh).withValues(alpha: 0.1),
+          color: selected ? (color ?? AppColors.ink) : AppColors.surface,
           borderRadius: BorderRadius.circular(9999),
           border: Border.all(
-            color: selected ? scheme.primary : scheme.outlineVariant,
+            color: selected ? (color ?? AppColors.ink) : AppColors.hairline,
+            width: 1,
           ),
         ),
         child: Text(
           label,
           style: TextStyle(
-            color: selected ? scheme.onPrimary : scheme.onSurface,
+            fontSize: 14.sp,
+            color: selected ? Colors.white : AppColors.ink,
             fontWeight: FontWeight.w600,
           ),
         ),
@@ -44,30 +45,59 @@ class AppChip extends StatelessWidget {
   }
 }
 
-/// Status pill used for order / table states.
+/// Status pill for order / table states — quiet tint + dot instead of a
+/// loud filled badge, matching the minimal aesthetic.
 class StatusChip extends StatelessWidget {
   final String status;
   const StatusChip({super.key, required this.status});
 
-  Color _color(BuildContext context) {
-    switch (status) {
+  Color _dot(String s) {
+    switch (s) {
       case 'paid':
       case 'available':
-        return const Color(0xFFA8DADC);
+        return AppColors.salmonDark;
       case 'pending':
       case 'occupied':
       case 'open':
-        return Colors.orange.shade300;
+        return AppColors.warning;
       case 'cancelled':
       case 'closed':
-        return Colors.red.shade300;
+        return AppColors.danger;
       default:
-        return Theme.of(context).colorScheme.outline;
+        return AppColors.inkMuted;
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return AppChip(label: status.toUpperCase(), color: _color(context));
+    final dot = _dot(status);
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 7.h),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceAlt,
+        borderRadius: BorderRadius.circular(9999),
+        border: Border.all(color: AppColors.hairline),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 7.r,
+            height: 7.r,
+            decoration: BoxDecoration(color: dot, shape: BoxShape.circle),
+          ),
+          SizedBox(width: 7.w),
+          Text(
+            status.toUpperCase(),
+            style: TextStyle(
+              fontSize: 11.sp,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 0.3,
+              color: AppColors.ink,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:get/get.dart';
+import '../../app/constants/colors.dart';
 import '../../app/routes/app_routes.dart';
 import '../../app/services/auth_service.dart';
 import '../../app/services/storage_service.dart';
@@ -9,8 +9,8 @@ import '../../shared/widgets/app_sidebar.dart';
 import '../../shared/utils/responsive.dart';
 import 'nav_item_factory.dart';
 
-/// App shell implementing the Design.md navigation rail / drawer pattern.
-/// Wraps every module page with role-aware navigation.
+/// App shell: minimal white nav rail (tablet landscape) or drawer (portrait)
+/// wrapping every module page.
 class AppScaffold extends StatelessWidget {
   final String title;
   final String currentRoute;
@@ -31,26 +31,29 @@ class AppScaffold extends StatelessWidget {
     final items = navItemsForRole(user?.roleName ?? '');
 
     final content = Scaffold(
+      backgroundColor: AppColors.surface,
       appBar: AppBar(
         title: Text(title),
         actions: [
           if (user != null)
             Padding(
-              padding: EdgeInsets.symmetric(horizontal: 12.w),
+              padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Center(
-                child: Text(user.nama,
-                    style: Theme.of(context).textTheme.bodyMedium),
+                child: Text(
+                  user.nama,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.inkMuted,
+                  ),
+                ),
               ),
             ),
           ...?actions,
+          const SizedBox(width: 8),
         ],
       ),
       drawer: Responsive.isTablet(context) && !Responsive.isLandscape(context)
-          ? AppDrawer(
-              items: items,
-              currentRoute: currentRoute,
-              onLogout: _logout,
-            )
+          ? AppDrawer(items: items, currentRoute: currentRoute, onLogout: _logout)
           : null,
       body: body,
     );
@@ -58,11 +61,7 @@ class AppScaffold extends StatelessWidget {
     if (Responsive.isLandscapeTablet(context)) {
       return Row(
         children: [
-          AppSidebar(
-            items: items,
-            currentRoute: currentRoute,
-            onLogout: _logout,
-          ),
+          AppSidebar(items: items, currentRoute: currentRoute, onLogout: _logout),
           Expanded(child: content),
         ],
       );

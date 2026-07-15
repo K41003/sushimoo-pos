@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import '../../app/constants/colors.dart';
 
 class AppTextField extends StatelessWidget {
   final String? label;
@@ -30,9 +31,16 @@ class AppTextField extends StatelessWidget {
       children: [
         if (label != null)
           Padding(
-            padding: EdgeInsets.only(bottom: 6.h),
-            child: Text(label!,
-                style: Theme.of(context).textTheme.labelLarge),
+            padding: EdgeInsets.only(bottom: 8.h, left: 2.w),
+            child: Text(
+              label!,
+              style: TextStyle(
+                fontSize: 13.sp,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 0.2,
+                color: AppColors.inkMuted,
+              ),
+            ),
           ),
         TextFormField(
           controller: controller,
@@ -41,6 +49,11 @@ class AppTextField extends StatelessWidget {
           validator: validator,
           onChanged: onChanged,
           maxLines: maxLines,
+          style: TextStyle(
+            fontSize: 16.sp,
+            fontWeight: FontWeight.w500,
+            color: AppColors.ink,
+          ),
           decoration: InputDecoration(hintText: hint),
         ),
       ],

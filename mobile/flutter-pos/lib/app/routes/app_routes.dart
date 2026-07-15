@@ -12,6 +12,7 @@ class AppRoutes {
   static const shift = '/shift';
   static const pos = '/pos';
   static const payment = '/payment';
+  static const receipt = '/receipt';
   static const expense = '/expense';
   static const report = '/report';
   static const closing = '/closing';

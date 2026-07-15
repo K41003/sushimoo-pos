@@ -1,13 +1,10 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:get/get.dart';
-import 'package:flutter/material.dart';
 import '../../../app/services/auth_service.dart';
 import '../../../app/services/printer_service.dart';
-import '../../../app/services/storage_service.dart';
 
 class SettingController extends GetxController {
-  final isDark = StorageService.to.isDark.obs;
-
   // FIX: dibuat late + di-assign dengan try-catch di onInit, bukan
   // langsung `PrinterService.to.isConnected` sebagai field initializer.
   // Ini mencegah crash kalau plugin blue_thermal_printer gagal
@@ -23,12 +20,6 @@ class SettingController extends GetxController {
     } catch (_) {
       printerConnected = false.obs;
     }
-  }
-
-  Future<void> toggleTheme(bool value) async {
-    isDark.value = value;
-    await StorageService.to.setDark(value);
-    Get.changeThemeMode(value ? ThemeMode.dark : ThemeMode.light);
   }
 
   Future<void> connectPrinter() async {

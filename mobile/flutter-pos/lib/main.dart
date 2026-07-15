@@ -5,10 +5,12 @@ import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'app/bindings/initial_binding.dart';
 import 'app/constants/app_constants.dart';
+import 'app/constants/colors.dart';
 import 'app/routes/app_pages.dart';
 import 'app/routes/app_routes.dart';
 import 'app/services/storage_service.dart';
 import 'app/themes/theme.dart';
+import 'app/config/scroll_behavior.dart';
 import 'dart:io';
 
 void main() async {
@@ -25,8 +27,14 @@ void main() async {
 void _configureLoading() {
   EasyLoading.instance
     ..indicatorType = EasyLoadingIndicatorType.fadingCircle
+    ..indicatorColor = AppColors.salmon
+    ..progressColor = AppColors.salmon
+    ..backgroundColor = Colors.white
+    ..textColor = AppColors.ink
+    ..maskColor = AppColors.ink.withValues(alpha: 0.15)
     ..toastPosition = EasyLoadingToastPosition.bottom
-    ..maskType = EasyLoadingMaskType.black;
+    ..maskType = EasyLoadingMaskType.black
+    ..radius = 14;
 }
 
 class MyApp extends StatelessWidget {
@@ -34,7 +42,6 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final storage = StorageService.to;
     return ScreenUtilInit(
       designSize: const Size(1280, 800),
       minTextAdapt: true,
@@ -45,9 +52,11 @@ class MyApp extends StatelessWidget {
         initialRoute: AppRoutes.initial,
         getPages: AppPages.pages,
         initialBinding: InitialBinding(),
+        // Single "Minimalis Putih" theme — no dark mode branching, so
+        // contrast and the salmon accent stay consistent.
         theme: AppTheme.light,
-        darkTheme: AppTheme.dark,
-        themeMode: storage.isDark ? ThemeMode.dark : ThemeMode.light,
+        themeMode: ThemeMode.light,
+        scrollBehavior: const AppScrollBehavior(),
         builder: EasyLoading.init(),
       ),
     );
