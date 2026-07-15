@@ -45,7 +45,7 @@ class ReceiptPage extends GetView<ReceiptController> {
                     border: Border.all(color: AppColors.hairline),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.03),
+                        color: Colors.black.withValues(alpha: 0.03),
                         blurRadius: 16,
                         offset: const Offset(0, 8),
                       ),
@@ -62,18 +62,18 @@ class ReceiptPage extends GetView<ReceiptController> {
                             margin: EdgeInsets.only(bottom: 16.h),
                             padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 6.h),
                             decoration: BoxDecoration(
-                              color: Colors.emerald.withOpacity(0.1),
+                              color: AppColors.emerald.withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(100.r),
                             ),
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Icon(Icons.check_circle, color: Colors.emerald, size: 16.sp),
+                                Icon(Icons.check_circle, color: AppColors.emerald, size: 16.sp),
                                 SizedBox(width: 6.w),
                                 Text(
                                   'PAYMENT SUCCESSFUL',
                                   style: TextStyle(
-                                    color: Colors.emerald,
+                                    color: AppColors.emerald,
                                     fontSize: 10.sp,
                                     fontWeight: FontWeight.bold,
                                     letterSpacing: 1,
@@ -93,7 +93,7 @@ class ReceiptPage extends GetView<ReceiptController> {
                                 style: TextStyle(
                                   fontFamily: 'Serif',
                                   fontSize: 24.sp,
-                                  fontWeight: FontWeight.extrabold,
+                                  fontWeight: FontWeight.w800,
                                   letterSpacing: 2.5,
                                   color: AppColors.ink,
                                 ),
@@ -206,7 +206,7 @@ class ReceiptPage extends GetView<ReceiptController> {
                               _money(trx.total),
                               style: TextStyle(
                                 fontSize: 20.sp,
-                                fontWeight: FontWeight.extrabold,
+                                fontWeight: FontWeight.w800,
                                 color: AppColors.salmonDark,
                               ),
                             ),
@@ -291,7 +291,7 @@ class ReceiptPage extends GetView<ReceiptController> {
               fontFamily: isMonospace ? 'Courier' : null,
               fontSize: 13.sp,
               fontWeight: isHighlight || isMonospace ? FontWeight.bold : FontWeight.w600,
-              color: isHighlight ? Colors.emerald : AppColors.ink,
+              color: isHighlight ? AppColors.emerald : AppColors.ink,
             ),
           ),
         ],

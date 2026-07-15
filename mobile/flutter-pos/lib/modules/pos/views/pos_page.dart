@@ -9,7 +9,7 @@ import '../../../shared/widgets/app_button.dart';
 import '../../../shared/widgets/app_chip.dart';
 import '../../../shared/widgets/app_loading.dart';
 import '../../../shared/widgets/app_scaffold.dart';
-import '../../product/widgets/pos_product_tile.dart';
+import '../widgets/pos_product_tile.dart';
 import '../controllers/pos_controller.dart';
 import '../widgets/cart_tile.dart';
 

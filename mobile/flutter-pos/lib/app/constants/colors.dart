@@ -39,6 +39,26 @@ class AppColors {
   static const Color dangerSoft = Color(0xFFFCE9EA);
   static const Color warning = Color(0xFFB9812A);
 
+  // Success / positive semantic color (used for confirmations, change due).
+  static const Color emerald = Color(0xFF10B981);
+
+  // Tailwind-style neutral "slate" scale used for low-emphasis surfaces.
+  static const MaterialColor slate = MaterialColor(
+    0xFF64748B,
+    <int, Color>{
+      50: Color(0xFFF8FAFC),
+      100: Color(0xFFF1F5F9),
+      200: Color(0xFFE2E8F0),
+      300: Color(0xFFCBD5E1),
+      400: Color(0xFF94A3B8),
+      500: Color(0xFF64748B),
+      600: Color(0xFF475569),
+      700: Color(0xFF334155),
+      800: Color(0xFF1E293B),
+      900: Color(0xFF0F172A),
+    },
+  );
+
   static const ColorScheme scheme = ColorScheme(
     brightness: Brightness.light,
     primary: salmon,

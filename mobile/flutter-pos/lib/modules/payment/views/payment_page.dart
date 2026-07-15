@@ -7,7 +7,6 @@ import '../../../app/routes/app_routes.dart';
 import '../../../shared/widgets/app_button.dart';
 import '../../../shared/widgets/app_card.dart';
 import '../../../shared/widgets/app_scaffold.dart';
-import '../../../shared/widgets/app_text_field.dart';
 import '../controllers/payment_controller.dart';
 
 class PaymentPage extends GetView<PaymentController> {
@@ -35,7 +34,8 @@ class PaymentPage extends GetView<PaymentController> {
                 // Minimal Japanese Accent Header
                 Center(
                   child: Container(
-                    padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 8.h),
+                    padding:
+                        EdgeInsets.symmetric(horizontal: 14.w, vertical: 8.h),
                     decoration: BoxDecoration(
                       color: AppColors.salmonSoft,
                       borderRadius: BorderRadius.circular(4.r),
@@ -70,7 +70,7 @@ class PaymentPage extends GetView<PaymentController> {
                         Text(
                           trx.invoiceNumber,
                           style: theme.textTheme.headlineMedium?.copyWith(
-                            fontWeight: FontWeight.extrabold,
+                            fontWeight: FontWeight.w800,
                           ),
                         ),
                         SizedBox(height: 12.h),
@@ -79,9 +79,12 @@ class PaymentPage extends GetView<PaymentController> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Text('Table / Layanan', style: theme.textTheme.bodyMedium),
+                            Text('Table / Layanan',
+                                style: theme.textTheme.bodyMedium),
                             Text(
-                              trx.table?.nomorMeja != null ? 'Meja ${trx.table!.nomorMeja}' : 'Takeaway (Bawa Pulang)',
+                              trx.table?.nomorMeja != null
+                                  ? 'Meja ${trx.table!.nomorMeja}'
+                                  : 'Takeaway (Bawa Pulang)',
                               style: theme.textTheme.bodyMedium?.copyWith(
                                 fontWeight: FontWeight.bold,
                                 color: AppColors.ink,
@@ -95,7 +98,11 @@ class PaymentPage extends GetView<PaymentController> {
                           children: [
                             Text('Tanggal', style: theme.textTheme.bodyMedium),
                             Text(
-                              trx.tanggal.substring(0, trx.tanggal.length > 10 ? 10 : trx.tanggal.length),
+                              trx.tanggal.substring(
+                                  0,
+                                  trx.tanggal.length > 10
+                                      ? 10
+                                      : trx.tanggal.length),
                               style: theme.textTheme.bodyMedium?.copyWith(
                                 color: AppColors.ink,
                               ),
@@ -172,13 +179,15 @@ class PaymentPage extends GetView<PaymentController> {
                           padding: EdgeInsets.all(14.r),
                           decoration: BoxDecoration(
                             color: AppColors.surfaceAlt,
-                            borderRadius: BorderRadius.circular(AppDimensions.radiusMd.r),
+                            borderRadius:
+                                BorderRadius.circular(AppDimensions.radiusMd.r),
                             border: Border.all(color: AppColors.hairline),
                           ),
                           child: Column(
                             children: [
                               Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
                                 children: [
                                   Text(
                                     'Total Tagihan:',
@@ -200,27 +209,35 @@ class PaymentPage extends GetView<PaymentController> {
                                 ],
                               ),
                               Obx(() {
-                                if (!controller.isCash || controller.receivedText.value.isEmpty) {
+                                if (!controller.isCash ||
+                                    controller.receivedText.value.isEmpty) {
                                   return const SizedBox.shrink();
                                 }
-                                final receivedAmt = double.tryParse(controller.receivedText.value) ?? 0;
+                                final receivedAmt = double.tryParse(
+                                        controller.receivedText.value) ??
+                                    0;
                                 final changeAmt = controller.change;
                                 final hasShortfall = receivedAmt < trx.total;
 
                                 return Padding(
-                                  padding: EdgeInsets.top(8.h),
+                                  padding: EdgeInsets.only(top: 8.h),
                                   child: Column(
                                     children: [
                                       const Divider(height: 12),
                                       Row(
-                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
                                         children: [
                                           Text(
-                                            hasShortfall ? 'Kurang Bayar:' : 'Kembalian:',
+                                            hasShortfall
+                                                ? 'Kurang Bayar:'
+                                                : 'Kembalian:',
                                             style: TextStyle(
                                               fontFamily: 'Courier',
                                               fontSize: 14.sp,
-                                              color: hasShortfall ? AppColors.danger : Colors.emerald,
+                                              color: hasShortfall
+                                                  ? AppColors.danger
+                                                  : AppColors.emerald,
                                               fontWeight: FontWeight.bold,
                                             ),
                                           ),
@@ -232,7 +249,9 @@ class PaymentPage extends GetView<PaymentController> {
                                               fontFamily: 'Courier',
                                               fontSize: 15.sp,
                                               fontWeight: FontWeight.bold,
-                                              color: hasShortfall ? AppColors.danger : Colors.emerald,
+                                              color: hasShortfall
+                                                  ? AppColors.danger
+                                                  : AppColors.emerald,
                                             ),
                                           ),
                                         ],
@@ -248,7 +267,9 @@ class PaymentPage extends GetView<PaymentController> {
 
                         // Cash Input Field (Only visible when cash is selected)
                         Obx(() {
-                          if (!controller.isCash) return const SizedBox.shrink();
+                          if (!controller.isCash) {
+                            return const SizedBox.shrink();
+                          }
                           return Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
@@ -296,8 +317,11 @@ class PaymentPage extends GetView<PaymentController> {
                 // Bayar Button
                 Obx(() {
                   final isCash = controller.isCash;
-                  final received = double.tryParse(controller.receivedText.value) ?? 0;
-                  final isButtonDisabled = isCash && (controller.receivedText.value.isEmpty || received < trx.total);
+                  final received =
+                      double.tryParse(controller.receivedText.value) ?? 0;
+                  final isButtonDisabled = isCash &&
+                      (controller.receivedText.value.isEmpty ||
+                          received < trx.total);
 
                   return AppButton(
                     label: 'SELESAIKAN ORDER / BAYAR',
@@ -352,7 +376,8 @@ class PaymentPage extends GetView<PaymentController> {
                   style: TextStyle(
                     fontSize: 11.sp,
                     fontWeight: FontWeight.bold,
-                    color: isSelected ? AppColors.salmonDark : AppColors.inkMuted,
+                    color:
+                        isSelected ? AppColors.salmonDark : AppColors.inkMuted,
                   ),
                 ),
               ],
