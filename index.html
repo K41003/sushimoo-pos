@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sushimoo POS — Zen Precision Restaurant POS</title>
+  <script>
+    // Prevent "Cannot set property fetch of #<Window> which has only a getter" TypeError
+    (function() {
+      try {
+        var currentFetch = window.fetch;
+        
+        function patchFetch(obj) {
+          Object.defineProperty(obj, 'fetch', {
+            get: function() {
+              return currentFetch;
+            },
+            set: function(val) {
+              currentFetch = val;
+            },
+            configurable: true,
+            enumerable: true
+          });
+        }
+
+        try {
+          patchFetch(window);
+        } catch (e1) {
+          try {
+            patchFetch(Window.prototype);
+          } catch (e2) {
+            console.warn("Could not patch fetch on window or Window.prototype");
+          }
+        }
+      } catch (e) {
+        console.warn("Unable to redefine window.fetch:", e);
+      }
+    })();
+  </script>
+</head>
+<body class="bg-[#f9f9f9] text-[#1a1c1c] antialiased">
+  <div id="root"></div>
+  <script type="module" src="/src/main.tsx"></script>
+</body>
+</html>

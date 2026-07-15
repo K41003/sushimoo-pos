@@ -34,3 +34,7 @@ backend/laravel-api/.env.*
 
 # Logs
 *.log
+
+# Node / Web App
+node_modules/
+dist/

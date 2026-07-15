@@ -1,0 +1,8 @@
+{
+  "name": "Sushimoo POS",
+  "description": "Zen Precision Point of Sale (POS) system for Japanese restaurants, with full menu, transaction, cashier shift, expense tracking, and analytics dashboards.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
