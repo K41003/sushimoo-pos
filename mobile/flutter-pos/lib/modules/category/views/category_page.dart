@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import '../../../app/constants/colors.dart';
+import '../../../app/constants/dimensions.dart';
 import '../../../app/routes/app_routes.dart';
 import '../../../shared/widgets/app_card.dart';
 import '../../../shared/widgets/app_loading.dart';
@@ -72,9 +74,9 @@ class CategoryPage extends GetView<CategoryController> {
                                 horizontal: 10.w, vertical: 4.h),
                             decoration: BoxDecoration(
                               color: c.status
-                                  ? Colors.green.shade100
-                                  : Colors.red.shade100,
-                              borderRadius: BorderRadius.circular(9999),
+                                  ? AppColors.emerald.withValues(alpha: 0.12)
+                                  : AppColors.danger.withValues(alpha: 0.12),
+                              borderRadius: BorderRadius.circular(AppDimensions.radiusFull),
                             ),
                             child: Text(
                               c.status ? 'Active' : 'Inactive',

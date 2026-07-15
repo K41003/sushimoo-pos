@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import '../../../app/constants/colors.dart';
+import '../../../app/constants/decorations.dart';
 import '../../../app/constants/dimensions.dart';
 import '../../../app/themes/theme.dart';
 import '../../../shared/utils/responsive.dart';
@@ -242,7 +243,7 @@ class PosPage extends GetView<PosController> {
               onPressed: controller.loadTables,
               icon: Icon(Icons.sync_outlined, size: 22.sp, color: AppColors.inkMuted),
               style: IconButton.styleFrom(
-                backgroundColor: AppColors.surfaceAlt,
+                backgroundColor: AppColors.card,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(AppDimensions.radiusMd.r),
                 ),
@@ -302,10 +303,7 @@ class PosPage extends GetView<PosController> {
       child: Container(
         width: 300.w,
         padding: EdgeInsets.all(28.r),
-        decoration: BoxDecoration(
-          color: AppColors.surfaceAlt,
-          borderRadius: BorderRadius.circular(AppDimensions.radiusLg.r),
-        ),
+        decoration: AppDecorations.card(radius: AppDimensions.radiusLg),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -431,10 +429,7 @@ class PosPage extends GetView<PosController> {
   Widget _summary(BuildContext context) {
     return Container(
       padding: EdgeInsets.all(22.w),
-      decoration: const BoxDecoration(
-        color: AppColors.surface,
-        border: Border(top: BorderSide(color: AppColors.hairline)),
-      ),
+      decoration: AppDecorations.card(radius: AppDimensions.radiusLg),
       child: Obx(() => Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [

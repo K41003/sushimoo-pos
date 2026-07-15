@@ -434,13 +434,14 @@ class _LoginPageState extends State<LoginPage> {
                         decoration: BoxDecoration(
                           color:
                               isSelected ? AppColors.salmonSoft : Colors.white,
-                          borderRadius: BorderRadius.circular(8.r),
+                          borderRadius: BorderRadius.circular(14.r),
                           border: Border.all(
                             color: isSelected
                                 ? AppColors.salmon
                                 : AppColors.hairline,
                             width: isSelected ? 1.5 : 1,
                           ),
+                          boxShadow: isSelected ? AppColors.shadowSm : null,
                         ),
                         child: Row(
                           children: [

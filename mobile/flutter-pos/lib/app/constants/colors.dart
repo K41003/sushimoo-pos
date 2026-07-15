@@ -1,48 +1,47 @@
 import 'package:flutter/material.dart';
 
-/// "Minimalis Putih" premium palette — salmon-only accent system.
+/// "Modern Minimalis / Clean UI" design tokens — floating white cards on a
+/// calm slate background, with a single warm Orange-Salmon accent.
 ///
-/// Design tokens (single source of truth — do not hardcode hex elsewhere):
-///  - ink        #111315  primary text / high-contrast elements
-///  - inkMuted   #8A8F98  secondary text, icons, placeholders
-///  - inkFaint   #B9BCC2  disabled / tertiary text
-///  - surface    #FFFFFF  page background
-///  - surfaceAlt #FAFAFA  subtle secondary surface (strips, headers)
-///  - salmon     #FA8072  PRIMARY accent — used for CTAs, badges, active
-///                        states, AND card/container tints (single accent
-///                        family, varied by tone/opacity, not by hue)
-///  - salmonDark #D8695C  pressed/hover state, high-contrast salmon text
-///  - salmonSoft #FFEDE8  salmon tint used as card/container background
-///  - salmonBorder #FAD3CB  salmon-tinted 1px borders
-///  - hairline   #ECECEE  neutral 1px borders replacing heavy shadows
+/// Single source of truth — do not hardcode hex elsewhere.
+///
+///  - background  #F8FAFC  calm slate-50 page canvas
+///  - card        #FFFFFF  white surface that floats via soft shadow
+///  - ink         #0F172A  charcoal primary text (Slate 900)
+///  - inkMuted    #475569  secondary text (Slate 600)
+///  - inkFaint    #94A3B8  tertiary / disabled text (Slate 400)
+///  - salmon      #FF7A59  ORANGE-SALMON accent (CTAs, active, badges)
+///  - hairline    #E2E8F0  soft 1px borders (Slate 200)
 class AppColors {
   AppColors._();
 
-  static const Color ink = Color(0xFF111315);
-  static const Color inkMuted = Color(0xFF8A8F98);
-  static const Color inkFaint = Color(0xFFB9BCC2);
+  // ---- Backgrounds & surfaces -------------------------------------------
+  static const Color background = Color(0xFFF8FAFC); // page canvas (slate-50)
+  static const Color surface = Color(0xFFF8FAFC); // alias of background
+  static const Color card = Color(0xFFFFFFFF); // floating card surface
+  static const Color surfaceAlt = Color(0xFFFFFFFF); // white inputs / active
+  static const Color hairline = Color(0xFFE2E8F0); // slate-200
 
-  static const Color surface = Color(0xFFFFFFFF);
-  static const Color surfaceAlt = Color(0xFFFAFAFA);
-  static const Color hairline = Color(0xFFECECEE);
+  // ---- Text (Slate / Charcoal) ------------------------------------------
+  static const Color ink = Color(0xFF0F172A); // slate-900
+  static const Color inkMuted = Color(0xFF475569); // slate-600
+  static const Color inkFaint = Color(0xFF94A3B8); // slate-400
 
-  /// Primary (and only) accent — Salmon. Used for CTAs (Bayar/Pay),
-  /// active states, selected chips, badges, and card/container tints.
-  static const Color salmon = Color(0xFFFA8072);
-  static const Color salmonDark =
-      Color(0xFFD8695C); // pressed state, on-light text
-  static const Color salmonSoft = Color(0xFFFFEDE8); // container / tint bg
-  static const Color salmonBorder = Color(0xFFFAD3CB); // tinted hairline
+  // ---- Accent: Orange Salmon --------------------------------------------
+  static const Color salmon = Color(0xFFFF7A59);
+  static const Color salmonDark = Color(0xFFF2643D); // pressed / hover
+  static const Color salmonSoft = Color(0xFFFFF0EB); // tinted container bg
+  static const Color salmonBorder = Color(0xFFFFD6C9); // tinted hairline
 
-  // Neutral semantic colors (kept minimal, low-chroma, not "bright")
-  static const Color danger = Color(0xFFE23744);
-  static const Color dangerSoft = Color(0xFFFCE9EA);
-  static const Color warning = Color(0xFFB9812A);
+  // ---- Semantic colors (kept minimal, low-chroma) -----------------------
+  static const Color danger = Color(0xFFEF4444);
+  static const Color dangerSoft = Color(0xFFFEE2E2);
+  static const Color warning = Color(0xFFF59E0B);
 
-  // Success / positive semantic color (used for confirmations, change due).
+  /// Success / positive semantic color (confirmations, change due).
   static const Color emerald = Color(0xFF10B981);
 
-  // Tailwind-style neutral "slate" scale used for low-emphasis surfaces.
+  /// Tailwind-style neutral "slate" scale used for low-emphasis surfaces.
   static const MaterialColor slate = MaterialColor(
     0xFF64748B,
     <int, Color>{
@@ -59,39 +58,50 @@ class AppColors {
     },
   );
 
-  static const ColorScheme scheme = ColorScheme(
-    brightness: Brightness.light,
-    primary: salmon,
-    onPrimary: Colors.white,
-    primaryContainer: salmonSoft,
-    onPrimaryContainer: salmonDark,
-    inversePrimary: salmonSoft,
-    secondary: salmonDark,
-    onSecondary: Colors.white,
-    secondaryContainer: salmonSoft,
-    onSecondaryContainer: ink,
-    tertiary: ink,
-    onTertiary: Colors.white,
-    tertiaryContainer: surfaceAlt,
-    onTertiaryContainer: ink,
-    error: danger,
-    onError: Colors.white,
-    errorContainer: dangerSoft,
-    onErrorContainer: danger,
-    surface: surface,
-    onSurface: ink,
-    onSurfaceVariant: inkMuted,
-    outline: hairline,
-    outlineVariant: salmonBorder,
-    surfaceContainerLowest: surface,
-    surfaceContainerLow: surfaceAlt,
-    surfaceContainer: surfaceAlt,
-    surfaceContainerHigh: salmonSoft,
-    surfaceContainerHighest: Color(0xFFF3F3F4),
-    inverseSurface: ink,
-    onInverseSurface: surface,
-    shadow: Color(0x14111315),
-    scrim: Color(0x66111315),
-    surfaceTint: salmon,
-  );
+  // ---- Soft shadows (high blur, low opacity → elegant float) ------------
+  static List<BoxShadow> get shadowSm => const [
+        BoxShadow(color: Color(0x0D1E293B), blurRadius: 10, offset: Offset(0, 2)),
+      ];
+  static List<BoxShadow> get shadowMd => const [
+        BoxShadow(color: Color(0x121A2433), blurRadius: 18, offset: Offset(0, 6)),
+      ];
+  static List<BoxShadow> get shadowLg => const [
+        BoxShadow(color: Color(0x1A0F172A), blurRadius: 30, offset: Offset(0, 12)),
+      ];
+
+  static ColorScheme get scheme => ColorScheme(
+        brightness: Brightness.light,
+        primary: salmon,
+        onPrimary: Colors.white,
+        primaryContainer: salmonSoft,
+        onPrimaryContainer: salmonDark,
+        inversePrimary: salmonSoft,
+        secondary: salmonDark,
+        onSecondary: Colors.white,
+        secondaryContainer: salmonSoft,
+        onSecondaryContainer: ink,
+        tertiary: ink,
+        onTertiary: Colors.white,
+        tertiaryContainer: background,
+        onTertiaryContainer: ink,
+        error: danger,
+        onError: Colors.white,
+        errorContainer: dangerSoft,
+        onErrorContainer: danger,
+        surface: background,
+        onSurface: ink,
+        onSurfaceVariant: inkMuted,
+        outline: hairline,
+        outlineVariant: const Color(0xFFE2E8F0),
+        surfaceContainerLowest: card,
+        surfaceContainerLow: background,
+        surfaceContainer: const Color(0xFFF1F5F9),
+        surfaceContainerHigh: const Color(0xFFF1F5F9),
+        surfaceContainerHighest: const Color(0xFFF1F5F9),
+        inverseSurface: ink,
+        onInverseSurface: Colors.white,
+        shadow: const Color(0x1A0F172A),
+        scrim: const Color(0x66111315),
+        surfaceTint: salmon,
+      );
 }

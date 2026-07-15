@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import '../../../app/constants/colors.dart';
+import '../../../app/constants/decorations.dart';
 import '../../../app/constants/dimensions.dart';
 import '../../../app/routes/app_routes.dart';
 import '../../../shared/widgets/app_button.dart';
@@ -39,17 +40,9 @@ class ReceiptPage extends GetView<ReceiptController> {
               children: [
                 // Thermal Receipt Card
                 Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(16.r),
-                    border: Border.all(color: AppColors.hairline),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.03),
-                        blurRadius: 16,
-                        offset: const Offset(0, 8),
-                      ),
-                    ],
+                  decoration: AppDecorations.card(
+                    radius: 16,
+                    shadow: AppColors.shadowMd,
                   ),
                   child: Padding(
                     padding: EdgeInsets.all(24.r),
@@ -63,7 +56,7 @@ class ReceiptPage extends GetView<ReceiptController> {
                             padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 6.h),
                             decoration: BoxDecoration(
                               color: AppColors.emerald.withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(100.r),
+                              borderRadius: BorderRadius.circular(AppDimensions.radiusFull),
                             ),
                             child: Row(
                               mainAxisSize: MainAxisSize.min,

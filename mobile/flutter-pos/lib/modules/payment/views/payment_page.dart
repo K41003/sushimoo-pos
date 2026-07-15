@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import '../../../app/constants/colors.dart';
+import '../../../app/constants/decorations.dart';
 import '../../../app/constants/dimensions.dart';
 import '../../../app/routes/app_routes.dart';
 import '../../../shared/widgets/app_button.dart';
@@ -38,7 +39,7 @@ class PaymentPage extends GetView<PaymentController> {
                         EdgeInsets.symmetric(horizontal: 14.w, vertical: 8.h),
                     decoration: BoxDecoration(
                       color: AppColors.salmonSoft,
-                      borderRadius: BorderRadius.circular(4.r),
+                      borderRadius: BorderRadius.circular(AppDimensions.radiusSm.r),
                     ),
                     child: Text(
                       '寿司 SUSHIMOO',
@@ -177,12 +178,7 @@ class PaymentPage extends GetView<PaymentController> {
                         // Bill Overview Box (Monospace Minimalist)
                         Container(
                           padding: EdgeInsets.all(14.r),
-                          decoration: BoxDecoration(
-                            color: AppColors.surfaceAlt,
-                            borderRadius:
-                                BorderRadius.circular(AppDimensions.radiusMd.r),
-                            border: Border.all(color: AppColors.hairline),
-                          ),
+                          decoration: AppDecorations.card(radius: AppDimensions.radiusMd),
                           child: Column(
                             children: [
                               Row(
@@ -355,11 +351,13 @@ class PaymentPage extends GetView<PaymentController> {
           child: Container(
             padding: EdgeInsets.symmetric(vertical: 14.h),
             decoration: BoxDecoration(
+              color: isSelected ? AppColors.salmonSoft : AppColors.card,
               borderRadius: BorderRadius.circular(AppDimensions.radiusMd.r),
               border: Border.all(
                 color: isSelected ? AppColors.salmon : AppColors.hairline,
                 width: isSelected ? 1.5 : 1,
               ),
+              boxShadow: isSelected ? AppColors.shadowSm : null,
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,

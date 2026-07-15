@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../../app/constants/colors.dart';
+import '../../../app/constants/decorations.dart';
 import '../../../app/constants/dimensions.dart';
 import '../../../app/themes/theme.dart';
 import '../../../data/models/product.dart';
@@ -22,11 +23,7 @@ class PosProductTile extends StatelessWidget {
       borderRadius: BorderRadius.circular(AppDimensions.radiusLg.r),
       child: Container(
         clipBehavior: Clip.antiAlias,
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(AppDimensions.radiusLg.r),
-          border: Border.all(color: AppColors.hairline, width: 1),
-        ),
+        decoration: AppDecorations.card(radius: AppDimensions.radiusLg),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [

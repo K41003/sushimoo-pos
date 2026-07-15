@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../../app/constants/colors.dart';
+import '../../../app/constants/decorations.dart';
 import '../../../app/constants/dimensions.dart';
 import '../controllers/cart_item.dart';
 import '../controllers/pos_controller.dart';
@@ -22,10 +23,7 @@ class CartTile extends StatelessWidget {
     return Container(
       margin: EdgeInsets.only(bottom: 14.h),
       padding: EdgeInsets.all(14.r),
-      decoration: BoxDecoration(
-        color: AppColors.surfaceAlt,
-        borderRadius: BorderRadius.circular(AppDimensions.radiusMd.r),
-      ),
+      decoration: AppDecorations.card(radius: AppDimensions.radiusMd),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -118,11 +116,7 @@ class _StepperButton extends StatelessWidget {
         width: 36.r,
         height: 36.r,
         alignment: Alignment.center,
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(AppDimensions.radiusSm.r),
-          border: Border.all(color: AppColors.hairline),
-        ),
+        decoration: AppDecorations.control(radius: AppDimensions.radiusSm),
         child: Icon(icon, size: 16.sp, color: AppColors.ink),
       ),
     );

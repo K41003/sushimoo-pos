@@ -6,6 +6,11 @@ class AppDimensions {
   static const double gutter = 20.0;
   static const double cardPadding = 22.0;
 
+  /// Consistent spacing scale (16–24 per brief) used across screens.
+  static const double gap = 16.0;
+  static const double gapMd = 20.0;
+  static const double gapLg = 24.0;
+
   /// Minimum touch target, sized up for cashier-friendly big tap areas.
   static const double touchTarget = 52.0;
 
@@ -14,7 +19,7 @@ class AppDimensions {
   static const double marginMobile = 18.0;
   static const double marginTablet = 28.0;
 
-  /// Soft rounded-corner tokens (12–16 per brief). No sharp corners.
+  /// Soft rounded-corner tokens (12–16+ per brief). No sharp corners.
   static const double radiusSm = 12.0;
   static const double radiusMd = 14.0;
   static const double radiusLg = 18.0;
@@ -25,6 +30,6 @@ class AppDimensions {
   static const double buttonHeight = 58.0;
   static const double stepperWidth = 64.0;
 
-  /// Hairline border width used everywhere instead of shadows.
+  /// Hairline border width used for subtle outlines.
   static const double hairline = 1.0;
 }

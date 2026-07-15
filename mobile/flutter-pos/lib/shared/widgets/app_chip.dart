@@ -25,12 +25,13 @@ class AppChip extends StatelessWidget {
         duration: const Duration(milliseconds: 140),
         padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 10.h),
         decoration: BoxDecoration(
-          color: selected ? (color ?? AppColors.ink) : AppColors.surface,
+          color: selected ? (color ?? AppColors.salmon) : AppColors.surfaceAlt,
           borderRadius: BorderRadius.circular(9999),
           border: Border.all(
-            color: selected ? (color ?? AppColors.ink) : AppColors.hairline,
+            color: selected ? (color ?? AppColors.salmon) : AppColors.hairline,
             width: 1,
           ),
+          boxShadow: selected ? AppColors.shadowSm : null,
         ),
         child: Text(
           label,

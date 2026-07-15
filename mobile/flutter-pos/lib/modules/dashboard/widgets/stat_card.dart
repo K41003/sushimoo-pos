@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import '../../../app/constants/colors.dart';
+import '../../../app/constants/decorations.dart';
+import '../../../app/constants/dimensions.dart';
 import '../../../app/themes/theme.dart';
 
 class StatCard extends StatelessWidget {
@@ -16,26 +19,31 @@ class StatCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    return Card(
-      child: Padding(
-        padding: EdgeInsets.all(16.r),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(icon, color: scheme.primary),
-                const Spacer(),
-                Icon(Icons.trending_up, color: scheme.outline),
-              ],
-            ),
-            SizedBox(height: 12.h),
-            Text(value, style: AppTypography.price),
-            SizedBox(height: 4.h),
-            Text(label, style: Theme.of(context).textTheme.labelLarge),
-          ],
-        ),
+    return Container(
+      padding: EdgeInsets.all(18.r),
+      decoration: AppDecorations.card(radius: AppDimensions.radiusLg),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: EdgeInsets.all(10.r),
+                decoration: BoxDecoration(
+                  color: AppColors.salmonSoft,
+                  borderRadius: BorderRadius.circular(12.r),
+                ),
+                child: Icon(icon, color: AppColors.salmon, size: 20.sp),
+              ),
+              const Spacer(),
+              Icon(Icons.trending_up, color: AppColors.inkFaint),
+            ],
+          ),
+          SizedBox(height: 14.h),
+          Text(value, style: AppTypography.price),
+          SizedBox(height: 4.h),
+          Text(label, style: Theme.of(context).textTheme.labelLarge),
+        ],
       ),
     );
   }

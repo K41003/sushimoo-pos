@@ -88,9 +88,11 @@ class AppTypography {
 class AppTheme {
   AppTheme._();
 
-  /// A single light theme — the brief is explicitly a white, minimal
-  /// aesthetic, so there is no dark variant to keep contrast honest.
+  /// A single light theme — calm slate canvas, white floating cards, one
+  /// warm orange-salmon accent.
   static ThemeData get light => _build();
+
+  static const _shadow = Color(0x1A0F172A);
 
   static ThemeData _build() {
     final scheme = AppColors.scheme;
@@ -104,9 +106,11 @@ class AppTheme {
       splashFactory: InkRipple.splashFactory,
       visualDensity: VisualDensity.standard,
 
-      // Shadows are replaced almost entirely by hairline borders.
+      // Cards: white surface, soft radius, whisper hairline. The floating
+      // shadow comes from AppCard / AppDecorations rather than Material
+      // elevation, so it stays soft and high-blur.
       cardTheme: CardThemeData(
-        color: AppColors.surface,
+        color: AppColors.card,
         elevation: 0,
         margin: EdgeInsets.zero,
         shape: RoundedRectangleBorder(
@@ -124,16 +128,19 @@ class AppTheme {
         surfaceTintColor: Colors.transparent,
         titleTextStyle: AppTypography.textTheme.headlineMedium,
         iconTheme: const IconThemeData(color: AppColors.ink),
+        shadowColor: _shadow,
       ),
 
-      // Primary CTA — solid salmon, the one loud color on screen.
+      // Primary CTA — solid orange-salmon, the one loud color on screen,
+      // lifted with a soft shadow.
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.salmon,
           foregroundColor: Colors.white,
           disabledBackgroundColor: AppColors.salmon.withValues(alpha: 0.35),
           disabledForegroundColor: Colors.white,
-          elevation: 0,
+          elevation: 3,
+          shadowColor: _shadow,
           minimumSize: Size(double.infinity, AppDimensions.buttonHeight.h),
           padding: EdgeInsets.symmetric(horizontal: 20.w),
           shape: RoundedRectangleBorder(
@@ -210,7 +217,7 @@ class AppTheme {
       floatingActionButtonTheme: FloatingActionButtonThemeData(
         backgroundColor: AppColors.salmon,
         foregroundColor: Colors.white,
-        elevation: 0,
+        elevation: 4,
         extendedTextStyle: TextStyle(
           fontFamily: AppTypography.fontFamily,
           fontWeight: FontWeight.w700,
@@ -230,7 +237,7 @@ class AppTheme {
 
       textSelectionTheme: const TextSelectionThemeData(
         cursorColor: AppColors.ink,
-        selectionColor: Color(0x33FA8072),
+        selectionColor: Color(0x33FF7A59),
         selectionHandleColor: AppColors.salmon,
       ),
 
@@ -239,6 +246,36 @@ class AppTheme {
       ),
 
       iconTheme: const IconThemeData(color: AppColors.ink),
+
+      dialogTheme: DialogThemeData(
+        backgroundColor: AppColors.card,
+        elevation: 8,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppDimensions.radiusXl.r),
+        ),
+        titleTextStyle: TextStyle(
+          fontFamily: AppTypography.fontFamily,
+          fontSize: 20.sp,
+          fontWeight: FontWeight.w700,
+          color: AppColors.ink,
+        ),
+        contentTextStyle: TextStyle(
+          fontFamily: AppTypography.fontFamily,
+          fontSize: 15.sp,
+          color: AppColors.inkMuted,
+        ),
+      ),
+
+      bottomSheetTheme: BottomSheetThemeData(
+        backgroundColor: AppColors.surface,
+        elevation: 12,
+        shadowColor: _shadow,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(
+            top: Radius.circular(AppDimensions.radiusXl.r),
+          ),
+        ),
+      ),
     );
   }
 }

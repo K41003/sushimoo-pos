@@ -42,8 +42,9 @@ class AppSidebar extends StatelessWidget {
               width: 40.r,
               height: 40.r,
               decoration: BoxDecoration(
-                color: AppColors.ink,
+                color: AppColors.salmon,
                 borderRadius: BorderRadius.circular(12.r),
+                boxShadow: AppColors.shadowSm,
               ),
               child: Icon(Icons.restaurant_menu, size: 20.sp, color: Colors.white),
             ),
@@ -59,15 +60,16 @@ class AppSidebar extends StatelessWidget {
                       margin: EdgeInsets.symmetric(vertical: 4.h, horizontal: 12.w),
                       padding: EdgeInsets.symmetric(vertical: 12.h),
                       decoration: BoxDecoration(
-                        color: active ? AppColors.surfaceAlt : Colors.transparent,
+                        color: active ? AppColors.card : Colors.transparent,
                         borderRadius: BorderRadius.circular(14.r),
+                        boxShadow: active ? AppColors.shadowSm : null,
                       ),
                       child: Column(
                         children: [
                           Icon(
                             item.icon,
                             size: 22.sp,
-                            color: active ? AppColors.ink : AppColors.inkFaint,
+                            color: active ? AppColors.salmon : AppColors.inkFaint,
                           ),
                           SizedBox(height: 5.h),
                           Text(
@@ -75,7 +77,7 @@ class AppSidebar extends StatelessWidget {
                             style: TextStyle(
                               fontSize: 10.5.sp,
                               fontWeight: active ? FontWeight.w700 : FontWeight.w500,
-                              color: active ? AppColors.ink : AppColors.inkFaint,
+                              color: active ? AppColors.salmon : AppColors.inkFaint,
                             ),
                           ),
                         ],

@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../app/constants/colors.dart';
+import '../../app/constants/decorations.dart';
 import '../../app/constants/dimensions.dart';
 
-/// Base card: white surface, 1px hairline border, soft radius — no shadow.
+/// Base card: white surface that floats on the #F8FAFC canvas via a soft
+/// shadow, with a whisper hairline and soft radius.
 /// Set [tinted] to use the salmon-soft secondary surface instead (for
 /// highlighted / "current" items, e.g. the active cart summary panel).
 class AppCard extends StatelessWidget {
@@ -12,6 +14,7 @@ class AppCard extends StatelessWidget {
   final VoidCallback? onTap;
   final bool tinted;
   final Color? borderColor;
+  final List<BoxShadow>? shadow;
 
   const AppCard({
     super.key,
@@ -20,6 +23,7 @@ class AppCard extends StatelessWidget {
     this.onTap,
     this.tinted = false,
     this.borderColor,
+    this.shadow,
   });
 
   @override
@@ -27,14 +31,17 @@ class AppCard extends StatelessWidget {
     final radius = BorderRadius.circular(AppDimensions.radiusLg.r);
     final card = Container(
       padding: padding ?? EdgeInsets.all(AppDimensions.cardPadding.r),
-      decoration: BoxDecoration(
-        color: tinted ? AppColors.salmonSoft : AppColors.surface,
-        borderRadius: radius,
-        border: Border.all(
-          color: borderColor ?? (tinted ? AppColors.salmonBorder : AppColors.hairline),
-          width: 1,
-        ),
-      ),
+      decoration: tinted
+          ? AppDecorations.tinted(radius: AppDimensions.radiusLg, shadow: shadow)
+          : BoxDecoration(
+              color: AppColors.card,
+              borderRadius: radius,
+              border: Border.all(
+                color: borderColor ?? AppColors.hairline,
+                width: 1,
+              ),
+              boxShadow: shadow ?? AppColors.shadowSm,
+            ),
       child: child,
     );
     if (onTap == null) return card;
@@ -45,3 +52,4 @@ class AppCard extends StatelessWidget {
     );
   }
 }
+
