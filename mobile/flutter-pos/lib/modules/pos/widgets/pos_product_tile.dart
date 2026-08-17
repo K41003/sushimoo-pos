@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../../app/constants/colors.dart';
-import '../../../app/constants/decorations.dart';
 import '../../../app/constants/dimensions.dart';
 import '../../../app/themes/theme.dart';
 import '../../../data/models/product.dart';
+import '../../../shared/widgets/glass_panel.dart';
 
 String moneyShort(dynamic v) => 'Rp ${(v is num ? v : 0).toStringAsFixed(0)}';
 
-/// POS grid tile — clean product card: salmon-tinted image area (no photo
-/// placeholder icon soup), bold price, single tap to add to cart.
+/// REPLACES `pos_product_tile.dart` 1:1 — same class name
+/// `PosProductTile`, same constructor (`product`, `onTap`).
 class PosProductTile extends StatelessWidget {
   final Product product;
   final VoidCallback onTap;
@@ -18,19 +18,19 @@ class PosProductTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
+    return GlassPanel(
+      radius: AppDimensions.radiusLg,
+      padding: EdgeInsets.zero,
       onTap: onTap,
-      borderRadius: BorderRadius.circular(AppDimensions.radiusLg.r),
-      child: Container(
-        clipBehavior: Clip.antiAlias,
-        decoration: AppDecorations.card(radius: AppDimensions.radiusLg),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Expanded(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Expanded(
+            child: ClipRRect(
+              borderRadius: BorderRadius.vertical(top: Radius.circular(AppDimensions.radiusLg.r)),
               child: Container(
                 alignment: Alignment.center,
-                color: AppColors.salmonSoft,
+                color: AppColors.salmonSoft.withValues(alpha: 0.7),
                 child: (product.gambar != null && product.gambar!.trim().isNotEmpty)
                     ? Image.network(
                         product.gambar!.trim(),
@@ -41,48 +41,45 @@ class PosProductTile extends StatelessWidget {
                     : _initials(context),
               ),
             ),
-            Padding(
-              padding: EdgeInsets.fromLTRB(14.r, 12.r, 14.r, 14.r),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    product.namaProduk,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: 14.5.sp,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.ink,
+          ),
+          Padding(
+            padding: EdgeInsets.fromLTRB(14.r, 12.r, 14.r, 14.r),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  product.namaProduk,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(fontSize: 14.5.sp, fontWeight: FontWeight.w700, color: AppColors.ink),
+                ),
+                SizedBox(height: 6.h),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        moneyShort(product.harga),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppTypography.priceCompact,
+                      ),
                     ),
-                  ),
-                  SizedBox(height: 6.h),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          moneyShort(product.harga),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: AppTypography.priceCompact,
-                        ),
+                    Container(
+                      width: 30.r,
+                      height: 30.r,
+                      decoration: BoxDecoration(
+                        gradient: AppColors.salmonGradient,
+                        borderRadius: BorderRadius.circular(AppDimensions.radiusSm.r),
+                        boxShadow: AppColors.shadowSalmon,
                       ),
-                      Container(
-                        width: 30.r,
-                        height: 30.r,
-                        decoration: BoxDecoration(
-                          color: AppColors.ink,
-                          borderRadius: BorderRadius.circular(AppDimensions.radiusSm.r),
-                        ),
-                        child: Icon(Icons.add, size: 18.sp, color: Colors.white),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
+                      child: Icon(Icons.add, size: 18.sp, color: Colors.white),
+                    ),
+                  ],
+                ),
+              ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -97,11 +94,7 @@ class PosProductTile extends StatelessWidget {
     final text = words.isEmpty ? 'SM' : words.map((w) => w[0].toUpperCase()).join();
     return Text(
       text,
-      style: TextStyle(
-        fontSize: 30.sp,
-        fontWeight: FontWeight.w800,
-        color: AppColors.salmon,
-      ),
+      style: TextStyle(fontSize: 30.sp, fontWeight: FontWeight.w800, color: AppColors.salmon),
     );
   }
 }

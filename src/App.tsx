@@ -15,7 +15,6 @@ import {
   AlertTriangle,
   MapPin,
   Flame,
-  Figma
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -47,7 +46,6 @@ import ShiftView from './components/ShiftView';
 import ClosingView from './components/ClosingView';
 import ManagementView from './components/ManagementView';
 import ReportView from './components/ReportView';
-import FigmaView from './components/FigmaView';
 
 export default function App() {
   // App states
@@ -371,17 +369,6 @@ export default function App() {
             <FileText className="w-5 h-5 shrink-0" />
             <span>Invoice</span>
           </button>
-
-          {/* Figma Export Center */}
-          <button
-            id="nav-figma"
-            onClick={() => setActiveTab('figma')}
-            className={`flex flex-col items-center py-2.5 rounded-lg transition-all gap-1 text-[9px] font-bold tracking-wide border ${activeTab === 'figma' ? 'bg-[#E63946] text-white border-[#E63946] shadow' : 'text-slate-400 border-transparent hover:text-white'}`}
-            title="Figma Integration"
-          >
-            <Figma className="w-5 h-5 shrink-0" />
-            <span>Figma</span>
-          </button>
         </div>
 
         {/* Bottom User Avatar / Logout Trigger */}
@@ -563,14 +550,9 @@ export default function App() {
                   onVoidTransaction={handleVoidTransaction}
                   currentUser={currentUser}
                 />
-              )}
+)}
 
-              {/* Figma Export & Copy Center */}
-              {activeTab === 'figma' && (
-                <FigmaView />
-              )}
-
-            </motion.div>
+             </motion.div>
           </AnimatePresence>
 
         </main>

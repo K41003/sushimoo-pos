@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../app/constants/colors.dart';
 
+/// REPLACES the old flat `AppChip` 1:1 (same constructor: `label`,
+/// `color`, `onTap`, `selected`). Selected state now fills with the
+/// salmon gradient + glow; unselected stays a quiet frosted pill.
 class AppChip extends StatelessWidget {
   final String label;
   final Color? color;
@@ -25,13 +28,20 @@ class AppChip extends StatelessWidget {
         duration: const Duration(milliseconds: 140),
         padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 10.h),
         decoration: BoxDecoration(
-          color: selected ? (color ?? AppColors.salmon) : AppColors.surfaceAlt,
+          gradient: selected
+              ? LinearGradient(
+                  colors: [color ?? AppColors.salmon, (color ?? AppColors.salmonDark)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                )
+              : null,
+          color: selected ? null : Colors.white.withValues(alpha: 0.45),
           borderRadius: BorderRadius.circular(9999),
           border: Border.all(
-            color: selected ? (color ?? AppColors.salmon) : AppColors.hairline,
-            width: 1,
+            color: selected ? Colors.transparent : AppColors.glassBorder(opacity: 0.7),
+            width: 1.2,
           ),
-          boxShadow: selected ? AppColors.shadowSm : null,
+          boxShadow: selected ? AppColors.shadowSalmon : null,
         ),
         child: Text(
           label,
@@ -46,8 +56,8 @@ class AppChip extends StatelessWidget {
   }
 }
 
-/// Status pill for order / table states — quiet tint + dot instead of a
-/// loud filled badge, matching the minimal aesthetic.
+/// Status pill for order / table states — REPLACES the old `StatusChip`
+/// 1:1 (same constructor: `status`). Quiet frosted tint + dot.
 class StatusChip extends StatelessWidget {
   final String status;
   const StatusChip({super.key, required this.status});
@@ -75,9 +85,9 @@ class StatusChip extends StatelessWidget {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 7.h),
       decoration: BoxDecoration(
-        color: AppColors.surfaceAlt,
+        color: Colors.white.withValues(alpha: 0.55),
         borderRadius: BorderRadius.circular(9999),
-        border: Border.all(color: AppColors.hairline),
+        border: Border.all(color: AppColors.glassBorder(opacity: 0.7)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,

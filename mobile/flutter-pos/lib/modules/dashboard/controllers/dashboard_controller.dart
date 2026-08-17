@@ -24,10 +24,11 @@ class DashboardController extends GetxController {
     final res = await _api.get(path, fromData: (d) => d);
     loading.value = false;
     if (res.success && res.data != null) {
+      final map = res.data is Map ? res.data as Map : <String, dynamic>{};
       if (isAdmin.value) {
-        adminData.value = res.data as Map;
+        adminData.value = map;
       } else {
-        cashierData.value = res.data as Map;
+        cashierData.value = map;
       }
     } else {
       EasyLoading.showError(res.message);

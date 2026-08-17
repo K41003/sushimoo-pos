@@ -1,15 +1,26 @@
+import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:fl_chart/fl_chart.dart';
 import 'package:get/get.dart';
+import '../../../app/constants/colors.dart';
 import '../../../app/constants/dimensions.dart';
 import '../../../app/routes/app_routes.dart';
 import '../../../shared/widgets/app_button.dart';
-import '../../../shared/widgets/app_loading.dart';
 import '../../../shared/widgets/app_scaffold.dart';
+import '../../../shared/widgets/glass_panel.dart';
 import '../controllers/dashboard_controller.dart';
 import '../widgets/stat_card.dart';
 
+/// REPLACES `dashboard_page.dart` 1:1 — same class name `DashboardPage`,
+/// same `GetView<DashboardController>`, so `DashboardBinding` and
+/// `app_pages.dart` need zero changes. Visual layer rebuilt as
+/// Glassmorphic Zen.
+///
+/// FIX: this previously used a bare `Scaffold` instead of `AppScaffold`,
+/// which meant Dashboard had no sidebar (landscape tablet) and no drawer
+/// / hamburger button (phone/portrait) — the user was stuck with no way
+/// to navigate away or log out. Now routed through `AppScaffold` like
+/// every other page, so it gets the same rail/drawer + logout button.
 class DashboardPage extends GetView<DashboardController> {
   const DashboardPage({super.key});
 
@@ -19,10 +30,10 @@ class DashboardPage extends GetView<DashboardController> {
       title: 'Dashboard',
       currentRoute: AppRoutes.dashboard,
       body: Obx(() {
-        if (controller.loading.value) return const AppLoading();
-        return controller.isAdmin.value
-            ? _admin(context)
-            : _cashier(context);
+        if (controller.loading.value) {
+          return const Center(child: CircularProgressIndicator(color: AppColors.salmon));
+        }
+        return controller.isAdmin.value ? _admin(context) : _cashier(context);
       }),
     );
   }
@@ -31,58 +42,100 @@ class DashboardPage extends GetView<DashboardController> {
     final d = controller.adminData;
     final trend = (d['salesTrend'] as Map? ?? {});
     final top = (d['topProducts'] as List? ?? []);
+
     return SingleChildScrollView(
       padding: EdgeInsets.all(AppDimensions.marginTablet.w),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          GridView.count(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            crossAxisCount: 4,
-            crossAxisSpacing: 16.w,
-            mainAxisSpacing: 16.h,
-            childAspectRatio: 1.6,
-            children: [
-              StatCard(label: 'Total Sales',
-                  value: _money(d['totalSales']), icon: Icons.payments),
-              StatCard(label: 'Transactions',
-                  value: '${d['transactions'] ?? 0}', icon: Icons.receipt_long),
-              StatCard(label: 'Products',
-                  value: '${d['products'] ?? 0}', icon: Icons.fastfood),
-              StatCard(label: 'Expenses',
-                  value: _money(d['expenses']), icon: Icons.money_off),
-            ],
-          ),
+          _header(context, 'Dashboard', 'Ringkasan performa hari ini'),
           SizedBox(height: 24.h),
-          Card(
-            child: Padding(
-              padding: EdgeInsets.all(16.r),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('Sales Trend', style: Theme.of(context).textTheme.headlineMedium),
-                  SizedBox(height: 12.h),
-                  SizedBox(height: 220.h, child: _trendChart(trend)),
-                ],
-              ),
+          LayoutBuilder(builder: (context, constraints) {
+            final cols = constraints.maxWidth > 900 ? 4 : (constraints.maxWidth > 560 ? 2 : 1);
+            return GridView.count(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              crossAxisCount: cols,
+              crossAxisSpacing: 16.w,
+              mainAxisSpacing: 16.h,
+              childAspectRatio: 1.5,
+              children: [
+                StatCard(
+                  label: 'Total Sales',
+                  value: _money(d['totalSales']),
+                  icon: Icons.payments_outlined,
+                  trend: '+12%',
+                ),
+                StatCard(
+                  label: 'Transactions',
+                  value: '${d['transactions'] ?? 0}',
+                  icon: Icons.receipt_long_outlined,
+                  accent: const Color(0xFF2F6FED),
+                ),
+                StatCard(
+                  label: 'Products',
+                  value: '${d['products'] ?? 0}',
+                  icon: Icons.fastfood_outlined,
+                  accent: AppColors.emerald,
+                ),
+                StatCard(
+                  label: 'Expenses',
+                  value: _money(d['expenses']),
+                  icon: Icons.money_off_outlined,
+                  accent: AppColors.danger,
+                ),
+              ],
+            );
+          }),
+          SizedBox(height: 24.h),
+          GlassPanel(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Sales Trend', style: Theme.of(context).textTheme.headlineSmall),
+                SizedBox(height: 12.h),
+                SizedBox(height: 220.h, child: _trendChart(trend)),
+              ],
             ),
           ),
           SizedBox(height: 24.h),
-          Card(
-            child: Padding(
-              padding: EdgeInsets.all(16.r),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('Top Products', style: Theme.of(context).textTheme.headlineMedium),
-                  SizedBox(height: 12.h),
-                  ...top.map((p) => ListTile(
-                        title: Text(p['nama_produk']?.toString() ?? '-'),
-                        trailing: Text('${p['qty']}'),
-                      )),
-                ],
-              ),
+          GlassPanel(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Top Products', style: Theme.of(context).textTheme.headlineSmall),
+                SizedBox(height: 12.h),
+                ...top.map((p) => Padding(
+                      padding: EdgeInsets.symmetric(vertical: 8.h),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 34.r,
+                            height: 34.r,
+                            decoration: BoxDecoration(
+                              color: AppColors.salmonSoft,
+                              borderRadius: BorderRadius.circular(10.r),
+                            ),
+                            child: Icon(Icons.ramen_dining_outlined,
+                                size: 17.sp, color: AppColors.salmonDark),
+                          ),
+                          SizedBox(width: 12.w),
+                          Expanded(
+                            child: Text(
+                              p['nama_produk']?.toString() ?? '-',
+                              style: Theme.of(context).textTheme.bodyLarge,
+                            ),
+                          ),
+                          Text('${p['qty']}x', style: Theme.of(context).textTheme.labelLarge),
+                        ],
+                      ),
+                    )),
+                if (top.isEmpty)
+                  Padding(
+                    padding: EdgeInsets.symmetric(vertical: 12.h),
+                    child: Text('No data available', style: Theme.of(context).textTheme.bodyMedium),
+                  ),
+              ],
             ),
           ),
         ],
@@ -93,28 +146,44 @@ class DashboardPage extends GetView<DashboardController> {
   Widget _cashier(BuildContext context) {
     final d = controller.cashierData;
     final shift = d['currentShift'];
+
     return SingleChildScrollView(
       padding: EdgeInsets.all(AppDimensions.marginTablet.w),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          GridView.count(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            crossAxisCount: 3,
-            crossAxisSpacing: 16.w,
-            mainAxisSpacing: 16.h,
-            childAspectRatio: 1.6,
-            children: [
-              StatCard(label: 'Current Shift',
+          _header(context, 'Selamat Bekerja', 'Ringkasan shift kamu hari ini'),
+          SizedBox(height: 24.h),
+          LayoutBuilder(builder: (context, constraints) {
+            final cols = constraints.maxWidth > 700 ? 3 : 1;
+            return GridView.count(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              crossAxisCount: cols,
+              crossAxisSpacing: 16.w,
+              mainAxisSpacing: 16.h,
+              childAspectRatio: 1.6,
+              children: [
+                StatCard(
+                  label: 'Current Shift',
                   value: shift != null ? '#${shift['id_shift']}' : 'None',
-                  icon: Icons.schedule),
-              StatCard(label: 'Sales Today',
-                  value: _money(d['salesToday']), icon: Icons.payments),
-              StatCard(label: 'Orders Today',
-                  value: '${d['ordersToday'] ?? 0}', icon: Icons.receipt_long),
-            ],
-          ),
+                  icon: Icons.schedule_outlined,
+                  accent: const Color(0xFF2F6FED),
+                ),
+                StatCard(
+                  label: 'Sales Today',
+                  value: _money(d['salesToday']),
+                  icon: Icons.payments_outlined,
+                ),
+                StatCard(
+                  label: 'Orders Today',
+                  value: '${d['ordersToday'] ?? 0}',
+                  icon: Icons.receipt_long_outlined,
+                  accent: AppColors.emerald,
+                ),
+              ],
+            );
+          }),
           SizedBox(height: 24.h),
           Row(
             children: [
@@ -122,6 +191,7 @@ class DashboardPage extends GetView<DashboardController> {
                 child: AppButton(
                   label: 'Open Shift',
                   icon: Icons.login,
+                  primary: false,
                   onPressed: () => Get.toNamed(AppRoutes.shift),
                 ),
               ),
@@ -140,6 +210,34 @@ class DashboardPage extends GetView<DashboardController> {
     );
   }
 
+  Widget _header(BuildContext context, String title, String subtitle) {
+    return Row(
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(title, style: Theme.of(context).textTheme.displayLarge?.copyWith(fontSize: 28.sp)),
+              SizedBox(height: 4.h),
+              Text(subtitle, style: Theme.of(context).textTheme.bodyMedium),
+            ],
+          ),
+        ),
+        GlassPanel(
+          radius: 14.r,
+          padding: EdgeInsets.zero,
+          blurSigma: AppColors.blurSigmaLight,
+          shadow: AppColors.shadowSm,
+          child: SizedBox(
+            width: 44.r,
+            height: 44.r,
+            child: Icon(Icons.notifications_outlined, size: 20.sp, color: AppColors.ink),
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget _trendChart(Map trend) {
     final entries = trend.entries.toList();
     if (entries.isEmpty) {
@@ -155,7 +253,19 @@ class DashboardPage extends GetView<DashboardController> {
           spots: spots,
           isCurved: true,
           barWidth: 3,
+          color: AppColors.salmon,
           dotData: const FlDotData(show: false),
+          belowBarData: BarAreaData(
+            show: true,
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                AppColors.salmon.withValues(alpha: 0.25),
+                AppColors.salmon.withValues(alpha: 0.0),
+              ],
+            ),
+          ),
         ),
       ],
       titlesData: const FlTitlesData(show: false),
@@ -164,6 +274,5 @@ class DashboardPage extends GetView<DashboardController> {
     ));
   }
 
-  String _money(dynamic v) =>
-      'Rp ${(v is num ? v : 0).toStringAsFixed(0)}';
+  String _money(dynamic v) => 'Rp ${(v is num ? v : 0).toStringAsFixed(0)}';
 }

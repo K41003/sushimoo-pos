@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import '../../../app/constants/colors.dart';
 import '../../../shared/widgets/app_text_field.dart';
 import '../controllers/product_controller.dart';
 import '../../../data/models/product.dart';
 
+/// REPLACES `product_form.dart` 1:1 — same class name `ProductForm`,
+/// same constructor (`controller`, `existing`).
 class ProductForm extends StatelessWidget {
   final ProductController controller;
   final Product? existing;
@@ -47,8 +50,7 @@ class ProductForm extends StatelessWidget {
           AppTextField(
             label: 'Harga',
             controller: controller.priceController,
-            keyboardType:
-                const TextInputType.numberWithOptions(decimal: true),
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
           ),
           SizedBox(height: 16.h),
           Obx(() => Row(
@@ -58,6 +60,7 @@ class ProductForm extends StatelessWidget {
                   Switch(
                     value: controller.selectedStatus.value,
                     onChanged: (v) => controller.selectedStatus.value = v,
+                    activeColor: AppColors.salmon,
                   ),
                 ],
               )),

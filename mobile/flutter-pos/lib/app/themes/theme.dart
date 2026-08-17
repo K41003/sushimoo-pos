@@ -1,98 +1,124 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../constants/colors.dart';
 import '../constants/dimensions.dart';
 
-/// Clean sans-serif type scale. Prices get their own bold/oversized style
-/// so the number a cashier cares about most is always the loudest thing
-/// on screen.
+/// Typography hierarchy for "Glassmorphic Zen" Pro Max.
+///
+/// REPLACES the old flat-theme typography file 1:1 — `AppTypography.price`
+/// and `AppTypography.textTheme` keep the same names/types so nothing
+/// referencing them elsewhere breaks. Internally it now uses Google Fonts.
+///
+/// Font pairing:
+///  - Display / Headline -> Plus Jakarta Sans (geometric, warm, reads
+///    premium on translucent glass backgrounds)
+///  - Body / Label       -> Manrope (stays crisp at small sizes over
+///    blurred surfaces — important for legibility)
+///
+/// Rule of thumb on glass: bump font-weight one notch heavier than you
+/// would on a flat white card, since blur softens edge contrast.
 class AppTypography {
   AppTypography._();
 
-  static const String fontFamily = 'Inter';
+  static TextStyle get _display => GoogleFonts.plusJakartaSans();
+  static TextStyle get _body => GoogleFonts.manrope();
+
+  static String get fontFamily => GoogleFonts.manrope().fontFamily!;
 
   static TextTheme get textTheme => TextTheme(
-        displayLarge: TextStyle(
-          fontFamily: fontFamily,
-          fontSize: 44.sp,
+        displayLarge: _display.copyWith(
+          fontSize: 40.sp,
           fontWeight: FontWeight.w800,
           height: 1.1,
-          letterSpacing: -0.5,
+          letterSpacing: -0.8,
           color: AppColors.ink,
         ),
-        headlineLarge: TextStyle(
-          fontFamily: fontFamily,
+        headlineLarge: _display.copyWith(
           fontSize: 30.sp,
           fontWeight: FontWeight.w700,
           height: 1.2,
-          letterSpacing: -0.3,
+          letterSpacing: -0.4,
           color: AppColors.ink,
         ),
-        headlineMedium: TextStyle(
-          fontFamily: fontFamily,
+        headlineMedium: _display.copyWith(
           fontSize: 22.sp,
           fontWeight: FontWeight.w700,
           height: 1.25,
+          letterSpacing: -0.3,
+          color: AppColors.ink,
+        ),
+        headlineSmall: _display.copyWith(
+          fontSize: 17.sp,
+          fontWeight: FontWeight.w700,
+          height: 1.3,
           letterSpacing: -0.2,
           color: AppColors.ink,
         ),
-        bodyLarge: TextStyle(
-          fontFamily: fontFamily,
+        bodyLarge: _body.copyWith(
           fontSize: 17.sp,
-          fontWeight: FontWeight.w500,
+          fontWeight: FontWeight.w600,
           height: 1.4,
           color: AppColors.ink,
         ),
-        bodyMedium: TextStyle(
-          fontFamily: fontFamily,
+        bodyMedium: _body.copyWith(
           fontSize: 15.sp,
-          fontWeight: FontWeight.w400,
+          fontWeight: FontWeight.w500,
           height: 1.4,
           color: AppColors.inkMuted,
         ),
-        labelLarge: TextStyle(
-          fontFamily: fontFamily,
+        bodySmall: _body.copyWith(
+          fontSize: 12.5.sp,
+          fontWeight: FontWeight.w500,
+          height: 1.4,
+          color: AppColors.inkMuted,
+        ),
+        labelLarge: _body.copyWith(
           fontSize: 13.sp,
           fontWeight: FontWeight.w700,
           height: 1.3,
           letterSpacing: 0.3,
           color: AppColors.inkMuted,
         ),
-        labelSmall: TextStyle(
-          fontFamily: fontFamily,
-          fontSize: 11.5.sp,
-          fontWeight: FontWeight.w600,
-          letterSpacing: 0.2,
+        labelSmall: _body.copyWith(
+          fontSize: 11.sp,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 0.6,
           color: AppColors.inkMuted,
         ),
       );
 
   /// Big bold price/quantity numerals — the loudest text on the screen.
-  static TextStyle price = TextStyle(
-    fontFamily: fontFamily,
-    fontSize: 30.sp,
-    fontWeight: FontWeight.w800,
-    letterSpacing: -0.5,
-    color: AppColors.ink,
-  );
+  static TextStyle get price => _display.copyWith(
+        fontSize: 30.sp,
+        fontWeight: FontWeight.w800,
+        letterSpacing: -0.5,
+        color: AppColors.ink,
+      );
 
-  static TextStyle priceCompact = TextStyle(
-    fontFamily: fontFamily,
-    fontSize: 18.sp,
-    fontWeight: FontWeight.w800,
-    letterSpacing: -0.2,
-    color: AppColors.ink,
-  );
+  static TextStyle get priceCompact => _display.copyWith(
+        fontSize: 18.sp,
+        fontWeight: FontWeight.w800,
+        letterSpacing: -0.2,
+        color: AppColors.ink,
+      );
+
+  static TextStyle get priceHero => _display.copyWith(
+        fontSize: 44.sp,
+        fontWeight: FontWeight.w800,
+        letterSpacing: -1.0,
+        color: AppColors.ink,
+      );
 }
 
 class AppTheme {
   AppTheme._();
 
-  /// A single light theme — calm slate canvas, white floating cards, one
-  /// warm orange-salmon accent.
+  /// A single light theme — gradient glass canvas, frosted floating
+  /// panels, one warm orange-salmon accent gradient.
   static ThemeData get light => _build();
 
-  static const _shadow = Color(0x1A0F172A);
+  static const _shadow = Color(0x1A10182B);
 
   static ThemeData _build() {
     final scheme = AppColors.scheme;
@@ -100,27 +126,28 @@ class AppTheme {
       useMaterial3: true,
       brightness: Brightness.light,
       colorScheme: scheme,
-      scaffoldBackgroundColor: AppColors.surface,
+      scaffoldBackgroundColor: AppColors.bgBase,
       fontFamily: AppTypography.fontFamily,
       textTheme: AppTypography.textTheme,
       splashFactory: InkRipple.splashFactory,
       visualDensity: VisualDensity.standard,
 
-      // Cards: white surface, soft radius, whisper hairline. The floating
-      // shadow comes from AppCard / AppDecorations rather than Material
-      // elevation, so it stays soft and high-blur.
+      // Cards default to a soft translucent surface; screens that want
+      // the full frosted-blur effect should use GlassPanel instead of
+      // relying on CardTheme alone (BackdropFilter can't be expressed
+      // as a static theme).
       cardTheme: CardThemeData(
-        color: AppColors.card,
+        color: Colors.white.withValues(alpha: 0.65),
         elevation: 0,
         margin: EdgeInsets.zero,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppDimensions.radiusLg.r),
-          side: const BorderSide(color: AppColors.hairline, width: 1),
+          side: BorderSide(color: AppColors.glassBorder(opacity: 0.7), width: 1.2),
         ),
       ),
 
       appBarTheme: AppBarTheme(
-        backgroundColor: AppColors.surface,
+        backgroundColor: Colors.transparent,
         foregroundColor: AppColors.ink,
         elevation: 0,
         scrolledUnderElevation: 0,
@@ -131,8 +158,9 @@ class AppTheme {
         shadowColor: _shadow,
       ),
 
-      // Primary CTA — solid orange-salmon, the one loud color on screen,
-      // lifted with a soft shadow.
+      // Primary CTA fallback (prefer GlassPrimaryButton for the gradient
+      // + press micro-interaction; this theme covers any stock
+      // ElevatedButton left in un-migrated screens).
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.salmon,
@@ -140,7 +168,7 @@ class AppTheme {
           disabledBackgroundColor: AppColors.salmon.withValues(alpha: 0.35),
           disabledForegroundColor: Colors.white,
           elevation: 3,
-          shadowColor: _shadow,
+          shadowColor: AppColors.salmon.withValues(alpha: 0.35),
           minimumSize: Size(double.infinity, AppDimensions.buttonHeight.h),
           padding: EdgeInsets.symmetric(horizontal: 20.w),
           shape: RoundedRectangleBorder(
@@ -155,13 +183,13 @@ class AppTheme {
         ),
       ),
 
-      // Secondary action — quiet ink outline, no fill.
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
           foregroundColor: AppColors.ink,
           disabledForegroundColor: AppColors.inkFaint,
+          backgroundColor: Colors.white.withValues(alpha: 0.4),
           minimumSize: Size(double.infinity, AppDimensions.buttonHeight.h),
-          side: const BorderSide(color: AppColors.hairline, width: 1.4),
+          side: BorderSide(color: AppColors.glassBorder(opacity: 0.7), width: 1.4),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppDimensions.radiusMd.r),
           ),
@@ -186,29 +214,29 @@ class AppTheme {
 
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: AppColors.surfaceAlt,
+        fillColor: Colors.white.withValues(alpha: 0.5),
         hintStyle: TextStyle(color: AppColors.inkFaint, fontSize: 15.sp),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppDimensions.radiusMd.r),
-          borderSide: const BorderSide(color: AppColors.hairline, width: 1),
+          borderSide: BorderSide(color: AppColors.glassBorder(opacity: 0.7), width: 1.2),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppDimensions.radiusMd.r),
-          borderSide: const BorderSide(color: AppColors.hairline, width: 1),
+          borderSide: BorderSide(color: AppColors.glassBorder(opacity: 0.7), width: 1.2),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppDimensions.radiusMd.r),
-          borderSide: const BorderSide(color: AppColors.ink, width: 1.6),
+          borderSide: const BorderSide(color: AppColors.salmon, width: 1.6),
         ),
         contentPadding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 16.h),
       ),
 
       chipTheme: ChipThemeData(
-        backgroundColor: AppColors.surfaceAlt,
-        selectedColor: AppColors.ink,
+        backgroundColor: Colors.white.withValues(alpha: 0.45),
+        selectedColor: AppColors.salmon,
         labelStyle: const TextStyle(color: AppColors.ink),
         secondaryLabelStyle: const TextStyle(color: Colors.white),
-        side: const BorderSide(color: AppColors.hairline),
+        side: BorderSide(color: AppColors.glassBorder(opacity: 0.7)),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppDimensions.radiusFull),
         ),
@@ -229,7 +257,7 @@ class AppTheme {
         ),
       ),
 
-      dividerTheme: const DividerThemeData(
+      dividerTheme: DividerThemeData(
         color: AppColors.hairline,
         thickness: 1,
         space: 1,
@@ -248,7 +276,7 @@ class AppTheme {
       iconTheme: const IconThemeData(color: AppColors.ink),
 
       dialogTheme: DialogThemeData(
-        backgroundColor: AppColors.card,
+        backgroundColor: Colors.white.withValues(alpha: 0.85),
         elevation: 8,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppDimensions.radiusXl.r),
@@ -267,7 +295,7 @@ class AppTheme {
       ),
 
       bottomSheetTheme: BottomSheetThemeData(
-        backgroundColor: AppColors.surface,
+        backgroundColor: AppColors.bgBase,
         elevation: 12,
         shadowColor: _shadow,
         shape: RoundedRectangleBorder(

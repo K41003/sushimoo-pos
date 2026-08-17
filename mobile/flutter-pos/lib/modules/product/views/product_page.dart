@@ -9,6 +9,8 @@ import '../../../shared/widgets/app_text_field.dart';
 import '../controllers/product_controller.dart';
 import '../widgets/product_card_widget.dart';
 
+/// REPLACES `product_page.dart` 1:1 — same class name `ProductPage`,
+/// same `GetView<ProductController>`.
 class ProductPage extends GetView<ProductController> {
   const ProductPage({super.key});
 
@@ -48,9 +50,7 @@ class ProductPage extends GetView<ProductController> {
                           padding: EdgeInsets.only(right: 8.w),
                           child: AppChip(
                             label: c.namaKategori,
-                            selected:
-                                controller.selectedCategoryId.value ==
-                                    c.idKategori,
+                            selected: controller.selectedCategoryId.value == c.idKategori,
                             onTap: () => controller.selectCategory(c.idKategori),
                           ),
                         ),
@@ -70,8 +70,8 @@ class ProductPage extends GetView<ProductController> {
                 return GridView.builder(
                   gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
                     maxCrossAxisExtent: 240.w,
-                    mainAxisSpacing: 12.h,
-                    crossAxisSpacing: 12.w,
+                    mainAxisSpacing: 14.h,
+                    crossAxisSpacing: 14.w,
                     childAspectRatio: 1.1,
                   ),
                   itemCount: controller.items.length,

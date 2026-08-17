@@ -1,15 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import '../../../app/constants/colors.dart';
 import '../../../app/constants/dimensions.dart';
 import '../../../app/routes/app_routes.dart';
 import '../../../data/models/table.dart' as tm;
-import '../../../shared/widgets/app_card.dart';
 import '../../../shared/widgets/app_chip.dart';
 import '../../../shared/widgets/app_loading.dart';
 import '../../../shared/widgets/app_scaffold.dart';
+import '../../../shared/widgets/glass_panel.dart';
 import '../controllers/table_controller.dart';
 
+/// REPLACES `table_page.dart` 1:1 — same class name `TablePage`.
 class TablePage extends GetView<TableController> {
   const TablePage({super.key});
 
@@ -38,18 +40,15 @@ class TablePage extends GetView<TableController> {
                   child: controller.items.isEmpty
                       ? const AppEmptyState(message: 'No tables found')
                       : GridView.builder(
-                          padding:
-                              EdgeInsets.all(AppDimensions.marginTablet.w),
-                          gridDelegate:
-                              SliverGridDelegateWithFixedCrossAxisCount(
+                          padding: EdgeInsets.all(AppDimensions.marginTablet.w),
+                          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                             crossAxisCount: _crossAxisCount(context),
                             crossAxisSpacing: 12.w,
                             mainAxisSpacing: 12.h,
                             childAspectRatio: 1.2,
                           ),
                           itemCount: controller.items.length,
-                          itemBuilder: (_, i) =>
-                              _tableCard(context, controller.items[i]),
+                          itemBuilder: (_, i) => _tableCard(context, controller.items[i]),
                         ),
                 ),
               ],
@@ -90,7 +89,8 @@ class TablePage extends GetView<TableController> {
   }
 
   Widget _tableCard(BuildContext context, tm.TableModel t) {
-    return AppCard(
+    return GlassPanel(
+      radius: AppDimensions.radiusLg,
       onTap: () => controller.save(t),
       child: Stack(
         children: [
@@ -99,14 +99,11 @@ class TablePage extends GetView<TableController> {
             children: [
               Text(
                 'Meja ${t.nomorMeja}',
-                style: Theme.of(context).textTheme.titleLarge,
+                style: Theme.of(context).textTheme.headlineMedium,
                 textAlign: TextAlign.center,
               ),
               SizedBox(height: 8.h),
-              Text(
-                '${t.kapasitas} seats',
-                style: Theme.of(context).textTheme.bodyMedium,
-              ),
+              Text('${t.kapasitas} seats', style: Theme.of(context).textTheme.bodyMedium),
               SizedBox(height: 10.h),
               StatusChip(status: t.status),
             ],
@@ -115,7 +112,7 @@ class TablePage extends GetView<TableController> {
             top: 0,
             right: 0,
             child: IconButton(
-              icon: const Icon(Icons.delete, size: 18),
+              icon: Icon(Icons.delete, size: 18.sp, color: AppColors.danger),
               onPressed: () => controller.delete(t.idMeja),
             ),
           ),

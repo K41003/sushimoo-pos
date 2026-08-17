@@ -5,10 +5,11 @@ import '../../../app/constants/colors.dart';
 import '../../../app/constants/dimensions.dart';
 import '../../../app/routes/app_routes.dart';
 import '../../../shared/widgets/app_button.dart';
-import '../../../shared/widgets/app_card.dart';
 import '../../../shared/widgets/app_scaffold.dart';
+import '../../../shared/widgets/glass_panel.dart';
 import '../controllers/setting_controller.dart';
 
+/// REPLACES `setting_page.dart` 1:1 — same class name `SettingPage`.
 class SettingPage extends GetView<SettingController> {
   const SettingPage({super.key});
 
@@ -21,7 +22,8 @@ class SettingPage extends GetView<SettingController> {
         padding: EdgeInsets.all(AppDimensions.marginTablet.w),
         child: Column(
           children: [
-            AppCard(
+            GlassPanel(
+              radius: AppDimensions.radiusLg,
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [

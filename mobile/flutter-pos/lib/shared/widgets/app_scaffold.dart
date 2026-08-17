@@ -5,12 +5,24 @@ import '../../app/constants/colors.dart';
 import '../../app/routes/app_routes.dart';
 import '../../app/services/auth_service.dart';
 import '../../app/services/storage_service.dart';
-import '../../shared/widgets/app_sidebar.dart';
+import 'app_sidebar.dart';
+import 'glass_panel.dart';
 import '../../shared/utils/responsive.dart';
 import 'nav_item_factory.dart';
 
-/// App shell: minimal white nav rail (tablet landscape) or drawer (portrait)
-/// wrapping every module page.
+/// REPLACES `app_scaffold.dart` 1:1 — same class name `AppScaffold`, same
+/// constructor (`title`, `currentRoute`, `body`, `actions`). Now wraps
+/// every page body in [GlassBackground] and renders a translucent app
+/// bar instead of an opaque one, so every screen using `AppScaffold`
+/// automatically gets the Glassmorphic Zen canvas + blobs.
+///
+/// FIX: the previous version only showed navigation via [AppSidebar] on
+/// landscape tablets. On phones / portrait it showed neither a sidebar
+/// nor a drawer trigger, leaving the user with no way to switch pages or
+/// log out. Now: landscape tablet -> persistent rail; everything else
+/// -> a [Scaffold.drawer] opened via an explicit hamburger button in the
+/// glass app bar (a custom [PreferredSize] app bar does NOT get Flutter's
+/// automatic drawer button, so it must be added by hand).
 class AppScaffold extends StatelessWidget {
   final String title;
   final String currentRoute;
@@ -29,36 +41,35 @@ class AppScaffold extends StatelessWidget {
   Widget build(BuildContext context) {
     final user = StorageService.to.user;
     final items = navItemsForRole(user?.roleName ?? '');
+    final isRail = Responsive.isLandscapeTablet(context);
 
-    final content = Scaffold(
-      backgroundColor: AppColors.surface,
-      appBar: AppBar(
-        title: Text(title),
-        actions: [
-          if (user != null)
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Center(
-                child: Text(
-                  user.nama,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.inkMuted,
-                  ),
-                ),
-              ),
-            ),
-          ...?actions,
-          const SizedBox(width: 8),
-        ],
-      ),
-      drawer: Responsive.isTablet(context) && !Responsive.isLandscape(context)
-          ? AppDrawer(items: items, currentRoute: currentRoute, onLogout: _logout)
-          : null,
-      body: body,
-    );
+    final content = Builder(builder: (scaffoldContext) {
+      return Scaffold(
+        backgroundColor: Colors.transparent,
+        extendBodyBehindAppBar: true,
+        appBar: PreferredSize(
+          preferredSize: const Size.fromHeight(64),
+          child: _GlassAppBar(
+            title: title,
+            user: user,
+            actions: actions,
+            showMenuButton: !isRail,
+            onLogout: () => _logout(),
+          ),
+        ),
+        drawer: isRail
+            ? null
+            : AppDrawer(items: items, currentRoute: currentRoute, onLogout: _logout),
+        body: GlassBackground(
+          child: Padding(
+            padding: const EdgeInsets.only(top: 64),
+            child: body,
+          ),
+        ),
+      );
+    });
 
-    if (Responsive.isLandscapeTablet(context)) {
+    if (isRail) {
       return Row(
         children: [
           AppSidebar(items: items, currentRoute: currentRoute, onLogout: _logout),
@@ -76,5 +87,67 @@ class AppScaffold extends StatelessWidget {
     } catch (e) {
       EasyLoading.showError('Logout failed');
     }
+  }
+}
+
+class _GlassAppBar extends StatelessWidget {
+  final String title;
+  final dynamic user;
+  final List<Widget>? actions;
+  final bool showMenuButton;
+  final VoidCallback onLogout;
+
+  const _GlassAppBar({
+    required this.title,
+    required this.user,
+    required this.showMenuButton,
+    required this.onLogout,
+    this.actions,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      bottom: false,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+        child: GlassPanel(
+          radius: 20,
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+          blurSigma: AppColors.blurSigmaLight,
+          shadow: AppColors.shadowSm,
+          child: Row(
+            children: [
+              if (showMenuButton)
+                Builder(
+                  builder: (ctx) => IconButton(
+                    icon: const Icon(Icons.menu_rounded, color: AppColors.ink),
+                    tooltip: 'Menu',
+                    onPressed: () => Scaffold.of(ctx).openDrawer(),
+                  ),
+                )
+              else
+                const SizedBox(width: 8),
+              Text(title, style: Theme.of(context).textTheme.headlineSmall),
+              const Spacer(),
+              if (user != null)
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  child: Text(
+                    user.nama,
+                    style: const TextStyle(fontWeight: FontWeight.w600, color: AppColors.inkMuted),
+                  ),
+                ),
+              ...?actions,
+              IconButton(
+                icon: const Icon(Icons.logout_rounded, color: AppColors.danger),
+                tooltip: 'Logout',
+                onPressed: onLogout,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }

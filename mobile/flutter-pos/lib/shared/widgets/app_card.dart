@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../app/constants/colors.dart';
-import '../../app/constants/decorations.dart';
 import '../../app/constants/dimensions.dart';
+import 'glass_panel.dart';
 
-/// Base card: white surface that floats on the #F8FAFC canvas via a soft
-/// shadow, with a whisper hairline and soft radius.
-/// Set [tinted] to use the salmon-soft secondary surface instead (for
-/// highlighted / "current" items, e.g. the active cart summary panel).
+/// REPLACES the old flat `AppCard` 1:1 (same constructor: `child`,
+/// `padding`, `onTap`, `tinted`, `borderColor`, `shadow`), so every
+/// existing call site across the app keeps compiling. Internally now
+/// renders a real frosted-glass surface via [GlassPanel] instead of a
+/// flat opaque [Container].
 class AppCard extends StatelessWidget {
   final Widget child;
   final EdgeInsets? padding;
@@ -28,28 +29,24 @@ class AppCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final radius = BorderRadius.circular(AppDimensions.radiusLg.r);
-    final card = Container(
+    return GlassPanel(
+      radius: AppDimensions.radiusLg.r,
       padding: padding ?? EdgeInsets.all(AppDimensions.cardPadding.r),
-      decoration: tinted
-          ? AppDecorations.tinted(radius: AppDimensions.radiusLg, shadow: shadow)
-          : BoxDecoration(
-              color: AppColors.card,
-              borderRadius: radius,
-              border: Border.all(
-                color: borderColor ?? AppColors.hairline,
-                width: 1,
-              ),
-              boxShadow: shadow ?? AppColors.shadowSm,
-            ),
-      child: child,
-    );
-    if (onTap == null) return card;
-    return InkWell(
+      opacity: tinted ? 0.45 : 0.55,
+      overlayGradient: tinted
+          ? LinearGradient(
+              colors: [
+                AppColors.salmonSoft.withValues(alpha: 0.9),
+                AppColors.salmonSoft.withValues(alpha: 0.6),
+              ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            )
+          : null,
+      borderColor: borderColor ?? (tinted ? AppColors.salmonBorder : null),
+      shadow: shadow,
       onTap: onTap,
-      borderRadius: radius,
-      child: card,
+      child: child,
     );
   }
 }
-

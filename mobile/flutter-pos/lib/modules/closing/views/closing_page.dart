@@ -4,11 +4,12 @@ import 'package:get/get.dart';
 import '../../../app/constants/dimensions.dart';
 import '../../../app/routes/app_routes.dart';
 import '../../../shared/widgets/app_button.dart';
-import '../../../shared/widgets/app_card.dart';
 import '../../../shared/widgets/app_loading.dart';
 import '../../../shared/widgets/app_scaffold.dart';
+import '../../../shared/widgets/glass_panel.dart';
 import '../controllers/closing_controller.dart';
 
+/// REPLACES `closing_page.dart` 1:1 — same class name `ClosingPage`.
 class ClosingPage extends GetView<ClosingController> {
   const ClosingPage({super.key});
 
@@ -23,12 +24,12 @@ class ClosingPage extends GetView<ClosingController> {
           padding: EdgeInsets.all(AppDimensions.marginTablet.w),
           child: Column(
             children: [
-              AppCard(
+              GlassPanel(
+                radius: AppDimensions.radiusLg,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Current Shift',
-                        style: Theme.of(context).textTheme.headlineMedium),
+                    Text('Current Shift', style: Theme.of(context).textTheme.headlineMedium),
                     SizedBox(height: 8.h),
                     Text(controller.activeShift.value != null
                         ? 'Shift #${controller.activeShift.value!.idShift} is open'
@@ -37,25 +38,23 @@ class ClosingPage extends GetView<ClosingController> {
                     Obx(() => AppButton(
                           label: 'Closing Kasir',
                           primary: controller.activeShift.value != null,
-                          onPressed: controller.activeShift.value != null
-                              ? controller.doClosing
-                              : null,
+                          onPressed: controller.activeShift.value != null ? controller.doClosing : null,
                         )),
                   ],
                 ),
               ),
               SizedBox(height: 16.h),
-              if (controller.lastClosing.value != null)
-                _reportCard(context, controller.lastClosing.value!),
+              if (controller.lastClosing.value != null) _reportCard(context, controller.lastClosing.value!),
               SizedBox(height: 16.h),
-              Text('Closing History', style: Theme.of(context).textTheme.headlineMedium),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Text('Closing History', style: Theme.of(context).textTheme.headlineMedium),
+              ),
               SizedBox(height: 8.h),
-              ...controller.history
-                  .map((c) => Padding(
-                        padding: EdgeInsets.only(bottom: 8.h),
-                        child: _reportCard(context, c),
-                      ))
-                  ,
+              ...controller.history.map((c) => Padding(
+                    padding: EdgeInsets.only(bottom: 8.h),
+                    child: _reportCard(context, c),
+                  )),
             ],
           ),
         );
@@ -64,12 +63,12 @@ class ClosingPage extends GetView<ClosingController> {
   }
 
   Widget _reportCard(BuildContext context, dynamic c) {
-    return AppCard(
+    return GlassPanel(
+      radius: AppDimensions.radiusLg,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Closing #${c.idClosing}',
-              style: Theme.of(context).textTheme.bodyLarge),
+          Text('Closing #${c.idClosing}', style: Theme.of(context).textTheme.bodyLarge),
           SizedBox(height: 6.h),
           Text('Total Penjualan: Rp ${c.totalPenjualan.toStringAsFixed(0)}'),
           Text('Total Cash: Rp ${c.totalCash.toStringAsFixed(0)}'),

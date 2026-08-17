@@ -24,7 +24,7 @@ class AppDataTable extends StatelessWidget {
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
         child: Table(
-          border: TableBorder.symmetric(
+          border: const TableBorder.symmetric(
             inside: BorderSide(color: AppColors.hairline),
           ),
           columnWidths: {

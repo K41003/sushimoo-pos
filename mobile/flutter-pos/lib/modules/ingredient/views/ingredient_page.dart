@@ -1,14 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import '../../../app/constants/colors.dart';
 import '../../../app/constants/dimensions.dart';
 import '../../../app/routes/app_routes.dart';
-import '../../../shared/widgets/app_card.dart';
 import '../../../shared/widgets/app_loading.dart';
 import '../../../shared/widgets/app_scaffold.dart';
 import '../../../shared/widgets/app_text_field.dart';
+import '../../../shared/widgets/glass_panel.dart';
 import '../controllers/ingredient_controller.dart';
 
+/// REPLACES `ingredient_page.dart` 1:1 — same class name `IngredientPage`.
 class IngredientPage extends GetView<IngredientController> {
   const IngredientPage({super.key});
 
@@ -36,18 +38,18 @@ class IngredientPage extends GetView<IngredientController> {
             return ListView.separated(
               padding: EdgeInsets.all(AppDimensions.marginTablet.w),
               itemCount: controller.items.length,
-              separatorBuilder: (_, __) => SizedBox(height: 8.h),
+              separatorBuilder: (_, __) => SizedBox(height: 10.h),
               itemBuilder: (_, i) {
                 final it = controller.items[i];
-                return AppCard(
+                return GlassPanel(
+                  radius: AppDimensions.radiusLg,
                   child: Row(
                     children: [
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(it.namaBahan,
-                                style: Theme.of(context).textTheme.titleMedium),
+                            Text(it.namaBahan, style: Theme.of(context).textTheme.headlineSmall),
                             SizedBox(height: 4.h),
                             Text(
                               '${it.satuan} • Min ${it.minimalStok}',
@@ -57,11 +59,12 @@ class IngredientPage extends GetView<IngredientController> {
                         ),
                       ),
                       IconButton(
-                        icon: const Icon(Icons.edit),
+                        icon: const Icon(Icons.edit_outlined),
                         onPressed: () => controller.save(it),
                       ),
                       IconButton(
-                        icon: const Icon(Icons.delete),
+                        icon: const Icon(Icons.delete_outline),
+                        color: AppColors.danger,
                         onPressed: () => controller.delete(it.idBahan),
                       ),
                     ],
