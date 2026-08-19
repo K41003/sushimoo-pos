@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<network-security-config>
+    <!-- Blokir cleartext (HTTP non-TLS) secara default di production -->
+    <base-config cleartextTrafficPermitted="false">
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+
+    <!-- Izinkan HTTP hanya untuk domain dev/emulator lokal -->
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="false">10.0.2.2</domain>
+        <domain includeSubdomains="false">localhost</domain>
+    </domain-config>
+
+    <!-- Pinning tambahan di level OS (opsional, redundant dengan Dio
+         interceptor tapi berguna sebagai defense-in-depth karena
+         berjalan sebelum kode Dart tereksekusi) -->
+    <domain-config>
+        <domain includeSubdomains="true">api.sushimoo-pos.com</domain>
+        <!--  pin-set expiration="2027-01-01">
+            <pin digest="SHA-256">GANTI_DENGAN_BASE64_PIN_LEAF_CERT=</pin>
+            <pin digest="SHA-256">GANTI_DENGAN_BASE64_PIN_BACKUP_CERT=</pin>
+        </!-->
+    </domain-config>
+</network-security-config>

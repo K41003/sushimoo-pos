@@ -2,10 +2,20 @@ import 'package:dio/dio.dart';
 import 'package:get/get.dart';
 import '../../app/constants/app_constants.dart';
 import '../../data/response/api_response.dart';
-import 'storage_service.dart';
+import 'secure_storage_service.dart';
+import 'ssl_pinning_interceptor.dart';
 
 /// Centralized Dio API client. Wraps every request into the
 /// `{success, message, data}` envelope used by the Laravel backend.
+///
+/// PERUBAHAN KEAMANAN (dibanding versi asli):
+/// 1. Token sekarang dibaca dari [SecureStorageService] (Keystore/
+///    Keychain), bukan dari `StorageService` (plaintext GetStorage).
+/// 2. [SslPinningInterceptor] ditambahkan sebagai interceptor PERTAMA —
+///    request akan ditolak sebelum sampai ke server jika sertifikat
+///    tidak cocok dengan pin yang dipercaya (lihat file tsb untuk detail
+///    kenapa `badCertificateCallback => true` di `main.dart` yang lama
+///    berbahaya dan harus dihapus).
 class ApiClient extends GetxService {
   static ApiClient get to => Get.find<ApiClient>();
 
@@ -18,17 +28,30 @@ class ApiClient extends GetxService {
       receiveTimeout: AppConstants.receiveTimeout,
       headers: {
         'Accept': 'application/json',
-        'Host':
-            'laravel-api.test', // <-- KUNCI SUKSES: Memaksa Herd mengenali project Anda
+        'Host': 'laravel-api.test',
       },
     ));
+
+    // Urutan penting: pinning check dulu (bisa reject sebelum request
+    // terkirim), baru auth header interceptor.
+    dio.interceptors.add(SslPinningInterceptor());
+
     dio.interceptors.add(InterceptorsWrapper(
       onRequest: (options, handler) {
-        final token = StorageService.to.token;
+        final token = SecureStorageService.to.token;
         if (token != null) {
           options.headers['Authorization'] = 'Bearer $token';
         }
         return handler.next(options);
+      },
+      onError: (error, handler) {
+        // 401 dari server (token invalid/expired) -> bersihkan sesi lokal
+        // supaya tidak nyangkut di state "logged in" yang sebenarnya sudah
+        // tidak valid di server.
+        if (error.response?.statusCode == 401) {
+          SecureStorageService.to.clearSession();
+        }
+        return handler.next(error);
       },
     ));
   }
@@ -49,6 +72,13 @@ class ApiClient extends GetxService {
       );
       return ApiResponse<T>.fromJson(response.data, fromData);
     } on DioException catch (e) {
+      if (e.type == DioExceptionType.badCertificate) {
+        // Jangan bocorkan detail teknis ke UI kasir; log internal saja.
+        return ApiResponse<T>(
+          success: false,
+          message: 'Koneksi tidak aman terdeteksi. Hubungi admin IT.',
+        );
+      }
       if (e.response != null && e.response!.data is Map) {
         final data = e.response!.data as Map<String, dynamic>;
         return ApiResponse<T>(

@@ -8,17 +8,45 @@ import 'app/constants/app_constants.dart';
 import 'app/constants/colors.dart';
 import 'app/routes/app_pages.dart';
 import 'app/routes/app_routes.dart';
-import 'app/services/storage_service.dart';
+import 'app/services/device_integrity_service.dart';
+import 'app/services/secure_storage_service.dart';
 import 'app/themes/theme.dart';
 import 'app/config/scroll_behavior.dart';
-import 'dart:io';
+
+// PERUBAHAN KEAMANAN PENTING:
+// `import 'dart:io'` dan class `MyHttpOverrides` DIHAPUS SELURUHNYA.
+//
+// Versi lama file ini berisi:
+//   HttpOverrides.global = MyHttpOverrides();
+//   ...
+//   class MyHttpOverrides extends HttpOverrides {
+//     HttpClient createHttpClient(SecurityContext? context) {
+//       return super.createHttpClient(context)
+//         ..badCertificateCallback = (cert, host, port) => true;
+//     }
+//   }
+//
+// Ini MENERIMA SERTIFIKAT TLS APAPUN secara global untuk SELURUH app,
+// termasuk sertifikat self-signed milik penyerang MITM. Ini adalah
+// kerentanan OWASP MASVS-NETWORK-1 tingkat kritis. Validasi sertifikat
+// sekarang ditangani per-request oleh `SslPinningInterceptor` di
+// `api_client.dart`, dengan default sistem TLS Dart yang benar (tidak
+// dioverride) sebagai baseline, ditambah pinning di atasnya.
+//
+// Jika sebelumnya override ini dipasang karena error semacam
+// "CERTIFICATE_VERIFY_FAILED" di emulator dev, itu tandanya
+// `AppConstants.baseUrl` dev perlu pakai HTTP biasa (10.0.2.2, non-TLS)
+// bukan mematikan validasi TLS secara global.
 
 void main() async {
-  HttpOverrides.global = MyHttpOverrides();
   WidgetsFlutterBinding.ensureInitialized();
   await GetStorage.init(AppConstants.boxName);
 
-  Get.put(StorageService());
+  // SecureStorageService menggantikan StorageService sebagai sumber
+  // token/session. Didaftarkan permanent SEBELUM runApp supaya splash
+  // bisa langsung membaca token yang sudah terenkripsi.
+  Get.put(SecureStorageService(), permanent: true);
+  Get.put(DeviceIntegrityService(), permanent: true);
 
   runApp(const MyApp());
   _configureLoading();
@@ -52,23 +80,11 @@ class MyApp extends StatelessWidget {
         initialRoute: AppRoutes.initial,
         getPages: AppPages.pages,
         initialBinding: InitialBinding(),
-        // Single "Minimalis Putih" theme — no dark mode branching, so
-        // contrast and the salmon accent stay consistent.
         theme: AppTheme.light,
         themeMode: ThemeMode.light,
         scrollBehavior: const AppScrollBehavior(),
         builder: EasyLoading.init(),
       ),
     );
-  }
-}
-
-// Tambahkan class ini di bagian paling bawah file main.dart (di luar fungsi main)
-class MyHttpOverrides extends HttpOverrides {
-  @override
-  HttpClient createHttpClient(SecurityContext? context) {
-    return super.createHttpClient(context)
-      ..badCertificateCallback =
-          (X509Certificate cert, String host, int port) => true;
   }
 }

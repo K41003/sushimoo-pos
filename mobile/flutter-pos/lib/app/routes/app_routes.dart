@@ -19,4 +19,5 @@ class AppRoutes {
   static const setting = '/setting';
 
   static const initial = splash;
+  static const securityBlocked = '/security-blocked';
 }

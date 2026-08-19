@@ -21,6 +21,10 @@ dependencies:
   flutter_svg: ^2.1.0
   blue_thermal_printer: ^1.2.3
   pdf: ^3.11.3
+  no_screenshot: ^1.0.2
+  safe_device: ^1.4.1
+  flutter_secure_storage: ^9.0.0
+  http_certificate_pinning: ^3.0.2
 
   printing: ^5.14.2
   fl_chart: ^1.0.0

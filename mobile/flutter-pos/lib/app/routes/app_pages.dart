@@ -31,6 +31,7 @@ import '../../modules/closing/bindings/closing_binding.dart';
 import '../../modules/closing/views/closing_page.dart';
 import '../../modules/setting/bindings/setting_binding.dart';
 import '../../modules/setting/views/setting_page.dart';
+import '../../modules/security/security_blocked_page.dart';
 import 'app_routes.dart';
 
 class AppPages {
@@ -116,6 +117,10 @@ class AppPages {
       name: AppRoutes.setting,
       page: () => const SettingPage(),
       binding: SettingBinding(),
+    ),
+    GetPage(
+      name: AppRoutes.securityBlocked,
+      page: () => const SecurityBlockedPage(),
     ),
   ];
 }
