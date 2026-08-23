@@ -71,11 +71,7 @@ class LoginPage extends GetView<LoginController> {
         SizedBox(height: 16.h),
         Text('SUSHIMOO', style: Theme.of(context).textTheme.displayLarge),
         SizedBox(height: 4.h),
-        Text(
-          'Zen Precision Restaurant POS',
-          style: TextStyle(
-              fontSize: 13.sp, color: AppColors.inkMuted, letterSpacing: 0.4),
-        ),
+        Text('Point of Sale', style: Theme.of(context).textTheme.titleMedium),
       ],
     );
   }

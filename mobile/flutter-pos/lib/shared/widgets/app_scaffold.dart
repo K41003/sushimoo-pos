@@ -4,7 +4,6 @@ import 'package:get/get.dart';
 import '../../app/constants/colors.dart';
 import '../../app/routes/app_routes.dart';
 import '../../app/services/auth_service.dart';
-import '../../app/services/storage_service.dart';
 import 'app_sidebar.dart';
 import 'glass_panel.dart';
 import '../../shared/utils/responsive.dart';
@@ -16,13 +15,26 @@ import 'nav_item_factory.dart';
 /// bar instead of an opaque one, so every screen using `AppScaffold`
 /// automatically gets the Glassmorphic Zen canvas + blobs.
 ///
-/// FIX: the previous version only showed navigation via [AppSidebar] on
-/// landscape tablets. On phones / portrait it showed neither a sidebar
-/// nor a drawer trigger, leaving the user with no way to switch pages or
-/// log out. Now: landscape tablet -> persistent rail; everything else
-/// -> a [Scaffold.drawer] opened via an explicit hamburger button in the
-/// glass app bar (a custom [PreferredSize] app bar does NOT get Flutter's
-/// automatic drawer button, so it must be added by hand).
+/// FIX (role/menu mismatch): previously this read the logged-in user
+/// from `StorageService.to.user` (plaintext GetStorage) to decide which
+/// sidebar/drawer items to show via `navItemsForRole(user?.roleName)`.
+/// After the app migrated auth/session storage to `SecureStorageService`
+/// (see `secure_storage_service.dart`, `auth_service.dart`), login only
+/// writes the session there — `StorageService`'s copy of the user is
+/// never populated anymore. That made `StorageService.to.user` always
+/// `null`, so `roleName` fell back to `''`, which `nav_item_factory.dart`
+/// treats as "not Admin" -> it always rendered the **Kasir** menu
+/// (Shift/POS/Expense/...), even when an Admin was logged in and the
+/// Dashboard body correctly showed admin data (because
+/// `DashboardController` reads the role from `AuthService`, a different,
+/// still-correct source).
+///
+/// Now both the page body (Dashboard) and the navigation (sidebar/drawer)
+/// derive the role from the SAME source — `AuthService.to.currentUser`
+/// — so an Admin login always gets the Admin menu:
+/// Dashboard/Category/Product/Ingredient/Stock/Table/Report/Closing/Setting,
+/// and a Kasir login always gets the Kasir menu:
+/// Dashboard/Shift/POS/Expense/Report/Closing/Setting.
 class AppScaffold extends StatelessWidget {
   final String title;
   final String currentRoute;
@@ -39,7 +51,10 @@ class AppScaffold extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final user = StorageService.to.user;
+    // FIX: use AuthService (SecureStorageService-backed) instead of
+    // StorageService, so the sidebar/drawer role matches the actual
+    // logged-in user's role everywhere else in the app.
+    final user = AuthService.to.currentUser;
     final items = navItemsForRole(user?.roleName ?? '');
     final isRail = Responsive.isLandscapeTablet(context);
 
