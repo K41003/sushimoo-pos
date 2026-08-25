@@ -1,7 +1,5 @@
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:get/get.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../../app/constants/app_constants.dart';
 import '../../../app/routes/app_routes.dart';
 import '../../../app/services/api_client.dart';
@@ -12,6 +10,7 @@ import '../../../data/models/table.dart';
 import '../../../data/models/transaction.dart';
 import '../../../data/response/api_response.dart';
 import '../controllers/cart_item.dart';
+import '../widgets/table_select_sheet.dart';
 
 class PosController extends GetxController {
   final ApiClient _api = ApiClient.to;
@@ -154,25 +153,19 @@ class PosController extends GetxController {
 
   void clearCart() => cart.clear();
 
+  /// UI CHANGE: previously opened a stock `AlertDialog` with a `Wrap` of
+  /// generic `ChoiceChip`s — functional, but visually inconsistent with
+  /// the rest of the app (no glass surface, no brand accent, no per-table
+  /// status indicator) and cramped once there were more than a handful
+  /// of tables. Now opens [TableSelectSheet], a dedicated glass card grid
+  /// with per-table capacity, a status dot (available/occupied/reserved/
+  /// cleaning), and the same salmon-gradient selected state used
+  /// everywhere else in the app. The return contract is unchanged: it
+  /// resolves to the picked [TableModel] or `null` if dismissed.
   Future<void> selectTable() async {
     if (tables.isEmpty) await loadTables();
     final picked = await Get.dialog<TableModel>(
-      AlertDialog(
-        title: const Text('Select Table'),
-        content: SizedBox(
-          width: 300.w,
-          child: Wrap(
-            spacing: 8.w,
-            children: tables
-                .map((t) => ChoiceChip(
-                      label: Text(t.nomorMeja),
-                      selected: selectedTable.value?.idMeja == t.idMeja,
-                      onSelected: (_) => Get.back(result: t),
-                    ))
-                .toList(),
-          ),
-        ),
-      ),
+      TableSelectSheet(tables: tables, selectedId: selectedTable.value?.idMeja),
     );
     if (picked != null) selectedTable.value = picked;
   }

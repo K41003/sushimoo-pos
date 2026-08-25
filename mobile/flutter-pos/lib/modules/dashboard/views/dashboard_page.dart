@@ -230,30 +230,18 @@ class DashboardPage extends GetView<DashboardController> {
     );
   }
 
+  /// UI CHANGE: the notification bell icon that used to sit here was
+  /// purely decorative — it wasn't wired to any notification feature
+  /// (no badge count, no tap handler beyond nothing, no backing data).
+  /// Showing an icon that looks interactive but does nothing on tap is
+  /// misleading, so the header is now just the title/subtitle block.
   Widget _header(BuildContext context, String title, String subtitle) {
-    return Row(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(title, style: Theme.of(context).textTheme.displayLarge?.copyWith(fontSize: 28.sp)),
-              SizedBox(height: 4.h),
-              Text(subtitle, style: Theme.of(context).textTheme.bodyMedium),
-            ],
-          ),
-        ),
-        GlassPanel(
-          radius: 14.r,
-          padding: EdgeInsets.zero,
-          blurSigma: AppColors.blurSigmaLight,
-          shadow: AppColors.shadowSm,
-          child: SizedBox(
-            width: 44.r,
-            height: 44.r,
-            child: Icon(Icons.notifications_outlined, size: 20.sp, color: AppColors.ink),
-          ),
-        ),
+        Text(title, style: Theme.of(context).textTheme.displayLarge?.copyWith(fontSize: 28.sp)),
+        SizedBox(height: 4.h),
+        Text(subtitle, style: Theme.of(context).textTheme.bodyMedium),
       ],
     );
   }

@@ -10,31 +10,20 @@ import '../../shared/utils/responsive.dart';
 import 'nav_item_factory.dart';
 
 /// REPLACES `app_scaffold.dart` 1:1 — same class name `AppScaffold`, same
-/// constructor (`title`, `currentRoute`, `body`, `actions`). Now wraps
-/// every page body in [GlassBackground] and renders a translucent app
-/// bar instead of an opaque one, so every screen using `AppScaffold`
-/// automatically gets the Glassmorphic Zen canvas + blobs.
+/// constructor (`title`, `currentRoute`, `body`, `actions`). Wraps every
+/// page body in [GlassBackground] and renders a translucent app bar, so
+/// every screen using `AppScaffold` automatically gets the Glassmorphic
+/// Zen canvas + blobs.
 ///
-/// FIX (role/menu mismatch): previously this read the logged-in user
-/// from `StorageService.to.user` (plaintext GetStorage) to decide which
-/// sidebar/drawer items to show via `navItemsForRole(user?.roleName)`.
-/// After the app migrated auth/session storage to `SecureStorageService`
-/// (see `secure_storage_service.dart`, `auth_service.dart`), login only
-/// writes the session there — `StorageService`'s copy of the user is
-/// never populated anymore. That made `StorageService.to.user` always
-/// `null`, so `roleName` fell back to `''`, which `nav_item_factory.dart`
-/// treats as "not Admin" -> it always rendered the **Kasir** menu
-/// (Shift/POS/Expense/...), even when an Admin was logged in and the
-/// Dashboard body correctly showed admin data (because
-/// `DashboardController` reads the role from `AuthService`, a different,
-/// still-correct source).
-///
-/// Now both the page body (Dashboard) and the navigation (sidebar/drawer)
-/// derive the role from the SAME source — `AuthService.to.currentUser`
-/// — so an Admin login always gets the Admin menu:
-/// Dashboard/Category/Product/Ingredient/Stock/Table/Report/Closing/Setting,
-/// and a Kasir login always gets the Kasir menu:
-/// Dashboard/Shift/POS/Expense/Report/Closing/Setting.
+/// UI CHANGE (this pass):
+/// - The top app bar no longer carries a logout icon (kept out of the
+///   way of accidental taps mid-transaction) but now shows the logged-in
+///   user's name on every screen, so whoever's using the device always
+///   knows which account is active.
+/// - Logout is back in the sidebar (tablet/landscape rail) and in the
+///   drawer (phone/portrait) — both already had the wiring for it via
+///   the nullable `onLogout` callback, so this only required passing
+///   that callback again, plus one still lives on the Setting page.
 class AppScaffold extends StatelessWidget {
   final String title;
   final String currentRoute;
@@ -51,9 +40,6 @@ class AppScaffold extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // FIX: use AuthService (SecureStorageService-backed) instead of
-    // StorageService, so the sidebar/drawer role matches the actual
-    // logged-in user's role everywhere else in the app.
     final user = AuthService.to.currentUser;
     final items = navItemsForRole(user?.roleName ?? '');
     final isRail = Responsive.isLandscapeTablet(context);
@@ -66,10 +52,9 @@ class AppScaffold extends StatelessWidget {
           preferredSize: const Size.fromHeight(64),
           child: _GlassAppBar(
             title: title,
-            user: user,
+            userName: user?.nama,
             actions: actions,
             showMenuButton: !isRail,
-            onLogout: () => _logout(),
           ),
         ),
         drawer: isRail
@@ -95,7 +80,7 @@ class AppScaffold extends StatelessWidget {
     return content;
   }
 
-  Future<void> _logout() async {
+  static Future<void> _logout() async {
     try {
       await AuthService.to.logout();
       Get.offAllNamed(AppRoutes.login);
@@ -107,16 +92,14 @@ class AppScaffold extends StatelessWidget {
 
 class _GlassAppBar extends StatelessWidget {
   final String title;
-  final dynamic user;
+  final String? userName;
   final List<Widget>? actions;
   final bool showMenuButton;
-  final VoidCallback onLogout;
 
   const _GlassAppBar({
     required this.title,
-    required this.user,
     required this.showMenuButton,
-    required this.onLogout,
+    this.userName,
     this.actions,
   });
 
@@ -145,24 +128,56 @@ class _GlassAppBar extends StatelessWidget {
                 const SizedBox(width: 8),
               Text(title, style: Theme.of(context).textTheme.headlineSmall),
               const Spacer(),
-              if (user != null)
+              if (userName != null && userName!.isNotEmpty)
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 12),
-                  child: Text(
-                    user.nama,
-                    style: const TextStyle(fontWeight: FontWeight.w600, color: AppColors.inkMuted),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 30,
+                        height: 30,
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          gradient: AppColors.salmonGradient,
+                          shape: BoxShape.circle,
+                        ),
+                        child: Text(
+                          _initials(userName!),
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 140),
+                        child: Text(
+                          userName!,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.inkMuted,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ...?actions,
-              IconButton(
-                icon: const Icon(Icons.logout_rounded, color: AppColors.danger),
-                tooltip: 'Logout',
-                onPressed: onLogout,
-              ),
             ],
           ),
         ),
       ),
     );
+  }
+
+  String _initials(String name) {
+    final words = name.trim().split(RegExp(r'\s+')).where((w) => w.isNotEmpty).take(2).toList();
+    if (words.isEmpty) return '?';
+    return words.map((w) => w[0].toUpperCase()).join();
   }
 }
