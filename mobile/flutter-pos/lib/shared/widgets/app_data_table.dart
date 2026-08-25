@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../app/constants/colors.dart';
-import '../../app/constants/decorations.dart';
 import '../../app/constants/dimensions.dart';
+import 'glass_panel.dart';
 
 /// Generic data table built on Flutter's Table with horizontal scroll,
-/// presented inside a soft floating card.
+/// presented inside a frosted glass panel card.
 class AppDataTable extends StatelessWidget {
   final List<String> columns;
   final List<List<Widget>> rows;
@@ -18,9 +18,9 @@ class AppDataTable extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: AppDecorations.card(radius: AppDimensions.radiusLg),
-      clipBehavior: Clip.antiAlias,
+    return GlassPanel(
+      radius: AppDimensions.radiusLg,
+      padding: EdgeInsets.zero,
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
         child: Table(
@@ -35,13 +35,18 @@ class AppDataTable extends StatelessWidget {
           children: [
             TableRow(
               decoration: BoxDecoration(
-                color: AppColors.scheme.surfaceContainerHigh,
+                color: Colors.white.withValues(alpha: 0.35),
               ),
               children: columns
                   .map((c) => Padding(
                         padding: EdgeInsets.all(14.r),
-                        child: Text(c,
-                            style: Theme.of(context).textTheme.labelLarge),
+                        child: Text(
+                          c,
+                          style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.ink,
+                              ),
+                        ),
                       ))
                   .toList(),
             ),
@@ -61,3 +66,4 @@ class AppDataTable extends StatelessWidget {
     );
   }
 }
+

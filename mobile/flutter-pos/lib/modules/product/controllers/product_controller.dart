@@ -105,21 +105,15 @@ class ProductController extends GetxController {
         existing?.idKategori ?? categories.firstOrNull?.idKategori;
     selectedStatus.value = existing?.status ?? true;
 
-    Get.dialog(
-      AlertDialog(
-        title: Text(existing == null ? 'Add Product' : 'Edit Product'),
-        content: ProductForm(controller: this, existing: existing),
-        actions: [
-          TextButton(
-            onPressed: () => Get.back(),
-            child: const Text('Cancel'),
-          ),
-          AppButton(
-            label: 'Save',
-            onPressed: () => createOrUpdate(existing),
-          ),
-        ],
-      ),
+    AppDialog.form(
+      title: existing == null ? 'Add Product' : 'Edit Product',
+      icon: Icons.fastfood_rounded,
+      maxWidth: 440,
+      content: ProductForm(controller: this, existing: existing),
+      onConfirm: () async {
+        await createOrUpdate(existing);
+        return false; // createOrUpdate handles closing dialog on success
+      },
     );
   }
 

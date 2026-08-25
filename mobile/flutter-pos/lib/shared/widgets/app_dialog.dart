@@ -49,6 +49,30 @@ class AppDialog {
       _GlassInfoDialog(title: title, message: message),
     );
   }
+
+  static Future<T?> form<T>({
+    required String title,
+    required Widget content,
+    String confirmText = 'Save',
+    String cancelText = 'Cancel',
+    IconData? icon,
+    double? maxWidth,
+    Future<bool> Function()? onConfirm,
+    List<Widget>? customActions,
+  }) {
+    return Get.dialog<T>(
+      _GlassFormDialog<T>(
+        title: title,
+        content: content,
+        confirmText: confirmText,
+        cancelText: cancelText,
+        icon: icon,
+        maxWidth: maxWidth,
+        onConfirm: onConfirm,
+        customActions: customActions,
+      ),
+    );
+  }
 }
 
 class _GlassConfirmDialog extends StatelessWidget {
@@ -195,6 +219,140 @@ class _GlassInfoDialog extends StatelessWidget {
               Text(message, style: Theme.of(context).textTheme.bodyMedium),
               SizedBox(height: AppDimensions.lg.h),
               AppButton(label: 'OK', onPressed: () => Get.back()),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _GlassFormDialog<T> extends StatefulWidget {
+  final String title;
+  final Widget content;
+  final String confirmText;
+  final String cancelText;
+  final IconData? icon;
+  final double? maxWidth;
+  final Future<bool> Function()? onConfirm;
+  final List<Widget>? customActions;
+
+  const _GlassFormDialog({
+    required this.title,
+    required this.content,
+    required this.confirmText,
+    required this.cancelText,
+    this.icon,
+    this.maxWidth,
+    this.onConfirm,
+    this.customActions,
+  });
+
+  @override
+  State<_GlassFormDialog<T>> createState() => _GlassFormDialogState<T>();
+}
+
+class _GlassFormDialogState<T> extends State<_GlassFormDialog<T>> {
+  bool _loading = false;
+
+  Future<void> _handleConfirm() async {
+    if (widget.onConfirm == null) {
+      Get.back(result: true);
+      return;
+    }
+    setState(() => _loading = true);
+    try {
+      final success = await widget.onConfirm!();
+      if (success && mounted) {
+        Get.back(result: true);
+      }
+    } catch (_) {
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      backgroundColor: Colors.transparent,
+      insetPadding: EdgeInsets.symmetric(
+        horizontal: 20.w,
+        vertical: 24.h,
+      ),
+      child: ConstrainedBox(
+        constraints: BoxConstraints(maxWidth: widget.maxWidth ?? 460.w),
+        child: GlassPanel(
+          radius: AppDimensions.radiusXl,
+          strong: true,
+          padding: EdgeInsets.all(AppDimensions.lg.r),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(
+                children: [
+                  if (widget.icon != null) ...[
+                    Container(
+                      width: 38.r,
+                      height: 38.r,
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        gradient: AppColors.salmonGradient,
+                        borderRadius: BorderRadius.circular(10.r),
+                        boxShadow: AppColors.shadowSm,
+                      ),
+                      child: Icon(widget.icon, color: Colors.white, size: 20.sp),
+                    ),
+                    SizedBox(width: 12.w),
+                  ],
+                  Expanded(
+                    child: Text(
+                      widget.title,
+                      style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.ink,
+                          ),
+                    ),
+                  ),
+                  IconButton(
+                    icon: Icon(Icons.close_rounded, size: 20.sp, color: AppColors.inkMuted),
+                    onPressed: () => Get.back(result: false),
+                  ),
+                ],
+              ),
+              SizedBox(height: 16.h),
+              Flexible(
+                child: SingleChildScrollView(
+                  child: widget.content,
+                ),
+              ),
+              SizedBox(height: 20.h),
+              if (widget.customActions != null)
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: widget.customActions!,
+                )
+              else
+                Row(
+                  children: [
+                    Expanded(
+                      child: AppButton(
+                        label: widget.cancelText,
+                        primary: false,
+                        onPressed: () => Get.back(result: false),
+                      ),
+                    ),
+                    SizedBox(width: 12.w),
+                    Expanded(
+                      child: AppButton(
+                        label: widget.confirmText,
+                        loading: _loading,
+                        onPressed: _handleConfirm,
+                      ),
+                    ),
+                  ],
+                ),
             ],
           ),
         ),

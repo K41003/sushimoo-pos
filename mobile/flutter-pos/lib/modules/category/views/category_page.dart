@@ -21,8 +21,14 @@ class CategoryPage extends GetView<CategoryController> {
       title: 'Category',
       currentRoute: AppRoutes.category,
       actions: [
-        IconButton(
-          icon: const Icon(Icons.add),
+        AppHeaderSearchField(
+          hint: 'Search category...',
+          width: 180.w,
+          onChanged: controller.onSearchChanged,
+        ),
+        AppGlassActionButton(
+          icon: Icons.add,
+          tooltip: 'Add Category',
           onPressed: () => controller.openForm(null),
         ),
       ],
@@ -30,12 +36,6 @@ class CategoryPage extends GetView<CategoryController> {
         padding: EdgeInsets.all(24.w),
         child: Column(
           children: [
-            AppTextField(
-              label: 'Search',
-              hint: 'Search category...',
-              onChanged: controller.onSearchChanged,
-            ),
-            SizedBox(height: 16.h),
             Expanded(
               child: Obx(() {
                 if (controller.loading.value) {

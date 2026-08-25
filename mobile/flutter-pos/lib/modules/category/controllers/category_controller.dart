@@ -71,21 +71,15 @@ class CategoryController extends GetxController {
     descController.text = existing?.deskripsi ?? '';
     selectedStatus.value = existing?.status ?? true;
 
-    Get.dialog(
-      AlertDialog(
-        title: Text(existing == null ? 'Add Category' : 'Edit Category'),
-        content: CategoryForm(controller: this, existing: existing),
-        actions: [
-          TextButton(
-            onPressed: () => Get.back(),
-            child: const Text('Cancel'),
-          ),
-          AppButton(
-            label: 'Save',
-            onPressed: () => createOrUpdate(existing),
-          ),
-        ],
-      ),
+    AppDialog.form(
+      title: existing == null ? 'Add Category' : 'Edit Category',
+      icon: Icons.category_rounded,
+      maxWidth: 440,
+      content: CategoryForm(controller: this, existing: existing),
+      onConfirm: () async {
+        await createOrUpdate(existing);
+        return false; // createOrUpdate handles closing dialog on success
+      },
     );
   }
 

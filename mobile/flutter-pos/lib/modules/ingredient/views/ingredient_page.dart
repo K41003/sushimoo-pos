@@ -20,69 +20,60 @@ class IngredientPage extends GetView<IngredientController> {
       title: 'Ingredient',
       currentRoute: AppRoutes.ingredient,
       actions: [
-        SizedBox(
-          width: 220.w,
-          child: AppTextField(
-            hint: 'Search...',
-            onChanged: controller.setSearch,
-          ),
+        AppHeaderSearchField(
+          hint: 'Search ingredient...',
+          width: 170.w,
+          onChanged: controller.setSearch,
+        ),
+        AppGlassActionButton(
+          icon: Icons.add,
+          tooltip: 'Add Ingredient',
+          onPressed: () => controller.save(null),
         ),
       ],
-      body: Stack(
-        children: [
-          Obx(() {
-            if (controller.loading.value) return const AppLoading();
-            if (controller.items.isEmpty) {
-              return const AppEmptyState(message: 'No ingredients found');
-            }
-            return ListView.separated(
-              padding: EdgeInsets.all(AppDimensions.marginTablet.w),
-              itemCount: controller.items.length,
-              separatorBuilder: (_, __) => SizedBox(height: 10.h),
-              itemBuilder: (_, i) {
-                final it = controller.items[i];
-                return GlassPanel(
-                  radius: AppDimensions.radiusLg,
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(it.namaBahan, style: Theme.of(context).textTheme.headlineSmall),
-                            SizedBox(height: 4.h),
-                            Text(
-                              '${it.satuan} • Min ${it.minimalStok}',
-                              style: Theme.of(context).textTheme.bodySmall,
-                            ),
-                          ],
+      body: Obx(() {
+        if (controller.loading.value) return const AppLoading();
+        if (controller.items.isEmpty) {
+          return const AppEmptyState(message: 'No ingredients found');
+        }
+        return ListView.separated(
+          padding: EdgeInsets.all(AppDimensions.marginTablet.w),
+          itemCount: controller.items.length,
+          separatorBuilder: (_, __) => SizedBox(height: 10.h),
+          itemBuilder: (_, i) {
+            final it = controller.items[i];
+            return GlassPanel(
+              radius: AppDimensions.radiusLg,
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(it.namaBahan, style: Theme.of(context).textTheme.headlineSmall),
+                        SizedBox(height: 4.h),
+                        Text(
+                          '${it.satuan} • Min ${it.minimalStok}',
+                          style: Theme.of(context).textTheme.bodySmall,
                         ),
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.edit_outlined),
-                        onPressed: () => controller.save(it),
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.delete_outline),
-                        color: AppColors.danger,
-                        onPressed: () => controller.delete(it.idBahan),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                );
-              },
+                  IconButton(
+                    icon: const Icon(Icons.edit_outlined),
+                    onPressed: () => controller.save(it),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.delete_outline),
+                    color: AppColors.danger,
+                    onPressed: () => controller.delete(it.idBahan),
+                  ),
+                ],
+              ),
             );
-          }),
-          Positioned(
-            right: 16.w,
-            bottom: 16.h,
-            child: FloatingActionButton(
-              onPressed: () => controller.save(null),
-              child: const Icon(Icons.add),
-            ),
-          ),
-        ],
-      ),
+          },
+        );
+      }),
     );
   }
 }

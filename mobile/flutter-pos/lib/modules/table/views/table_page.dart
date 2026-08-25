@@ -28,6 +28,13 @@ class TablePage extends GetView<TableController> {
     return AppScaffold(
       title: 'Table',
       currentRoute: AppRoutes.table,
+      actions: [
+        AppGlassActionButton(
+          icon: Icons.add,
+          tooltip: 'Add Table',
+          onPressed: () => controller.save(null),
+        ),
+      ],
       body: Stack(
         children: [
           Obx(() {
@@ -54,14 +61,6 @@ class TablePage extends GetView<TableController> {
               ],
             );
           }),
-          Positioned(
-            right: 16.w,
-            bottom: 16.h,
-            child: FloatingActionButton(
-              onPressed: () => controller.save(null),
-              child: const Icon(Icons.add),
-            ),
-          ),
         ],
       ),
     );

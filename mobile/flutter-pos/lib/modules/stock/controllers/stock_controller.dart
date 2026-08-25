@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import '../../../app/constants/colors.dart';
+import '../../../app/constants/decorations.dart';
+import '../../../app/constants/dimensions.dart';
 import '../../../app/services/api_client.dart';
 import '../../../data/models/ingredient.dart';
 import '../../../data/models/stock.dart';
@@ -69,54 +72,68 @@ class StockController extends GetxController {
     final jumlah = TextEditingController();
     final formKey = GlobalKey<FormState>();
 
-    final result = await Get.dialog<bool>(
-      AlertDialog(
-        title: const Text('Add Stock Adjustment'),
-        content: Form(
-          key: formKey,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Obx(() => InputDecorator(
-                    decoration: const InputDecoration(labelText: 'Ingredient'),
+    final result = await AppDialog.form<bool>(
+      title: 'Add Stock Adjustment',
+      icon: Icons.inventory_2_rounded,
+      maxWidth: 440.w,
+      content: Form(
+        key: formKey,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              'Ingredient',
+              style: TextStyle(
+                fontSize: 13.sp,
+                fontWeight: FontWeight.w600,
+                color: AppColors.inkMuted,
+              ),
+            ),
+            SizedBox(height: 6.h),
+            Obx(() => Container(
+                  padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 4.h),
+                  decoration: AppDecorations.control(radius: AppDimensions.radiusMd),
+                  child: DropdownButtonHideUnderline(
                     child: DropdownButton<Ingredient>(
                       isExpanded: true,
                       value: selected.value,
-                      hint: const Text('Select ingredient'),
+                      hint: Text('Select ingredient',
+                          style: TextStyle(color: AppColors.inkFaint, fontSize: 13.5.sp)),
+                      icon: const Icon(Icons.keyboard_arrow_down_rounded, color: AppColors.inkMuted),
                       items: ingredients
                           .map((e) => DropdownMenuItem(
                                 value: e,
-                                child: Text(e.namaBahan),
+                                child: Text(
+                                  '${e.namaBahan} (${e.satuan})',
+                                  style: TextStyle(fontSize: 13.5.sp, color: AppColors.ink),
+                                ),
                               ))
                           .toList(),
                       onChanged: (v) => selected.value = v,
                     ),
-                  )),
-              SizedBox(height: 12.h),
-              AppTextField(
-                label: 'Jumlah',
-                controller: jumlah,
-                keyboardType:
-                    const TextInputType.numberWithOptions(decimal: true),
-                validator: (v) =>
-                    (v == null || v.isEmpty) ? 'Required' : null,
-              ),
-            ],
-          ),
+                  ),
+                )),
+            SizedBox(height: 14.h),
+            AppTextField(
+              label: 'Jumlah',
+              controller: jumlah,
+              keyboardType:
+                  const TextInputType.numberWithOptions(decimal: true),
+              validator: (v) =>
+                  (v == null || v.isEmpty) ? 'Required' : null,
+            ),
+          ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Get.back(result: false),
-            child: const Text('Cancel'),
-          ),
-          AppButton(
-            label: 'Add',
-            onPressed: () {
-              if (formKey.currentState!.validate()) Get.back(result: true);
-            },
-          ),
-        ],
       ),
+      onConfirm: () async {
+        if (selected.value == null) {
+          EasyLoading.showError('Please select an ingredient');
+          return false;
+        }
+        if (!formKey.currentState!.validate()) return false;
+        return true;
+      },
     );
     if (result != true || selected.value == null) return;
 
@@ -147,32 +164,25 @@ class StockController extends GetxController {
         TextEditingController(text: stock.jumlah.toString());
     final formKey = GlobalKey<FormState>();
 
-    final result = await Get.dialog<bool>(
-      AlertDialog(
-        title: const Text('Update Stock'),
-        content: Form(
-          key: formKey,
-          child: AppTextField(
-            label: 'Jumlah',
-            controller: jumlah,
-            keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            validator: (v) =>
-                (v == null || v.isEmpty) ? 'Required' : null,
-          ),
+    final result = await AppDialog.form<bool>(
+      title: 'Update Stock (${stock.ingredient?.namaBahan ?? 'Item'})',
+      icon: Icons.edit_note_rounded,
+      maxWidth: 400.w,
+      confirmText: 'Update',
+      content: Form(
+        key: formKey,
+        child: AppTextField(
+          label: 'Jumlah (${stock.ingredient?.satuan ?? ''})',
+          controller: jumlah,
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          validator: (v) =>
+              (v == null || v.isEmpty) ? 'Required' : null,
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Get.back(result: false),
-            child: const Text('Cancel'),
-          ),
-          AppButton(
-            label: 'Update',
-            onPressed: () {
-              if (formKey.currentState!.validate()) Get.back(result: true);
-            },
-          ),
-        ],
       ),
+      onConfirm: () async {
+        if (!formKey.currentState!.validate()) return false;
+        return true;
+      },
     );
     if (result != true) return;
 

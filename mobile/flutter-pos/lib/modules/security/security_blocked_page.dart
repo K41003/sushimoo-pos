@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import '../../app/constants/colors.dart';
+import '../../app/constants/dimensions.dart';
+import '../../shared/widgets/glass_panel.dart';
 
 /// Halaman terminal — tidak ada tombol "lanjutkan", tidak ada navigasi
 /// balik. Ditampilkan saat DeviceIntegrityService mendeteksi
@@ -16,30 +20,51 @@ class SecurityBlockedPage extends StatelessWidget {
     return PopScope(
       canPop: false, // cegah back-button menutup halaman blocking ini
       child: Scaffold(
-        backgroundColor: const Color(0xFF10182B),
-        body: SafeArea(
-          child: Center(
-            child: Padding(
-              padding: const EdgeInsets.all(32),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(Icons.shield_outlined, color: Colors.white70, size: 56),
-                  const SizedBox(height: 24),
-                  const Text(
-                    'Akses Ditolak',
-                    style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold),
+        body: GlassBackground(
+          child: SafeArea(
+            child: Center(
+              child: Padding(
+                padding: EdgeInsets.all(AppDimensions.marginTablet.w),
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(maxWidth: 440.w),
+                  child: GlassPanel(
+                    radius: AppDimensions.radiusXl,
+                    strong: true,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          width: 72.r,
+                          height: 72.r,
+                          decoration: BoxDecoration(
+                            gradient: AppColors.salmonGradient,
+                            shape: BoxShape.circle,
+                            boxShadow: AppColors.shadowSalmon,
+                          ),
+                          child: Icon(Icons.shield_outlined, color: Colors.white, size: 36.sp),
+                        ),
+                        SizedBox(height: 20.h),
+                        Text(
+                          'Akses Ditolak',
+                          style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.ink,
+                              ),
+                        ),
+                        SizedBox(height: 12.h),
+                        Text(
+                          message,
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: AppColors.inkMuted,
+                            fontSize: 14.sp,
+                            height: 1.5,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                  const SizedBox(height: 12),
-                  Text(
-                    message,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(color: Colors.white70, fontSize: 14, height: 1.5),
-                  ),
-                ],
+                ),
               ),
             ),
           ),
@@ -48,3 +73,4 @@ class SecurityBlockedPage extends StatelessWidget {
     );
   }
 }
+

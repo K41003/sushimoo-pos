@@ -16,6 +16,9 @@ class AppTextField extends StatefulWidget {
   final String? Function(String?)? validator;
   final void Function(String)? onChanged;
   final int maxLines;
+  final bool dense;
+  final Widget? prefixIcon;
+  final Widget? suffixIcon;
 
   const AppTextField({
     super.key,
@@ -27,6 +30,9 @@ class AppTextField extends StatefulWidget {
     this.validator,
     this.onChanged,
     this.maxLines = 1,
+    this.dense = false,
+    this.prefixIcon,
+    this.suffixIcon,
   });
 
   @override
@@ -53,6 +59,7 @@ class _AppTextFieldState extends State<AppTextField> {
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
       children: [
         if (widget.label != null)
           Padding(
@@ -87,21 +94,154 @@ class _AppTextFieldState extends State<AppTextField> {
             onChanged: widget.onChanged,
             maxLines: widget.maxLines,
             style: TextStyle(
-              fontSize: 16.sp,
+              fontSize: 15.sp,
               fontWeight: FontWeight.w500,
               color: AppColors.ink,
             ),
             decoration: InputDecoration(
+              isDense: widget.dense,
               hintText: widget.hint,
+              hintStyle: TextStyle(
+                fontSize: 14.sp,
+                color: AppColors.inkFaint,
+                fontWeight: FontWeight.w400,
+              ),
+              prefixIcon: widget.prefixIcon,
+              suffixIcon: widget.suffixIcon,
               border: InputBorder.none,
               enabledBorder: InputBorder.none,
               focusedBorder: InputBorder.none,
               filled: false,
-              contentPadding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 16.h),
+              contentPadding: EdgeInsets.symmetric(
+                horizontal: 16.w,
+                vertical: widget.dense ? 10.h : 14.h,
+              ),
             ),
           ),
         ),
       ],
+    );
+  }
+}
+
+/// Compact glassmorphic search input field designed specifically for
+/// header action bars and compact toolbars.
+/// Fixed 36px height with perfect vertical centering, search icon prefix,
+/// clear button, and focus styling.
+class AppHeaderSearchField extends StatefulWidget {
+  final String hint;
+  final ValueChanged<String>? onChanged;
+  final VoidCallback? onClear;
+  final double? width;
+  final TextEditingController? controller;
+
+  const AppHeaderSearchField({
+    super.key,
+    this.hint = 'Search...',
+    this.onChanged,
+    this.onClear,
+    this.width,
+    this.controller,
+  });
+
+  @override
+  State<AppHeaderSearchField> createState() => _AppHeaderSearchFieldState();
+}
+
+class _AppHeaderSearchFieldState extends State<AppHeaderSearchField> {
+  late final TextEditingController _controller;
+  late final bool _internalController;
+  final FocusNode _focusNode = FocusNode();
+  bool _focused = false;
+  bool _hasText = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _internalController = widget.controller == null;
+    _controller = widget.controller ?? TextEditingController();
+    _hasText = _controller.text.isNotEmpty;
+    _controller.addListener(_onTextChanged);
+    _focusNode.addListener(() => setState(() => _focused = _focusNode.hasFocus));
+  }
+
+  void _onTextChanged() {
+    final has = _controller.text.isNotEmpty;
+    if (has != _hasText) {
+      setState(() => _hasText = has);
+    }
+  }
+
+  @override
+  void dispose() {
+    _focusNode.dispose();
+    _controller.removeListener(_onTextChanged);
+    if (_internalController) {
+      _controller.dispose();
+    }
+    super.dispose();
+  }
+
+  void _handleClear() {
+    _controller.clear();
+    widget.onChanged?.call('');
+    widget.onClear?.call();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: widget.width ?? 180.w,
+      height: 36,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.55),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: _focused ? AppColors.salmon : AppColors.glassBorder(opacity: 0.7),
+          width: _focused ? 1.4 : 1.0,
+        ),
+        boxShadow: _focused ? AppColors.shadowSm : null,
+      ),
+      child: TextField(
+        controller: _controller,
+        focusNode: _focusNode,
+        onChanged: widget.onChanged,
+        style: TextStyle(
+          fontSize: 13.sp,
+          fontWeight: FontWeight.w500,
+          color: AppColors.ink,
+        ),
+        textAlignVertical: TextAlignVertical.center,
+        decoration: InputDecoration(
+          isDense: true,
+          hintText: widget.hint,
+          hintStyle: TextStyle(
+            fontSize: 13.sp,
+            color: AppColors.inkFaint,
+            fontWeight: FontWeight.w400,
+          ),
+          prefixIcon: Icon(
+            Icons.search_rounded,
+            size: 18.sp,
+            color: _focused ? AppColors.salmon : AppColors.inkMuted,
+          ),
+          prefixIconConstraints: const BoxConstraints(minWidth: 32, minHeight: 36),
+          suffixIcon: _hasText
+              ? IconButton(
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(minWidth: 28, minHeight: 36),
+                  icon: Icon(Icons.close_rounded, size: 16.sp, color: AppColors.inkMuted),
+                  onPressed: _handleClear,
+                )
+              : null,
+          suffixIconConstraints: const BoxConstraints(minWidth: 28, minHeight: 36),
+          border: InputBorder.none,
+          enabledBorder: InputBorder.none,
+          focusedBorder: InputBorder.none,
+          contentPadding: const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
+        ),
+      ),
     );
   }
 }

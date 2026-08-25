@@ -53,51 +53,44 @@ class IngredientController extends GetxController {
     );
     final formKey = GlobalKey<FormState>();
 
-    final result = await Get.dialog<bool>(
-      AlertDialog(
-        title: Text(existing == null ? 'Add Ingredient' : 'Edit Ingredient'),
-        content: Form(
-          key: formKey,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              AppTextField(
-                label: 'Nama Bahan',
-                controller: nama,
-                validator: (v) =>
-                    (v == null || v.isEmpty) ? 'Required' : null,
-              ),
-              SizedBox(height: 12.h),
-              AppTextField(
-                label: 'Satuan',
-                controller: satuan,
-                validator: (v) =>
-                    (v == null || v.isEmpty) ? 'Required' : null,
-              ),
-              SizedBox(height: 12.h),
-              AppTextField(
-                label: 'Minimal Stok',
-                controller: minimal,
-                keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                validator: (v) =>
-                    (v == null || v.isEmpty) ? 'Required' : null,
-              ),
-            ],
-          ),
+    final result = await AppDialog.form<bool>(
+      title: existing == null ? 'Add Ingredient' : 'Edit Ingredient',
+      icon: Icons.egg_alt_rounded,
+      maxWidth: 420.w,
+      content: Form(
+        key: formKey,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            AppTextField(
+              label: 'Nama Bahan',
+              controller: nama,
+              validator: (v) =>
+                  (v == null || v.isEmpty) ? 'Required' : null,
+            ),
+            SizedBox(height: 14.h),
+            AppTextField(
+              label: 'Satuan (e.g. gram, ml, pcs)',
+              controller: satuan,
+              validator: (v) =>
+                  (v == null || v.isEmpty) ? 'Required' : null,
+            ),
+            SizedBox(height: 14.h),
+            AppTextField(
+              label: 'Minimal Stok',
+              controller: minimal,
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              validator: (v) =>
+                  (v == null || v.isEmpty) ? 'Required' : null,
+            ),
+          ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Get.back(result: false),
-            child: const Text('Cancel'),
-          ),
-          AppButton(
-            label: 'Save',
-            onPressed: () {
-              if (formKey.currentState!.validate()) Get.back(result: true);
-            },
-          ),
-        ],
       ),
+      onConfirm: () async {
+        if (!formKey.currentState!.validate()) return false;
+        return true;
+      },
     );
     if (result != true) return;
 

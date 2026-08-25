@@ -95,10 +95,37 @@ class PosPage extends GetView<PosController> {
         Positioned(
           right: AppDimensions.md.w,
           bottom: AppDimensions.md.h,
-          child: FloatingActionButton.extended(
-            onPressed: () => _showCartSheet(context, c),
-            label: Text('Cart (${c.cart.length})'),
-            icon: const Icon(Icons.shopping_bag_outlined),
+          child: Container(
+            decoration: BoxDecoration(
+              gradient: AppColors.salmonGradient,
+              borderRadius: BorderRadius.circular(AppDimensions.radiusFull.r),
+              boxShadow: AppColors.shadowSalmon,
+            ),
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: () => _showCartSheet(context, c),
+                borderRadius: BorderRadius.circular(AppDimensions.radiusFull.r),
+                child: Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 14.h),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.shopping_bag_outlined, color: Colors.white, size: 20),
+                      SizedBox(width: 8.w),
+                      Text(
+                        'Cart (${c.cart.length})',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14.sp,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
           ),
         ),
       ],

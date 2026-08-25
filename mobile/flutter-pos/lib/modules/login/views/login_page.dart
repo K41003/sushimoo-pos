@@ -86,10 +86,12 @@ class LoginPage extends GetView<LoginController> {
         children: [
           Row(
             children: [
-              const StatusChip(status: 'open'),
               const Spacer(),
-              Text('Cashier Login',
-                  style: Theme.of(context).textTheme.headlineSmall),
+              Text(
+                'Login',
+                style: Theme.of(context).textTheme.headlineSmall,
+              ),
+              const Spacer(),
             ],
           ),
           SizedBox(height: 24.h),

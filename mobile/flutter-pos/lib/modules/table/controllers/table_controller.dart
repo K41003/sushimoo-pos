@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import '../../../app/constants/colors.dart';
+import '../../../app/constants/decorations.dart';
+import '../../../app/constants/dimensions.dart';
 import '../../../app/services/api_client.dart';
 import '../../../data/models/table.dart' as tm;
 import '../../../data/response/api_response.dart';
@@ -64,61 +67,74 @@ class TableController extends GetxController {
     final status = (existing?.status ?? statusOptions.first).obs;
     final formKey = GlobalKey<FormState>();
 
-    final result = await Get.dialog<bool>(
-      AlertDialog(
-        title: Text(existing == null ? 'Add Table' : 'Edit Table'),
-        content: Form(
-          key: formKey,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              AppTextField(
-                label: 'Nomor Meja',
-                controller: nomor,
-                validator: (v) =>
-                    (v == null || v.isEmpty) ? 'Required' : null,
+    final result = await AppDialog.form<bool>(
+      title: existing == null ? 'Add Table' : 'Edit Table',
+      icon: Icons.table_restaurant_rounded,
+      maxWidth: 420.w,
+      content: Form(
+        key: formKey,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            AppTextField(
+              label: 'Nomor Meja',
+              controller: nomor,
+              validator: (v) =>
+                  (v == null || v.isEmpty) ? 'Required' : null,
+            ),
+            SizedBox(height: 14.h),
+            AppTextField(
+              label: 'Kapasitas',
+              controller: kapasitas,
+              keyboardType: TextInputType.number,
+              validator: (v) =>
+                  (v == null || v.isEmpty) ? 'Required' : null,
+            ),
+            SizedBox(height: 14.h),
+            Text(
+              'Status Meja',
+              style: TextStyle(
+                fontSize: 13.sp,
+                fontWeight: FontWeight.w600,
+                color: AppColors.inkMuted,
               ),
-              SizedBox(height: 12.h),
-              AppTextField(
-                label: 'Kapasitas',
-                controller: kapasitas,
-                keyboardType: TextInputType.number,
-                validator: (v) =>
-                    (v == null || v.isEmpty) ? 'Required' : null,
-              ),
-              SizedBox(height: 12.h),
-              Obx(() => InputDecorator(
-                    decoration: const InputDecoration(labelText: 'Status'),
+            ),
+            SizedBox(height: 6.h),
+            Obx(() => Container(
+                  padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 4.h),
+                  decoration: AppDecorations.control(radius: AppDimensions.radiusMd),
+                  child: DropdownButtonHideUnderline(
                     child: DropdownButton<String>(
                       isExpanded: true,
                       value: status.value,
+                      icon: const Icon(Icons.keyboard_arrow_down_rounded, color: AppColors.inkMuted),
                       items: statusOptions
                           .map((s) => DropdownMenuItem(
                                 value: s,
-                                child: Text(s),
+                                child: Text(
+                                  s.toUpperCase(),
+                                  style: TextStyle(
+                                    fontSize: 13.5.sp,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppColors.ink,
+                                  ),
+                                ),
                               ))
                           .toList(),
                       onChanged: (v) {
                         if (v != null) status.value = v;
                       },
                     ),
-                  )),
-            ],
-          ),
+                  ),
+                )),
+          ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Get.back(result: false),
-            child: const Text('Cancel'),
-          ),
-          AppButton(
-            label: 'Save',
-            onPressed: () {
-              if (formKey.currentState!.validate()) Get.back(result: true);
-            },
-          ),
-        ],
       ),
+      onConfirm: () async {
+        if (!formKey.currentState!.validate()) return false;
+        return true;
+      },
     );
     if (result != true) return;
 

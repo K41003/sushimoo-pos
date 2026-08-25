@@ -28,7 +28,7 @@ class ReportPage extends GetView<ReportController> {
             children: [
               _card('Daily Sales', controller.daily['sales'] ?? 0),
               SizedBox(height: 10.h),
-              _card('Daily Orders', controller.daily['orders'] ?? 0),
+              _card('Daily Orders', controller.daily['orders'] ?? 0, isCurrency: false),
               SizedBox(height: 10.h),
               _card('Daily Cash', controller.daily['cash'] ?? 0),
               SizedBox(height: 10.h),
@@ -54,7 +54,11 @@ class ReportPage extends GetView<ReportController> {
     );
   }
 
-  Widget _card(String label, dynamic value) {
+  Widget _card(String label, dynamic value, {bool isCurrency = true}) {
+    final numVal = value is num ? value : (num.tryParse(value?.toString() ?? '') ?? 0);
+    final textValue = isCurrency
+        ? 'Rp ${numVal.toStringAsFixed(0)}'
+        : numVal.toStringAsFixed(0);
     return GlassPanel(
       radius: AppDimensions.radiusLg,
       padding: EdgeInsets.all(16.r),
@@ -62,7 +66,7 @@ class ReportPage extends GetView<ReportController> {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(label, style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14.sp)),
-          Text('Rp ${(value is num ? value : 0).toStringAsFixed(0)}',
+          Text(textValue,
               style: TextStyle(fontSize: 18.sp, fontWeight: FontWeight.bold, color: AppColors.salmonDark)),
         ],
       ),

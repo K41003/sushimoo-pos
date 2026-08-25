@@ -20,8 +20,14 @@ class ProductPage extends GetView<ProductController> {
       title: 'Product',
       currentRoute: AppRoutes.product,
       actions: [
-        IconButton(
-          icon: const Icon(Icons.add),
+        AppHeaderSearchField(
+          hint: 'Search product...',
+          width: 180.w,
+          onChanged: controller.onSearchChanged,
+        ),
+        AppGlassActionButton(
+          icon: Icons.add,
+          tooltip: 'Add Product',
           onPressed: () => controller.openForm(null),
         ),
       ],
@@ -29,12 +35,6 @@ class ProductPage extends GetView<ProductController> {
         padding: EdgeInsets.all(24.w),
         child: Column(
           children: [
-            AppTextField(
-              label: 'Search',
-              hint: 'Search product...',
-              onChanged: controller.onSearchChanged,
-            ),
-            SizedBox(height: 16.h),
             Obx(() => SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
                   child: Row(
