@@ -5,7 +5,12 @@ import '../../../app/services/printer_service.dart';
 import '../../../data/models/closing.dart';
 import '../../../data/models/shift.dart';
 import '../../../data/response/api_response.dart';
+import '../../../shared/widgets/app_dialog.dart';
 
+/// UI CHANGE: `doClosing()` used to open a `Get.defaultDialog` — GetX's
+/// stock dialog, visually inconsistent with the rest of the app. Swapped
+/// to `AppDialog.confirm` (glass panel + gradient CTA) to match every
+/// other confirmation dialog in the app.
 class ClosingController extends GetxController {
   final ApiClient _api = ApiClient.to;
   final activeShift = Rx<Shift?>(null);
@@ -39,13 +44,10 @@ class ClosingController extends GetxController {
       EasyLoading.showError('No active shift');
       return;
     }
-    final confirmed = await Get.defaultDialog<bool>(
+    final confirmed = await AppDialog.confirm(
       title: 'Closing Kasir',
-      middleText: 'Generate closing report for this shift?',
-      textConfirm: 'Close',
-      textCancel: 'Cancel',
-      onConfirm: () => Get.back(result: true),
-      onCancel: () => Get.back(result: false),
+      message: 'Generate closing report for this shift?',
+      confirmText: 'Close',
     );
     if (confirmed != true) return;
 

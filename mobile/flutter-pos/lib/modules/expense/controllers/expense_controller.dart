@@ -5,7 +5,12 @@ import '../../../app/services/api_client.dart';
 import '../../../app/services/storage_service.dart';
 import '../../../data/models/expense.dart';
 import '../../../data/response/api_response.dart';
+import '../../../shared/widgets/app_dialog.dart';
 
+/// UI CHANGE: `delete()` used to open a `Get.defaultDialog` — swapped to
+/// `AppDialog.confirm(destructive: true)` so this delete confirmation
+/// gets the same glass panel + red confirm button used by every other
+/// delete action in the app (Table/Stock/Ingredient/Category/Product).
 class ExpenseController extends GetxController {
   final ApiClient _api = ApiClient.to;
   final items = <Expense>[].obs;
@@ -72,13 +77,11 @@ class ExpenseController extends GetxController {
   }
 
   Future<void> delete(int id) async {
-    final confirmed = await Get.defaultDialog<bool>(
+    final confirmed = await AppDialog.confirm(
       title: 'Delete Expense',
-      middleText: 'Are you sure?',
-      textConfirm: 'Delete',
-      textCancel: 'Cancel',
-      onConfirm: () => Get.back(result: true),
-      onCancel: () => Get.back(result: false),
+      message: 'Are you sure you want to delete this expense record?',
+      confirmText: 'Delete',
+      destructive: true,
     );
     if (confirmed != true) return;
     EasyLoading.show(status: 'Deleting...');

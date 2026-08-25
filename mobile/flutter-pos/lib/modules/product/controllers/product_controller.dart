@@ -168,6 +168,7 @@ class ProductController extends GetxController {
       title: 'Delete Product',
       message: 'Are you sure you want to delete this product?',
       confirmText: 'Delete',
+      destructive: true,
     );
     if (confirmed != true) return;
 

@@ -123,6 +123,7 @@ class CategoryController extends GetxController {
       title: 'Delete Category',
       message: 'Are you sure you want to delete this category?',
       confirmText: 'Delete',
+      destructive: true,
     );
     if (confirmed != true) return;
 

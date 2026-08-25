@@ -129,6 +129,8 @@ class IngredientController extends GetxController {
     final confirm = await AppDialog.confirm(
       title: 'Delete Ingredient',
       message: 'Are you sure you want to delete this ingredient?',
+      confirmText: 'Delete',
+      destructive: true,
     );
     if (confirm != true) return;
 

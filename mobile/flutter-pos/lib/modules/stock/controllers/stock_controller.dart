@@ -203,6 +203,8 @@ class StockController extends GetxController {
     final confirm = await AppDialog.confirm(
       title: 'Delete Stock',
       message: 'Are you sure you want to delete this stock entry?',
+      confirmText: 'Delete',
+      destructive: true,
     );
     if (confirm != true) return;
 

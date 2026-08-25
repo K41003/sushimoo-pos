@@ -4,7 +4,15 @@ import 'package:flutter/material.dart';
 import '../../../app/services/api_client.dart';
 import '../../../app/services/storage_service.dart';
 import '../../../data/models/shift.dart';
+import '../../../shared/widgets/app_dialog.dart';
 
+/// UI CHANGE: `closeShift()` used to open a `Get.defaultDialog` — GetX's
+/// own stock dialog helper, which renders as a plain white rounded card
+/// with default text buttons. That's visually inconsistent with every
+/// other confirmation in the app (delete confirmations, etc.), which all
+/// go through [AppDialog.confirm] and get the glass panel + gradient CTA
+/// treatment. Swapped to `AppDialog.confirm` for the same look and to
+/// keep exactly one confirmation-dialog implementation in the codebase.
 class ShiftController extends GetxController {
   final ApiClient _api = ApiClient.to;
   final activeShift = Rx<Shift?>(null);
@@ -80,13 +88,10 @@ class ShiftController extends GetxController {
 
   Future<void> closeShift() async {
     if (activeShift.value == null) return;
-    final confirmed = await Get.defaultDialog<bool>(
+    final confirmed = await AppDialog.confirm(
       title: 'Close Shift',
-      middleText: 'Are you sure you want to close this shift?',
-      textConfirm: 'Close',
-      textCancel: 'Cancel',
-      onConfirm: () => Get.back(result: true),
-      onCancel: () => Get.back(result: false),
+      message: 'Are you sure you want to close this shift?',
+      confirmText: 'Close',
     );
     if (confirmed != true) return;
 

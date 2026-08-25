@@ -150,6 +150,8 @@ class TableController extends GetxController {
     final confirm = await AppDialog.confirm(
       title: 'Delete Table',
       message: 'Are you sure you want to delete this table?',
+      confirmText: 'Delete',
+      destructive: true,
     );
     if (confirm != true) return;
 
