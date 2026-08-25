@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../../app/constants/colors.dart';
+import '../../../app/constants/dimensions.dart';
 import '../../../app/themes/theme.dart';
 import '../../../shared/widgets/glass_panel.dart';
 
@@ -8,6 +9,13 @@ import '../../../shared/widgets/glass_panel.dart';
 /// constructor (`label`, `value`, `icon`). Optional `trend`/`accent`
 /// kept as new opt-in params with safe defaults so old call sites
 /// (`StatCard(label: ..., value: ..., icon: ...)`) still compile.
+///
+/// UI FIX: when `trend` was null, the card used to still render a faint
+/// static `Icons.trending_up` glyph in the top-right corner — a decoration
+/// that looks like it means something ("this is trending up") but
+/// actually carries no data. That's misleading at a glance. The card now
+/// renders nothing in that slot when there's no real trend to show,
+/// instead of a placeholder icon that could be misread as a signal.
 class StatCard extends StatelessWidget {
   final String label;
   final String value;
@@ -27,7 +35,7 @@ class StatCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GlassPanel(
-      padding: EdgeInsets.all(18.r),
+      padding: EdgeInsets.all(AppDimensions.md.r),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -56,12 +64,10 @@ class StatCard extends StatelessWidget {
                       ),
                     ),
                   ],
-                )
-              else
-                Icon(Icons.trending_up, color: AppColors.inkFaint, size: 18.sp),
+                ),
             ],
           ),
-          SizedBox(height: 14.h),
+          SizedBox(height: AppDimensions.sm.h + 2.h),
           Text(value, style: AppTypography.price),
           SizedBox(height: 4.h),
           Text(label, style: Theme.of(context).textTheme.labelLarge),

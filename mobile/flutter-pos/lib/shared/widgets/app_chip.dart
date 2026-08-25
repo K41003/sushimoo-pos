@@ -5,6 +5,20 @@ import '../../app/constants/colors.dart';
 /// REPLACES the old flat `AppChip` 1:1 (same constructor: `label`,
 /// `color`, `onTap`, `selected`). Selected state now fills with the
 /// salmon gradient + glow; unselected stays a quiet frosted pill.
+///
+/// BUG FIX: category chips could appear stuck on the first-selected
+/// category and not visually update when tapping a different one, even
+/// though the underlying `selectedCategoryId` value did change. Root
+/// cause: chips were built without a `Key` inside a `ListView.builder`/
+/// `ListView.separated`. Without a stable key, Flutter's element
+/// reconciliation can match a chip's `AnimatedContainer` state to the
+/// wrong list position when items shift or a rebuild only marks *some*
+/// widgets dirty — the `selected` flag passed in was correct, but a
+/// stale `AnimatedContainer` render object could keep showing its old
+/// interpolated decoration instead of restarting the animation to the
+/// new value. Giving each chip a `ValueKey` tied to its label makes
+/// Flutter track the correct widget identity across rebuilds, so the
+/// `selected` gradient always follows the tapped chip immediately.
 class AppChip extends StatelessWidget {
   final String label;
   final Color? color;
@@ -22,9 +36,11 @@ class AppChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return InkWell(
+      key: key ?? ValueKey('chip_$label'),
       onTap: onTap,
       borderRadius: BorderRadius.circular(9999),
       child: AnimatedContainer(
+        key: ValueKey('chip_container_${label}_$selected'),
         duration: const Duration(milliseconds: 140),
         padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 10.h),
         decoration: BoxDecoration(

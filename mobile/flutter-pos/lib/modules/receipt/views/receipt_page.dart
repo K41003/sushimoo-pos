@@ -10,6 +10,17 @@ import '../controllers/receipt_controller.dart';
 
 /// REPLACES `receipt_page.dart` 1:1 — same class name `ReceiptPage`,
 /// same `GetView<ReceiptController>`.
+///
+/// BUG FIX: this page used to show a hardcoded "Pajak (10%)" label
+/// regardless of the actual tax rate. `AppConstants.taxRate` is 0.0 by
+/// default, so the receipt was printing a tax line with a misleading
+/// percentage next to an amount that was always Rp 0 — confusing for
+/// both the cashier and the customer (looks like a tax was charged when
+/// it wasn't). The tax row now:
+///   1. Shows the real percentage derived from `controller.tax` /
+///      `controller.subtotal` instead of a hardcoded "10%".
+///   2. Is hidden entirely when tax is zero, instead of always
+///      rendering a Rp 0 line that adds visual noise to the receipt.
 class ReceiptPage extends GetView<ReceiptController> {
   const ReceiptPage({super.key});
 
@@ -20,6 +31,10 @@ class ReceiptPage extends GetView<ReceiptController> {
     final theme = Theme.of(context);
     final trx = controller.transaction;
     final pay = controller.payment;
+    final hasTax = controller.tax > 0;
+    final taxPercent = controller.subtotal > 0
+        ? (controller.tax / controller.subtotal * 100)
+        : 0;
 
     return Scaffold(
       body: GlassBackground(
@@ -27,27 +42,32 @@ class ReceiptPage extends GetView<ReceiptController> {
           child: Column(
             children: [
               Padding(
-                padding: EdgeInsets.symmetric(vertical: 12.h),
-                child: Text('Receipt View', style: theme.textTheme.headlineMedium, textAlign: TextAlign.center),
+                padding: EdgeInsets.symmetric(vertical: AppDimensions.sm.h),
+                child: Text('Receipt View',
+                    style: theme.textTheme.headlineMedium,
+                    textAlign: TextAlign.center),
               ),
               Expanded(
                 child: Center(
                   child: SingleChildScrollView(
-                    padding: EdgeInsets.symmetric(horizontal: AppDimensions.marginTablet.w, vertical: 16.h),
+                    padding: EdgeInsets.symmetric(
+                        horizontal: AppDimensions.marginTablet.w,
+                        vertical: AppDimensions.md.h),
                     child: ConstrainedBox(
                       constraints: BoxConstraints(maxWidth: 440.w),
                       child: Column(
                         children: [
                           GlassPanel(
-                            radius: 20,
+                            radius: AppDimensions.radiusLg,
                             strong: true,
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.stretch,
                               children: [
                                 Center(
                                   child: Container(
-                                    margin: EdgeInsets.only(bottom: 16.h),
-                                    padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 6.h),
+                                    margin: EdgeInsets.only(bottom: AppDimensions.md.h),
+                                    padding: EdgeInsets.symmetric(
+                                        horizontal: AppDimensions.sm.w, vertical: 6.h),
                                     decoration: BoxDecoration(
                                       color: AppColors.emerald.withValues(alpha: 0.14),
                                       borderRadius: BorderRadius.circular(AppDimensions.radiusFull),
@@ -96,17 +116,17 @@ class ReceiptPage extends GetView<ReceiptController> {
                                     ],
                                   ),
                                 ),
-                                SizedBox(height: 18.h),
+                                SizedBox(height: AppDimensions.lg.h),
                                 _buildDashedDivider(),
-                                SizedBox(height: 16.h),
+                                SizedBox(height: AppDimensions.md.h),
                                 _buildReceiptRow('Invoice', trx.invoiceNumber, isMonospace: true),
                                 _buildReceiptRow('Tanggal',
                                     trx.tanggal.substring(0, trx.tanggal.length > 16 ? 16 : trx.tanggal.length)),
                                 _buildReceiptRow(
                                     'Table / Layanan', trx.table?.nomorMeja != null ? 'Meja ${trx.table!.nomorMeja}' : 'Takeaway'),
-                                SizedBox(height: 8.h),
+                                SizedBox(height: AppDimensions.xs.h),
                                 _buildDashedDivider(),
-                                SizedBox(height: 16.h),
+                                SizedBox(height: AppDimensions.md.h),
                                 Text('ITEMS ORDERED',
                                     style: theme.textTheme.labelSmall?.copyWith(letterSpacing: 1.5)),
                                 SizedBox(height: 10.h),
@@ -133,9 +153,14 @@ class ReceiptPage extends GetView<ReceiptController> {
                                 ),
                                 SizedBox(height: 6.h),
                                 _buildDashedDivider(),
-                                SizedBox(height: 16.h),
+                                SizedBox(height: AppDimensions.md.h),
                                 _buildReceiptRow('Subtotal', _money(controller.subtotal), isMonospace: true),
-                                _buildReceiptRow('Pajak (10%)', _money(controller.tax), isMonospace: true),
+                                if (hasTax)
+                                  _buildReceiptRow(
+                                    'Pajak (${taxPercent.toStringAsFixed(0)}%)',
+                                    _money(controller.tax),
+                                    isMonospace: true,
+                                  ),
                                 SizedBox(height: 6.h),
                                 Row(
                                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -145,13 +170,13 @@ class ReceiptPage extends GetView<ReceiptController> {
                                         style: TextStyle(fontSize: 20.sp, fontWeight: FontWeight.w800, color: AppColors.salmonDark)),
                                   ],
                                 ),
-                                SizedBox(height: 12.h),
+                                SizedBox(height: AppDimensions.sm.h),
                                 _buildDashedDivider(),
-                                SizedBox(height: 16.h),
+                                SizedBox(height: AppDimensions.md.h),
                                 _buildReceiptRow('Metode Bayar', pay.method?.namaMetode ?? pay.status.toUpperCase()),
                                 _buildReceiptRow('Uang Diterima', _money(pay.uangDiterima), isMonospace: true),
                                 _buildReceiptRow('Uang Kembalian', _money(pay.kembalian), isMonospace: true, isHighlight: true),
-                                SizedBox(height: 14.h),
+                                SizedBox(height: AppDimensions.sm.h + 2.h),
                                 Center(
                                   child: Text(
                                     'Arigatou Gozaimasu!\nSushimoo POS • Thank You for Dining',
@@ -162,7 +187,7 @@ class ReceiptPage extends GetView<ReceiptController> {
                               ],
                             ),
                           ),
-                          SizedBox(height: 24.h),
+                          SizedBox(height: AppDimensions.xl.h),
                           Obx(() => AppButton(
                                 label: 'CETAK STRUK FISIK (PRINTER)',
                                 icon: Icons.print_outlined,
@@ -170,7 +195,7 @@ class ReceiptPage extends GetView<ReceiptController> {
                                 loading: controller.loading.value,
                                 onPressed: controller.reprint,
                               )),
-                          SizedBox(height: 12.h),
+                          SizedBox(height: AppDimensions.sm.h),
                           AppButton(
                             label: 'SELESAI',
                             icon: Icons.check,

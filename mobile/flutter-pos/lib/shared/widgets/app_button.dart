@@ -13,6 +13,14 @@ import '../../app/constants/dimensions.dart';
 /// `primary: false` -> quiet frosted-glass secondary action.
 /// `fullWidth: false` -> shrinks to content, safe inside a Row without
 /// Expanded.
+///
+/// UI FIX: previously the label/icon color for a *disabled secondary*
+/// button (`primary: false`, `onPressed: null`) was full-opacity
+/// `AppColors.ink` — identical to the enabled state — so a disabled
+/// secondary button looked exactly as "clickable" as an active one, with
+/// only a slightly softer border to hint otherwise. Disabled buttons now
+/// dim their label/icon color so the disabled state reads clearly at a
+/// glance, matching how the primary variant already fades its gradient.
 class AppButton extends StatefulWidget {
   final String label;
   final VoidCallback? onPressed;
@@ -47,6 +55,10 @@ class _AppButtonState extends State<AppButton> {
     final h = (widget.height ?? AppDimensions.buttonHeight).h;
     final spinnerColor = widget.primary ? Colors.white : AppColors.ink;
 
+    final labelColor = widget.primary
+        ? Colors.white
+        : (_enabled ? AppColors.ink : AppColors.inkFaint);
+
     final child = widget.loading
         ? SizedBox(
             width: 20.r,
@@ -57,7 +69,7 @@ class _AppButtonState extends State<AppButton> {
             mainAxisSize: MainAxisSize.min,
             children: [
               if (widget.icon != null) ...[
-                Icon(widget.icon, size: 20.sp, color: widget.primary ? Colors.white : AppColors.ink),
+                Icon(widget.icon, size: 20.sp, color: labelColor),
                 SizedBox(width: 8.w),
               ],
               Text(
@@ -65,7 +77,7 @@ class _AppButtonState extends State<AppButton> {
                 style: TextStyle(
                   fontWeight: FontWeight.w700,
                   fontSize: 15.5.sp,
-                  color: widget.primary ? Colors.white : AppColors.ink,
+                  color: labelColor,
                 ),
               ),
             ],
@@ -84,7 +96,7 @@ class _AppButtonState extends State<AppButton> {
           duration: const Duration(milliseconds: 160),
           height: h,
           width: widget.fullWidth ? double.infinity : null,
-          padding: EdgeInsets.symmetric(horizontal: widget.fullWidth ? 0 : 24.w),
+          padding: EdgeInsets.symmetric(horizontal: widget.fullWidth ? 0 : AppDimensions.xl.w),
           alignment: Alignment.center,
           decoration: BoxDecoration(
             gradient: widget.primary
@@ -95,11 +107,14 @@ class _AppButtonState extends State<AppButton> {
                         AppColors.salmonDark.withValues(alpha: 0.35),
                       ]))
                 : null,
-            color: widget.primary ? null : Colors.white.withValues(alpha: 0.5),
+            color: widget.primary ? null : Colors.white.withValues(alpha: _enabled ? 0.5 : 0.35),
             borderRadius: BorderRadius.circular(AppDimensions.radiusMd.r),
             border: widget.primary
                 ? null
-                : Border.all(color: AppColors.glassBorder(), width: 1.2),
+                : Border.all(
+                    color: _enabled ? AppColors.glassBorder() : AppColors.glassBorderSubtle(),
+                    width: 1.2,
+                  ),
             boxShadow: widget.primary && _enabled && !_pressed ? AppColors.shadowSalmon : null,
           ),
           child: child,

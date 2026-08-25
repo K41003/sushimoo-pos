@@ -26,13 +26,20 @@ import '../widgets/stat_card.dart';
 /// EITHER a keyed map (`{"2026-08-10": 120000, ...}`) OR a list of
 /// `{date, total}` objects (`[{"date": "2026-08-10", "total": 120000}]`),
 /// depending on how the Laravel controller serializes its `groupBy()`
-/// result (whether `->values()` was called downstream). The previous
-/// code did `(d['salesTrend'] as Map? ?? {})`, which throws
-/// `type 'List<dynamic>' is not a subtype of type 'Map<dynamic, dynamic>?'`
-/// whenever the backend sends the list form — this crashed the entire
-/// Admin Dashboard on load. `normalizeTrend()` now accepts both shapes
-/// and always hands back a `Map<String, num>`, so the page renders
-/// regardless of which shape the API returns.
+/// result (whether `->values()` was called downstream). `normalizeTrend()`
+/// accepts both shapes and always hands back a `Map<String, num>`, so the
+/// page renders regardless of which shape the API returns.
+///
+/// UI FIX (this pass): the "Total Sales" stat card used to show a
+/// hardcoded `trend: '+12%'` badge that had no relationship to any real
+/// data returned by the API — it was the same fake number regardless of
+/// what actually happened this period. Showing a made-up percentage next
+/// to a real sales figure is misleading for whoever is reading the
+/// dashboard (an admin might genuinely believe sales grew 12%). The badge
+/// is now computed from the real `salesTrend` series (comparing the last
+/// two data points) and only renders when there's enough real data to
+/// support a percentage; otherwise it's omitted entirely rather than
+/// showing a placeholder number.
 class DashboardPage extends GetView<DashboardController> {
   const DashboardPage({super.key});
 
@@ -54,6 +61,7 @@ class DashboardPage extends GetView<DashboardController> {
     final d = controller.adminData;
     final trend = normalizeTrend(d['salesTrend']);
     final top = (d['topProducts'] as List? ?? []);
+    final salesTrendLabel = _trendLabel(trend);
 
     return SingleChildScrollView(
       padding: EdgeInsets.all(AppDimensions.marginTablet.w),
@@ -61,22 +69,22 @@ class DashboardPage extends GetView<DashboardController> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _header(context, 'Dashboard', 'Ringkasan performa hari ini'),
-          SizedBox(height: 24.h),
+          SizedBox(height: AppDimensions.xl.h),
           LayoutBuilder(builder: (context, constraints) {
             final cols = constraints.maxWidth > 900 ? 4 : (constraints.maxWidth > 560 ? 2 : 1);
             return GridView.count(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
               crossAxisCount: cols,
-              crossAxisSpacing: 16.w,
-              mainAxisSpacing: 16.h,
+              crossAxisSpacing: AppDimensions.md.w,
+              mainAxisSpacing: AppDimensions.md.h,
               childAspectRatio: 1.5,
               children: [
                 StatCard(
                   label: 'Total Sales',
                   value: _money(d['totalSales']),
                   icon: Icons.payments_outlined,
-                  trend: '+12%',
+                  trend: salesTrendLabel,
                 ),
                 StatCard(
                   label: 'Transactions',
@@ -99,26 +107,26 @@ class DashboardPage extends GetView<DashboardController> {
               ],
             );
           }),
-          SizedBox(height: 24.h),
+          SizedBox(height: AppDimensions.xl.h),
           GlassPanel(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text('Sales Trend', style: Theme.of(context).textTheme.headlineSmall),
-                SizedBox(height: 12.h),
+                SizedBox(height: AppDimensions.sm.h),
                 SizedBox(height: 220.h, child: _trendChart(trend)),
               ],
             ),
           ),
-          SizedBox(height: 24.h),
+          SizedBox(height: AppDimensions.xl.h),
           GlassPanel(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text('Top Products', style: Theme.of(context).textTheme.headlineSmall),
-                SizedBox(height: 12.h),
+                SizedBox(height: AppDimensions.sm.h),
                 ...top.map((p) => Padding(
-                      padding: EdgeInsets.symmetric(vertical: 8.h),
+                      padding: EdgeInsets.symmetric(vertical: AppDimensions.xs.h),
                       child: Row(
                         children: [
                           Container(
@@ -131,7 +139,7 @@ class DashboardPage extends GetView<DashboardController> {
                             child: Icon(Icons.ramen_dining_outlined,
                                 size: 17.sp, color: AppColors.salmonDark),
                           ),
-                          SizedBox(width: 12.w),
+                          SizedBox(width: AppDimensions.sm.w),
                           Expanded(
                             child: Text(
                               p['nama_produk']?.toString() ?? '-',
@@ -144,7 +152,7 @@ class DashboardPage extends GetView<DashboardController> {
                     )),
                 if (top.isEmpty)
                   Padding(
-                    padding: EdgeInsets.symmetric(vertical: 12.h),
+                    padding: EdgeInsets.symmetric(vertical: AppDimensions.sm.h),
                     child: Text('No data available', style: Theme.of(context).textTheme.bodyMedium),
                   ),
               ],
@@ -165,15 +173,15 @@ class DashboardPage extends GetView<DashboardController> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _header(context, 'Selamat Bekerja', 'Ringkasan shift kamu hari ini'),
-          SizedBox(height: 24.h),
+          SizedBox(height: AppDimensions.xl.h),
           LayoutBuilder(builder: (context, constraints) {
             final cols = constraints.maxWidth > 700 ? 3 : 1;
             return GridView.count(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
               crossAxisCount: cols,
-              crossAxisSpacing: 16.w,
-              mainAxisSpacing: 16.h,
+              crossAxisSpacing: AppDimensions.md.w,
+              mainAxisSpacing: AppDimensions.md.h,
               childAspectRatio: 1.6,
               children: [
                 StatCard(
@@ -196,7 +204,7 @@ class DashboardPage extends GetView<DashboardController> {
               ],
             );
           }),
-          SizedBox(height: 24.h),
+          SizedBox(height: AppDimensions.xl.h),
           Row(
             children: [
               Expanded(
@@ -207,7 +215,7 @@ class DashboardPage extends GetView<DashboardController> {
                   onPressed: () => Get.toNamed(AppRoutes.shift),
                 ),
               ),
-              SizedBox(width: 16.w),
+              SizedBox(width: AppDimensions.md.w),
               Expanded(
                 child: AppButton(
                   label: 'Go to POS',
@@ -287,6 +295,21 @@ class DashboardPage extends GetView<DashboardController> {
   }
 
   String _money(dynamic v) => 'Rp ${(v is num ? v : 0).toStringAsFixed(0)}';
+
+  /// Computes a "+X%" / "-X%" label by comparing the last two points of
+  /// the real sales trend series. Returns null (no badge shown) when
+  /// there isn't enough data to make a meaningful comparison, or when
+  /// the previous point is zero (percentage change is undefined).
+  String? _trendLabel(Map<String, num> trend) {
+    final values = trend.values.toList();
+    if (values.length < 2) return null;
+    final previous = values[values.length - 2];
+    final latest = values.last;
+    if (previous == 0) return null;
+    final change = ((latest - previous) / previous) * 100;
+    final sign = change >= 0 ? '+' : '';
+    return '$sign${change.toStringAsFixed(0)}%';
+  }
 }
 
 /// Normalizes the `salesTrend` field from `/dashboard/admin` into a
