@@ -3,7 +3,8 @@ import 'package:get/get.dart';
 import '../../../app/constants/app_constants.dart';
 import '../../../app/routes/app_routes.dart';
 import '../../../app/services/api_client.dart';
-import '../../../app/services/printer_service.dart';
+import '../../../app/services/offline_queue_service.dart';
+import '../../../app/services/print_queue_service.dart';
 import '../../../data/models/category.dart';
 import '../../../data/models/product.dart';
 import '../../../data/models/table.dart';
@@ -170,6 +171,24 @@ class PosController extends GetxController {
     if (picked != null) selectedTable.value = picked;
   }
 
+  /// OFFLINE QUEUE (this pass): previously a failed `POST /transaksi`
+  /// (e.g. WiFi drops at the table) just surfaced `EasyLoading.showError`
+  /// and the whole order — everything the cashier just entered — was
+  /// gone with nothing to retry. That's a real problem for a restaurant
+  /// POS where connectivity to the counter isn't always reliable.
+  ///
+  /// Behavior now:
+  ///  1. Try the request normally, exactly as before.
+  ///  2. On success: unchanged (print ticket, clear cart, go to payment).
+  ///  3. On failure that looks like a CONNECTIVITY problem (see
+  ///     `_isLikelyOffline`): save the order to `OfflineQueueService`
+  ///     (sqflite-backed) and clear the cart so the cashier can keep
+  ///     taking new orders. Nothing is printed yet — printing happens
+  ///     once `SyncService` successfully sends the order later.
+  ///  4. On failure that looks like a real SERVER rejection (validation,
+  ///     stock, auth, etc.): shown to the cashier immediately, same as
+  ///     before. These are deliberately NOT queued, since resending an
+  ///     invalid payload later would just fail again silently.
   Future<void> placeOrder() async {
     if (cart.isEmpty) {
       EasyLoading.showError('Cart is empty');
@@ -180,23 +199,54 @@ class PosController extends GetxController {
       if (selectedTable.value == null) return;
     }
 
+    final items = cart.map((e) => e.toPayload()).toList();
+    final idMeja = selectedTable.value!.idMeja;
+
     loading.value = true;
     EasyLoading.show(status: 'Placing order...');
     final res = await _api.post('/transaksi', body: {
-      'id_meja': selectedTable.value!.idMeja,
-      'items': cart.map((e) => e.toPayload()).toList(),
+      'id_meja': idMeja,
+      'items': items,
     }, fromData: (d) => Transaction.fromJson(d as Map<String, dynamic>));
     loading.value = false;
     EasyLoading.dismiss();
 
     if (res.success && res.data != null) {
       final trx = res.data as Transaction;
-      await PrinterService.to.printKitchenTicket(trx);
+      await PrintQueueService.to.printKitchenTicket(trx);
       clearCart();
       EasyLoading.showSuccess('Order placed');
       Get.toNamed(AppRoutes.payment, arguments: trx);
-    } else {
-      EasyLoading.showError(res.message);
+      return;
     }
+
+    if (_isLikelyOffline(res.message)) {
+      await OfflineQueueService.to.enqueue(idMeja: idMeja, items: items);
+      clearCart();
+      EasyLoading.showInfo(
+        'No connection — order saved locally and will sync automatically.',
+      );
+      return;
+    }
+
+    EasyLoading.showError(res.message);
+  }
+
+  /// Distinguishes "couldn't reach the server" from "server rejected the
+  /// request". `ApiClient._send()` (api_client.dart) sets these exact
+  /// messages for Dio failures that never got a real HTTP response back
+  /// (network error, timeout, bad/pinned certificate), as opposed to a
+  /// 4xx/5xx response body with a business-logic `message`. Only the
+  /// former should ever be queued for silent retry.
+  bool _isLikelyOffline(String message) {
+    const networkErrorMarkers = [
+      'Network error',
+      'Koneksi tidak aman terdeteksi', // SSL pinning reject, see ssl_pinning_interceptor.dart
+      'SocketException',
+      'Connection timed out',
+      'Connection refused',
+      'Failed host lookup',
+    ];
+    return networkErrorMarkers.any((m) => message.contains(m));
   }
 }

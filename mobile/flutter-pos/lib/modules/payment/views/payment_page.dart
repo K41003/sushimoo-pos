@@ -7,10 +7,21 @@ import '../../../app/routes/app_routes.dart';
 import '../../../shared/widgets/app_button.dart';
 import '../../../shared/widgets/app_scaffold.dart';
 import '../../../shared/widgets/glass_panel.dart';
+import '../../../shared/widgets/void_order_controller.dart';
 import '../controllers/payment_controller.dart';
 
 /// REPLACES `payment_page.dart` 1:1 — same class name `PaymentPage`,
 /// same `GetView<PaymentController>`.
+///
+/// VOID ORDER (this pass): added a "Void Order" action to the app bar.
+/// This is the natural place for it — by the time the cashier reaches
+/// PaymentPage, the order already exists server-side (and its kitchen
+/// ticket has already printed) but no `Payment` has been recorded yet,
+/// which is exactly the "unpaid" window `VoidOrderController.attemptVoid`
+/// is scoped to (see void_order_controller.dart). Voiding requires a
+/// stated reason + admin PIN approval; on success the cashier is routed
+/// back to the dashboard rather than left on a payment screen for an
+/// order that no longer exists.
 class PaymentPage extends GetView<PaymentController> {
   const PaymentPage({super.key});
 
@@ -22,6 +33,19 @@ class PaymentPage extends GetView<PaymentController> {
     return AppScaffold(
       title: 'Payment Confirmation',
       currentRoute: AppRoutes.payment,
+      actions: [
+        AppGlassActionButton(
+          icon: Icons.cancel_outlined,
+          tooltip: 'Void Order',
+          primary: false,
+          onPressed: () async {
+            final voided = await VoidOrderController.attemptVoid(context, trx);
+            if (voided) {
+              Get.offAllNamed(AppRoutes.dashboard);
+            }
+          },
+        ),
+      ],
       body: Center(
         child: ConstrainedBox(
           constraints: BoxConstraints(maxWidth: 520.w),

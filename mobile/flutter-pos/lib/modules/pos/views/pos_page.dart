@@ -10,6 +10,8 @@ import '../../../shared/widgets/app_chip.dart';
 import '../../../shared/widgets/app_loading.dart';
 import '../../../shared/widgets/app_scaffold.dart';
 import '../../../shared/widgets/glass_panel.dart';
+import '../../../shared/widgets/print_queue_button.dart';
+import '../../../shared/widgets/sync_status_button.dart';
 import '../widgets/pos_product_tile.dart';
 import '../controllers/pos_controller.dart';
 import '../widgets/cart_tile.dart';
@@ -40,6 +42,13 @@ import '../widgets/cart_tile.dart';
 /// handed to this one builder, so there is no more room for a reactive
 /// widget to end up reading from a different scope than the one that
 /// was updated.
+///
+/// OFFLINE QUEUE (this pass): added [SyncStatusButton] to the app bar
+/// `actions`. It renders nothing when there's no pending queue, and a
+/// small "Sync Now (n)" pill when `PosController.placeOrder()` has
+/// queued one or more orders locally (see `OfflineQueueService` /
+/// `SyncService`) — lets the cashier trigger a retry manually instead
+/// of only waiting for the next app launch's auto-sync.
 class PosPage extends GetView<PosController> {
   const PosPage({super.key});
 
@@ -48,6 +57,7 @@ class PosPage extends GetView<PosController> {
     return AppScaffold(
       title: 'POS',
       currentRoute: '/pos',
+      actions: const [SyncStatusButton(), PrintQueueButton()],
       body: GetX<PosController>(
         builder: (c) {
           return Responsive.isLandscapeTablet(context)
