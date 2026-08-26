@@ -1,0 +1,54 @@
+name: sushimoo_pos
+description: SUSHIMOO POS - Japanese Restaurant Point of Sale
+publish_to: "none"
+version: 1.0.0+1
+
+environment:
+  sdk: ">=3.3.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # State management / DI / routing
+  get: ^4.6.6
+
+  # Local storage
+  get_storage: ^2.1.1
+  flutter_secure_storage: ^9.2.2
+
+  # OFFLINE QUEUE (this pass): sqflite-backed local queue for orders
+  # placed without connectivity — see app/services/offline_queue_service.dart
+  sqflite: ^2.3.3+1
+  path: ^1.9.0
+
+  # Networking
+  dio: ^5.4.3+1
+  http_certificate_pinning: ^3.0.2
+
+  # UI / responsive
+  flutter_screenutil: ^5.9.3
+  google_fonts: ^6.2.1
+  fl_chart: ^0.68.0
+
+  # UX feedback
+  flutter_easyloading: ^3.0.5
+
+  # Printing
+  blue_thermal_printer: ^1.2.3
+  pdf: ^3.11.1
+  printing: ^5.13.1
+
+  # Security / device integrity
+  safe_device: ^1.1.6
+  no_screenshot: ^0.3.1
+
+  cupertino_icons: ^1.0.8
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+
+flutter:
+  uses-material-design: true

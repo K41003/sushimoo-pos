@@ -1,9 +1,11 @@
 import 'dart:convert';
+
 import 'package:get/get.dart';
 import 'package:path/path.dart' as p;
-import 'package:sqflite/sqflite.dart';
+import 'package:sqflite/sqflite.dart' hide Transaction;
+import 'package:sushimoo_pos/data/models/transaction.dart';
+
 import 'printer_service.dart';
-import '../../data/models/transaction.dart';
 
 /// What kind of ticket a queued print job represents. Only the two jobs
 /// `PrinterService` already knows how to render are supported — this
@@ -237,44 +239,46 @@ class PrintQueueService extends GetxService {
     if (isRetrying.value) return;
     isRetrying.value = true;
 
-    final db = await _database;
-    final rows = await db.query(_table, orderBy: 'created_at ASC');
-    final jobs = rows.map(QueuedPrintJob.fromRow).toList();
+    try {
+      final db = await _database;
+      final rows = await db.query(_table, orderBy: 'created_at ASC');
+      final jobs = rows.map(QueuedPrintJob.fromRow).toList();
 
-    for (final job in jobs) {
-      if (job.id == null) continue;
-      final trx = _transactionFromRetryPayload(
-          jsonDecode(job.transactionJson) as Map<String, dynamic>);
+      for (final job in jobs) {
+        if (job.id == null) continue;
+        final trx = _transactionFromRetryPayload(
+            jsonDecode(job.transactionJson) as Map<String, dynamic>);
 
-      bool success;
-      try {
-        if (!PrinterService.to.isConnected.value) {
-          throw StateError('Printer not connected');
+        bool success;
+        try {
+          if (!PrinterService.to.isConnected.value) {
+            throw StateError('Printer not connected');
+          }
+          if (job.type == PrintJobType.kitchen) {
+            await PrinterService.to.printKitchenTicket(trx);
+          } else {
+            await PrinterService.to.printCustomerReceipt(trx);
+          }
+          success = true;
+        } catch (_) {
+          success = false;
         }
-        if (job.type == PrintJobType.kitchen) {
-          await PrinterService.to.printKitchenTicket(trx);
+
+        if (success) {
+          await db.delete(_table, where: 'id = ?', whereArgs: [job.id]);
         } else {
-          await PrinterService.to.printCustomerReceipt(trx);
+          await db.update(
+            _table,
+            {'retry_count': job.retryCount + 1, 'last_error': 'Retry failed'},
+            where: 'id = ?',
+            whereArgs: [job.id],
+          );
         }
-        success = true;
-      } catch (_) {
-        success = false;
       }
-
-      if (success) {
-        await db.delete(_table, where: 'id = ?', whereArgs: [job.id]);
-      } else {
-        await db.update(
-          _table,
-          {'retry_count': job.retryCount + 1, 'last_error': 'Retry failed'},
-          where: 'id = ?',
-          whereArgs: [job.id],
-        );
-      }
+    } finally {
+      isRetrying.value = false;
+      await _refreshPendingCount();
     }
-
-    isRetrying.value = false;
-    await _refreshPendingCount();
   }
 
   /// Rebuilds just enough of a [Transaction] to satisfy
