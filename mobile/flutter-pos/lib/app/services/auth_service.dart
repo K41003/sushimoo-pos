@@ -24,7 +24,7 @@ class AuthService extends GetxService {
     if (AppConstants.localMode) {
       final localUser = await _local.login(username, password);
       if (localUser == null) {
-        return ApiResponse(
+        return const ApiResponse(
           success: false,
           message: 'Username atau password salah',
         );
@@ -66,9 +66,8 @@ class AuthService extends GetxService {
   }
 
   Future<ApiResponse<void>> logout() async {
-    final res = await _api.post('/logout');
     await SecureStorageService.to.clearSession();
-    return ApiResponse(success: res.success, message: res.message);
+    return const ApiResponse(success: true, message: 'Logged out');
   }
 
   /// Refreshes the cached [User] profile from `/me`.
@@ -77,6 +76,13 @@ class AuthService extends GetxService {
   /// hanya menulis ulang sesi jika token yang ada di storage memang
   /// valid (non-null). Jika null, tidak menimpa apapun.
   Future<ApiResponse<User>> me() async {
+    if (AppConstants.localMode) {
+      final user = SecureStorageService.to.user;
+      if (user != null) {
+        return ApiResponse(success: true, message: 'OK', data: user);
+      }
+      return const ApiResponse(success: false, message: 'Not logged in');
+    }
     final res = await _api.get('/me', fromData: (d) {
       return User.fromJson(d as Map<String, dynamic>);
     });

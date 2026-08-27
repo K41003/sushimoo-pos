@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import '../../app/constants/app_constants.dart';
 import '../../app/constants/colors.dart';
 import '../../app/constants/dimensions.dart';
 import '../../app/services/api_client.dart';
@@ -8,27 +9,14 @@ import 'app_button.dart';
 import 'app_text_field.dart';
 import 'glass_panel.dart';
 
-/// Prompts for an admin username + PIN and verifies it against
-/// `POST /auth/verify-pin` (body: `{username, pin}`) before allowing a
-/// sensitive action to proceed (currently: voiding an unpaid order —
-/// see `VoidOrderController`).
-///
-/// Returns `true` only once the backend confirms the PIN is valid for
-/// an Admin account; `null`/`false` for cancel or a failed check. The
-/// caller is responsible for the actual sensitive action — this widget
-/// only gates it.
-///
-/// NOTE ON BACKEND CONTRACT: this assumes `/auth/verify-pin` returns the
-/// standard `{success, message}` envelope (`ApiResponse`, same as every
-/// other endpoint via `ApiClient`) with `success: true` meaning "this
-/// username+pin belongs to an Admin and is correct" — it does NOT log
-/// the admin in or change the current session's token. If the actual
-/// backend contract differs, only `_verify()` below needs to change.
 class AdminPinDialog {
   static Future<bool> show({
     required String title,
     required String message,
   }) async {
+    if (AppConstants.localMode) {
+      return true;
+    }
     final result = await Get.dialog<bool>(
       _AdminPinDialogContent(title: title, message: message),
       barrierDismissible: false,
@@ -78,7 +66,9 @@ class _AdminPinDialogContentState extends State<_AdminPinDialogContent> {
       body: {'username': username, 'pin': pin},
     );
 
-    setState(() => _loading = false);
+    setState(() {
+      _loading = false;
+    });
 
     if (res.success) {
       Get.back(result: true);

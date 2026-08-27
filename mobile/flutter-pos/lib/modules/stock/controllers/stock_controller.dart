@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import '../../../app/constants/app_constants.dart';
 import '../../../app/constants/colors.dart';
 import '../../../app/constants/decorations.dart';
 import '../../../app/constants/dimensions.dart';
@@ -27,6 +28,10 @@ class StockController extends GetxController {
   }
 
   Future<void> loadIngredients() async {
+    if (AppConstants.localMode) {
+      ingredients.clear();
+      return;
+    }
     final res = await _api.get(
       '/bahan-baku',
       query: {'perPage': 100},
@@ -43,6 +48,11 @@ class StockController extends GetxController {
 
   Future<void> load() async {
     loading.value = true;
+    if (AppConstants.localMode) {
+      items.clear();
+      loading.value = false;
+      return;
+    }
     final res = await _api.get(
       '/stok-bahan',
       query: {'q': search.value, 'perPage': 50},
@@ -66,6 +76,10 @@ class StockController extends GetxController {
   }
 
   Future<void> addAdjustment() async {
+    if (AppConstants.localMode) {
+      EasyLoading.showError('Not available in local mode');
+      return;
+    }
     if (ingredients.isEmpty) await loadIngredients();
     final selected = Rxn<Ingredient>();
     final jumlah = TextEditingController();
@@ -162,6 +176,10 @@ class StockController extends GetxController {
   }
 
   Future<void> adjust(Stock stock) async {
+    if (AppConstants.localMode) {
+      EasyLoading.showError('Not available in local mode');
+      return;
+    }
     final jumlah = TextEditingController(text: stock.jumlah.toString());
     final formKey = GlobalKey<FormState>();
 
@@ -190,6 +208,10 @@ class StockController extends GetxController {
   }
 
   Future<void> updateStock(int id, double jumlah) async {
+    if (AppConstants.localMode) {
+      EasyLoading.showError('Not available in local mode');
+      return;
+    }
     loading.value = true;
     EasyLoading.show(status: 'Updating...');
     final res = await _api.put(
@@ -209,6 +231,10 @@ class StockController extends GetxController {
   }
 
   Future<void> delete(int id) async {
+    if (AppConstants.localMode) {
+      EasyLoading.showError('Not available in local mode');
+      return;
+    }
     final confirm = await AppDialog.confirm(
       title: 'Delete Stock',
       message: 'Are you sure you want to delete this stock entry?',

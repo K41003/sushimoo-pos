@@ -20,10 +20,11 @@ class AppConstants {
 
   /// Enable fully local/demo mode without backend.
   ///
-  /// Use: `flutter run --dart-define=LOCAL_MODE=true`
+  /// Default is now true so the app runs fully offline unless overridden.
+  /// Override with: `flutter run --dart-define=LOCAL_MODE=false`
   static const bool localMode = bool.fromEnvironment(
     'LOCAL_MODE',
-    defaultValue: false,
+    defaultValue: true,
   );
 
   /// Optional host override for local virtual-host setups only.

@@ -1,13 +1,16 @@
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:get/get.dart';
 import 'package:flutter/material.dart';
+import '../../../app/constants/app_constants.dart';
 import '../../../app/routes/app_routes.dart';
 import '../../../app/services/api_client.dart';
+import '../../../app/services/local_data_service.dart';
 import '../../../data/models/transaction.dart';
 import '../../../data/models/payment.dart';
 
 class PaymentController extends GetxController {
   final ApiClient _api = ApiClient.to;
+  final LocalDataService _local = LocalDataService.to;
   final Transaction transaction;
   final methods = const [
     {'id': 1, 'name': 'Cash'},
@@ -19,15 +22,6 @@ class PaymentController extends GetxController {
   final receivedController = TextEditingController();
   final loading = false.obs;
 
-  /// Mirrors [receivedController].text as an observable.
-  ///
-  /// BUG FIX: `Obx(() => ... controller.change ...)` in payment_page.dart
-  /// only rebuilds when an `.obs` value is *read* inside its builder.
-  /// A plain `TextEditingController` is NOT observable by GetX, so typing
-  /// into the "Received Amount" field never triggered a rebuild and the
-  /// "Change" label stayed frozen at its very first computed value
-  /// (Rp 0, before anything was typed). Listening to the controller and
-  /// mirroring its text into this Rx makes `change` reactive again.
   final receivedText = ''.obs;
 
   PaymentController({required this.transaction});
@@ -70,6 +64,44 @@ class PaymentController extends GetxController {
 
     loading.value = true;
     EasyLoading.show(status: 'Paying...');
+    if (AppConstants.localMode) {
+      final methodName = methods.firstWhere((m) => m['id'] == selectedMethod.value, orElse: () => methods.first)['name'] as String;
+      await _local.updateTransactionPayment(transaction.idTransaksi, methodName);
+      loading.value = false;
+      EasyLoading.dismiss();
+      EasyLoading.showSuccess('Payment success');
+      final paidTransaction = Transaction(
+        idTransaksi: transaction.idTransaksi,
+        invoiceNumber: transaction.invoiceNumber,
+        idShift: transaction.idShift,
+        idUser: transaction.idUser,
+        idMeja: transaction.idMeja,
+        tanggal: transaction.tanggal,
+        total: transaction.total,
+        status: 'paid',
+        details: transaction.details,
+        table: transaction.table,
+        user: transaction.user,
+        payment: Payment(
+          idPembayaran: 0,
+          idTransaksi: transaction.idTransaksi,
+          idMetode: selectedMethod.value!,
+          totalBayar: transaction.total,
+          uangDiterima: isCash ? (double.tryParse(receivedController.text) ?? 0) : 0,
+          kembalian: change,
+          waktuBayar: DateTime.now().toIso8601String(),
+          status: 'success',
+        ),
+      );
+      Get.offAndToNamed(
+        AppRoutes.receipt,
+        arguments: {
+          'transaction': paidTransaction,
+          'payment': paidTransaction.payment,
+        },
+      );
+      return;
+    }
     final res = await _api.post(
       '/transaksi/${transaction.idTransaksi}/pembayaran',
       body: body,
@@ -80,10 +112,6 @@ class PaymentController extends GetxController {
 
     if (res.success && res.data != null) {
       EasyLoading.showSuccess('Payment success');
-      // Show the receipt/bill screen with full order + payment details
-      // instead of jumping straight back to the dashboard. Printing the
-      // physical receipt now happens from that screen (with a manual
-      // "Print Receipt" button), not automatically here.
       Get.offAndToNamed(
         AppRoutes.receipt,
         arguments: {

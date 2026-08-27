@@ -9,6 +9,7 @@ class LocalUser {
   final int? id;
   final String username;
   final String name;
+  final String password;
   final String role;
   final String token;
 
@@ -16,6 +17,7 @@ class LocalUser {
     this.id,
     required this.username,
     required this.name,
+    required this.password,
     required this.role,
     required this.token,
   });
@@ -24,6 +26,7 @@ class LocalUser {
         if (id != null) 'id': id,
         'username': username,
         'name': name,
+        'password': password,
         'role': role,
         'token': token,
       };
@@ -32,6 +35,7 @@ class LocalUser {
         id: row['id'] as int,
         username: row['username'] as String,
         name: row['name'] as String,
+        password: row['password'] as String,
         role: row['role'] as String,
         token: row['token'] as String,
       );
@@ -219,13 +223,14 @@ class LocalDataService extends GetxService {
     final path = p.join(dbPath, _dbName);
     return openDatabase(
       path,
-      version: 1,
+      version: 2,
       onCreate: (db, version) async {
         await db.execute('''
           CREATE TABLE users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             username TEXT NOT NULL UNIQUE,
             name TEXT NOT NULL,
+            password TEXT NOT NULL,
             role TEXT NOT NULL,
             token TEXT NOT NULL
           )
@@ -278,6 +283,11 @@ class LocalDataService extends GetxService {
         ''');
         await _seed(db);
       },
+      onUpgrade: (db, oldVersion, newVersion) async {
+        if (oldVersion < 2) {
+          await db.execute('ALTER TABLE users ADD COLUMN password TEXT NOT NULL DEFAULT \'admin\'');
+        }
+      },
     );
   }
 
@@ -285,8 +295,17 @@ class LocalDataService extends GetxService {
     await db.insert('users', LocalUser(
       username: 'admin',
       name: 'Admin Sushimoo',
+      password: 'admin',
       role: 'Admin',
       token: 'local-token-admin',
+    ).toRow());
+
+    await db.insert('users', LocalUser(
+      username: 'kasir',
+      name: 'Kasir Sushimoo',
+      password: 'kasir',
+      role: 'Kasir',
+      token: 'local-token-kasir',
     ).toRow());
 
     final categories = [
@@ -320,7 +339,7 @@ class LocalDataService extends GetxService {
     final db = await database;
     final rows = await db.query(
       'users',
-      where: 'username = ? AND name = ?',
+      where: 'username = ? AND password = ?',
       whereArgs: [username, password],
     );
     if (rows.isEmpty) return null;
@@ -395,5 +414,67 @@ class LocalDataService extends GetxService {
     final db = await database;
     final rows = await db.query('transactions', orderBy: 'created_at DESC');
     return rows.map(LocalTransaction.fromRow).toList();
+  }
+
+  Future<void> saveTable({int? id, required String name, required int capacity, required String status}) async {
+    final db = await database;
+    final isOccupied = status == 'occupied' ? 1 : 0;
+    if (id == null) {
+      await db.insert('tables', {'name': name, 'capacity': capacity, 'is_occupied': isOccupied});
+    } else {
+      await db.update('tables', {'name': name, 'capacity': capacity, 'is_occupied': isOccupied}, where: 'id = ?', whereArgs: [id]);
+    }
+  }
+
+  Future<void> deleteTable(int id) async {
+    final db = await database;
+    await db.delete('tables', where: 'id = ?', whereArgs: [id]);
+  }
+
+  Future<void> saveCategory({int? id, required String name, String? description}) async {
+    final db = await database;
+    if (id == null) {
+      await db.insert('categories', {'name': name, 'description': description});
+    } else {
+      await db.update('categories', {'name': name, 'description': description}, where: 'id = ?', whereArgs: [id]);
+    }
+  }
+
+  Future<void> deleteCategory(int id) async {
+    final db = await database;
+    await db.delete('categories', where: 'id = ?', whereArgs: [id]);
+  }
+
+  Future<void> saveProduct({int? id, required int categoryId, required String name, required int price, String? imageUrl, bool isAvailable = true}) async {
+    final db = await database;
+    final data = {
+      'category_id': categoryId,
+      'name': name,
+      'price': price,
+      'image_url': imageUrl,
+      'is_available': isAvailable ? 1 : 0,
+    };
+    if (id == null) {
+      await db.insert('products', data);
+    } else {
+      await db.update('products', data, where: 'id = ?', whereArgs: [id]);
+    }
+  }
+
+  Future<void> deleteProduct(int id) async {
+    final db = await database;
+    await db.delete('products', where: 'id = ?', whereArgs: [id]);
+  }
+
+  Future<LocalTransaction?> getTransaction(int id) async {
+    final db = await database;
+    final rows = await db.query('transactions', where: 'id = ?', whereArgs: [id]);
+    if (rows.isEmpty) return null;
+    return LocalTransaction.fromRow(rows.first);
+  }
+
+  Future<void> updateTransactionPayment(int id, String paymentMethod) async {
+    final db = await database;
+    await db.update('transactions', {'payment_method': paymentMethod, 'status': 'paid'}, where: 'id = ?', whereArgs: [id]);
   }
 }

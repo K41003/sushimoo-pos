@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:get/get.dart';
+import '../../../app/constants/app_constants.dart';
 import '../../../app/services/api_client.dart';
+import '../../../app/services/local_data_service.dart';
 import '../../../data/models/category.dart';
 import '../../../data/models/product.dart';
 import '../../../data/response/api_response.dart';
@@ -11,6 +13,8 @@ import '../widgets/product_form.dart';
 String money(dynamic v) => 'Rp ${(v is num ? v : 0).toStringAsFixed(0)}';
 
 class ProductController extends GetxController {
+  final ApiClient _api = Get.find<ApiClient>();
+  final LocalDataService _local = LocalDataService.to;
   final items = <Product>[].obs;
   final categories = <Category>[].obs;
   final loading = false.obs;
@@ -55,6 +59,10 @@ class ProductController extends GetxController {
 
   Future<void> loadCategories() async {
     try {
+      if (AppConstants.localMode) {
+        categories.assignAll(await _local.getAppCategories());
+        return;
+      }
       final res = await Get.find<ApiClient>()
           .get('/categories', query: {'perPage': 100}, fromData: (d) => d);
       if (res.success && res.data != null) {
@@ -70,6 +78,24 @@ class ProductController extends GetxController {
   Future<void> load() async {
     loading.value = true;
     try {
+      if (AppConstants.localMode) {
+        final all = await _local.getAppProducts();
+        final query = search.value.trim().toLowerCase();
+        final catId = selectedCategoryId.value;
+        var filtered = all;
+        if (catId != null) {
+          filtered = filtered.where((p) => p.idKategori == catId).toList();
+        }
+        if (query.isNotEmpty) {
+          filtered = filtered.where((p) => p.namaProduk.toLowerCase().contains(query)).toList();
+        }
+        items.assignAll(filtered);
+        total.value = filtered.length;
+        lastPage.value = 1;
+        page.value = 1;
+        loading.value = false;
+        return;
+      }
       final query = <String, dynamic>{
         'perPage': perPage.value,
         if (search.value.isNotEmpty) 'q': search.value,
@@ -109,7 +135,7 @@ class ProductController extends GetxController {
       content: ProductForm(controller: this, existing: existing),
       onConfirm: () async {
         await createOrUpdate(existing);
-        return false; // createOrUpdate handles closing dialog on success
+        return false;
       },
     );
   }
@@ -131,14 +157,27 @@ class ProductController extends GetxController {
       return;
     }
 
+    EasyLoading.show(status: 'Saving...');
+    if (AppConstants.localMode) {
+      await _local.saveProduct(
+        id: existing?.idProduk,
+        categoryId: selectedCategory.value!,
+        name: nama,
+        price: (harga * 100).toInt(),
+        imageUrl: existing?.gambar,
+        isAvailable: selectedStatus.value,
+      );
+      EasyLoading.dismiss();
+      EasyLoading.showSuccess('Saved');
+      await load();
+      return;
+    }
     final body = {
       'id_kategori': selectedCategory.value,
       'nama_produk': nama,
       'harga': harga,
       'status': selectedStatus.value ? 1 : 0,
     };
-
-    EasyLoading.show(status: 'Saving...');
     final res = existing == null
         ? await Get.find<ApiClient>().post('/products', body: body)
         : await Get.find<ApiClient>()
@@ -155,6 +194,12 @@ class ProductController extends GetxController {
   }
 
   Future<void> delete(int id) async {
+    if (AppConstants.localMode) {
+      await _local.deleteProduct(id);
+      EasyLoading.showSuccess('Deleted');
+      await load();
+      return;
+    }
     final confirmed = await AppDialog.confirm(
       title: 'Delete Product',
       message: 'Are you sure you want to delete this product?',

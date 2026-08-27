@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'api_client.dart';
 import 'offline_queue_service.dart';
 import 'print_queue_service.dart';
+import '../../app/constants/app_constants.dart';
 import '../../data/models/transaction.dart';
 
 /// Result of one sync pass, so the UI can show a meaningful summary.
@@ -27,6 +28,10 @@ class SyncService extends GetxService {
   final isSyncing = false.obs;
 
   Future<SyncResult> syncNow({bool showToast = true}) async {
+    if (AppConstants.localMode) {
+      return const SyncResult(succeeded: 0, failed: 0);
+    }
+
     if (isSyncing.value) {
       return const SyncResult(succeeded: 0, failed: 0);
     }

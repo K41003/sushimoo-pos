@@ -45,8 +45,8 @@ class InitialBinding extends Bindings {
     }
 
     Get.put(ApiClient(), permanent: true);
-    Get.put(AuthService(), permanent: true);
     Get.put(LocalDataService(), permanent: true);
+    Get.put(AuthService(), permanent: true);
     Get.put(PrinterService(), permanent: true);
 
     Get.put(OfflineQueueService(), permanent: true);

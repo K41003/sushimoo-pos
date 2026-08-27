@@ -1,5 +1,6 @@
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:get/get.dart';
+import '../../../app/constants/app_constants.dart';
 import '../../../app/services/api_client.dart';
 
 class ReportController extends GetxController {
@@ -17,6 +18,13 @@ class ReportController extends GetxController {
 
   Future<void> load() async {
     loading.value = true;
+    if (AppConstants.localMode) {
+      daily.clear();
+      last7.clear();
+      monthly.clear();
+      loading.value = false;
+      return;
+    }
     final d = await _api.get('/reports/daily', fromData: (x) => x);
     if (d.success && d.data != null) daily.value = d.data as Map;
     final l = await _api.get('/reports/last-7-days', fromData: (x) => x);

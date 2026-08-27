@@ -1,34 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:get/get.dart';
+import '../../app/constants/app_constants.dart';
 import '../../app/constants/colors.dart';
 import '../../app/constants/dimensions.dart';
 import '../../app/services/api_client.dart';
+import '../../app/services/local_data_service.dart';
 import '../../data/models/transaction.dart';
 import 'admin_pin_dialog.dart';
 import 'app_button.dart';
 import 'app_text_field.dart';
 import 'glass_panel.dart';
 
-/// Voids an order via `POST /transaksi/:id/void` (body: `{alasan: '...'}`),
-/// gated on two things:
-///
-///  1. The order must not already be paid — `Transaction.status` other
-///     than `'paid'` is treated as voidable. This mirrors the product
-///     decision that void only applies pre-payment; a paid order needs
-///     a separate refund process, not covered here.
-///  2. An Admin must approve via [AdminPinDialog] (`POST /auth/verify-pin`)
-///     before the void request is sent. The cashier only supplies a
-///     reason; they cannot void without an admin present to approve.
-///
-/// BACKEND CONTRACT: `POST /transaksi/{id}/void` is the real endpoint
-/// (see `routes/api.php` -> `TransactionController::void`), which takes
-/// `alasan` and moves the transaction to `status: 'cancelled'` server
-/// side. There is no `'void'` status in the database — `'cancelled'` is
-/// the terminal status for a pre-payment order, applied by the backend.
 class VoidOrderController {
-  /// Returns `true` if the order was successfully voided (caller should
-  /// refresh/navigate away), `false` if cancelled or blocked.
   static Future<bool> attemptVoid(BuildContext context, Transaction trx) async {
     if (trx.status.toLowerCase() == 'paid') {
       EasyLoading.showError('Cannot void an order that has already been paid.');
@@ -48,6 +32,12 @@ class VoidOrderController {
     }
 
     EasyLoading.show(status: 'Voiding order...');
+    if (AppConstants.localMode) {
+      await LocalDataService.to.updateTransactionPayment(trx.idTransaksi, 'void');
+      EasyLoading.dismiss();
+      EasyLoading.showSuccess('Order ${trx.invoiceNumber} voided');
+      return true;
+    }
     final res = await ApiClient.to.post(
       '/transaksi/${trx.idTransaksi}/void',
       body: {'alasan': reason.trim()},

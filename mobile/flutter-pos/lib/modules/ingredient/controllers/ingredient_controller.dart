@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import '../../../app/constants/app_constants.dart';
 import '../../../app/services/api_client.dart';
 import '../../../data/models/ingredient.dart';
 import '../../../data/response/api_response.dart';
@@ -22,6 +23,11 @@ class IngredientController extends GetxController {
 
   Future<void> load() async {
     loading.value = true;
+    if (AppConstants.localMode) {
+      items.clear();
+      loading.value = false;
+      return;
+    }
     final res = await _api.get(
       '/bahan-baku',
       query: {'q': search.value, 'perPage': 50},
@@ -45,6 +51,10 @@ class IngredientController extends GetxController {
   }
 
   Future<void> save(Ingredient? existing) async {
+    if (AppConstants.localMode) {
+      EasyLoading.showError('Not available in local mode');
+      return;
+    }
     final nama = TextEditingController(text: existing?.namaBahan ?? '');
     final satuan = TextEditingController(text: existing?.satuan ?? '');
     final minimal = TextEditingController(
@@ -115,6 +125,10 @@ class IngredientController extends GetxController {
   }
 
   Future<void> delete(int id) async {
+    if (AppConstants.localMode) {
+      EasyLoading.showError('Not available in local mode');
+      return;
+    }
     final confirm = await AppDialog.confirm(
       title: 'Delete Ingredient',
       message: 'Are you sure you want to delete this ingredient?',

@@ -1,18 +1,12 @@
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:get/get.dart';
 import 'package:flutter/material.dart';
+import '../../../app/constants/app_constants.dart';
 import '../../../app/services/api_client.dart';
 import '../../../app/services/storage_service.dart';
 import '../../../data/models/shift.dart';
 import '../../../shared/widgets/app_dialog.dart';
 
-/// UI CHANGE: `closeShift()` used to open a `Get.defaultDialog` — GetX's
-/// own stock dialog helper, which renders as a plain white rounded card
-/// with default text buttons. That's visually inconsistent with every
-/// other confirmation in the app (delete confirmations, etc.), which all
-/// go through [AppDialog.confirm] and get the glass panel + gradient CTA
-/// treatment. Swapped to `AppDialog.confirm` for the same look and to
-/// keep exactly one confirmation-dialog implementation in the codebase.
 class ShiftController extends GetxController {
   final ApiClient _api = ApiClient.to;
   final activeShift = Rx<Shift?>(null);
@@ -35,6 +29,12 @@ class ShiftController extends GetxController {
 
   Future<void> loadActive() async {
     loading.value = true;
+    if (AppConstants.localMode) {
+      activeShift.value = null;
+      await StorageService.to.clearShift();
+      loading.value = false;
+      return;
+    }
     final res = await _api.get('/shifts/active', fromData: (d) {
       return d == null ? null : Shift.fromJson(d as Map<String, dynamic>);
     });
@@ -51,6 +51,10 @@ class ShiftController extends GetxController {
   }
 
   Future<void> openShift() async {
+    if (AppConstants.localMode) {
+      EasyLoading.showError('Not available in local mode');
+      return;
+    }
     final petty = double.tryParse(pettyCashController.text) ?? 0;
     loading.value = true;
     EasyLoading.show(status: 'Opening...');
@@ -66,6 +70,10 @@ class ShiftController extends GetxController {
   }
 
   Future<void> addPettyCash() async {
+    if (AppConstants.localMode) {
+      EasyLoading.showError('Not available in local mode');
+      return;
+    }
     if (activeShift.value == null) return;
     final nominal = double.tryParse(pettyController.text) ?? 0;
     if (nominal <= 0) {
@@ -87,6 +95,10 @@ class ShiftController extends GetxController {
   }
 
   Future<void> closeShift() async {
+    if (AppConstants.localMode) {
+      EasyLoading.showError('Not available in local mode');
+      return;
+    }
     if (activeShift.value == null) return;
     final confirmed = await AppDialog.confirm(
       title: 'Close Shift',
