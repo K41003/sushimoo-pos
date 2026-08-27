@@ -9,7 +9,6 @@ import '../../../app/services/api_client.dart';
 import '../../../data/models/ingredient.dart';
 import '../../../data/models/stock.dart';
 import '../../../data/response/api_response.dart';
-import '../../../shared/widgets/app_button.dart';
 import '../../../shared/widgets/app_dialog.dart';
 import '../../../shared/widgets/app_text_field.dart';
 
@@ -92,21 +91,26 @@ class StockController extends GetxController {
             ),
             SizedBox(height: 6.h),
             Obx(() => Container(
-                  padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 4.h),
-                  decoration: AppDecorations.control(radius: AppDimensions.radiusMd),
+                  padding:
+                      EdgeInsets.symmetric(horizontal: 14.w, vertical: 4.h),
+                  decoration:
+                      AppDecorations.control(radius: AppDimensions.radiusMd),
                   child: DropdownButtonHideUnderline(
                     child: DropdownButton<Ingredient>(
                       isExpanded: true,
                       value: selected.value,
                       hint: Text('Select ingredient',
-                          style: TextStyle(color: AppColors.inkFaint, fontSize: 13.5.sp)),
-                      icon: const Icon(Icons.keyboard_arrow_down_rounded, color: AppColors.inkMuted),
+                          style: TextStyle(
+                              color: AppColors.inkFaint, fontSize: 13.5.sp)),
+                      icon: const Icon(Icons.keyboard_arrow_down_rounded,
+                          color: AppColors.inkMuted),
                       items: ingredients
                           .map((e) => DropdownMenuItem(
                                 value: e,
                                 child: Text(
                                   '${e.namaBahan} (${e.satuan})',
-                                  style: TextStyle(fontSize: 13.5.sp, color: AppColors.ink),
+                                  style: TextStyle(
+                                      fontSize: 13.5.sp, color: AppColors.ink),
                                 ),
                               ))
                           .toList(),
@@ -120,8 +124,7 @@ class StockController extends GetxController {
               controller: jumlah,
               keyboardType:
                   const TextInputType.numberWithOptions(decimal: true),
-              validator: (v) =>
-                  (v == null || v.isEmpty) ? 'Required' : null,
+              validator: (v) => (v == null || v.isEmpty) ? 'Required' : null,
             ),
           ],
         ),
@@ -151,8 +154,7 @@ class StockController extends GetxController {
     EasyLoading.dismiss();
 
     if (res.success) {
-      EasyLoading.showSuccess(
-          res.message.isNotEmpty ? res.message : 'Saved');
+      EasyLoading.showSuccess(res.message.isNotEmpty ? res.message : 'Saved');
       await load();
     } else {
       EasyLoading.showError(res.message);
@@ -160,8 +162,7 @@ class StockController extends GetxController {
   }
 
   Future<void> adjust(Stock stock) async {
-    final jumlah =
-        TextEditingController(text: stock.jumlah.toString());
+    final jumlah = TextEditingController(text: stock.jumlah.toString());
     final formKey = GlobalKey<FormState>();
 
     final result = await AppDialog.form<bool>(
@@ -175,8 +176,7 @@ class StockController extends GetxController {
           label: 'Jumlah (${stock.ingredient?.satuan ?? ''})',
           controller: jumlah,
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
-          validator: (v) =>
-              (v == null || v.isEmpty) ? 'Required' : null,
+          validator: (v) => (v == null || v.isEmpty) ? 'Required' : null,
         ),
       ),
       onConfirm: () async {
@@ -201,8 +201,7 @@ class StockController extends GetxController {
     EasyLoading.dismiss();
 
     if (res.success) {
-      EasyLoading.showSuccess(
-          res.message.isNotEmpty ? res.message : 'Updated');
+      EasyLoading.showSuccess(res.message.isNotEmpty ? res.message : 'Updated');
       await load();
     } else {
       EasyLoading.showError(res.message);
@@ -225,8 +224,7 @@ class StockController extends GetxController {
     EasyLoading.dismiss();
 
     if (res.success) {
-      EasyLoading.showSuccess(
-          res.message.isNotEmpty ? res.message : 'Deleted');
+      EasyLoading.showSuccess(res.message.isNotEmpty ? res.message : 'Deleted');
       await load();
     } else {
       EasyLoading.showError(res.message);

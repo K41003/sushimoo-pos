@@ -155,7 +155,10 @@ class PrintQueueService extends GetxService {
 
     // All auto-retries exhausted — persist for manual/later retry rather
     // than silently dropping the ticket.
-    await _enqueue(type: type, transaction: transaction, error: 'Printer unreachable after $_maxAutoRetries attempts');
+    await _enqueue(
+        type: type,
+        transaction: transaction,
+        error: 'Printer unreachable after $_maxAutoRetries attempts');
   }
 
   Future<void> _enqueue({
@@ -195,7 +198,7 @@ class PrintQueueService extends GetxService {
         // fields printer_service.dart actually reads (`namaProduk`) are
         // captured manually rather than adding a new serializer to a
         // model this feature doesn't otherwise need to touch.
-        'table': trx.table != null ? trx.table!.toJson() : null,
+        'table': trx.table?.toJson(),
         'details': trx.details
             ?.map((d) => {
                   'id_detail': d.idDetail,

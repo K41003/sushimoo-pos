@@ -1,6 +1,7 @@
 import 'package:get/get.dart';
 import '../services/api_client.dart';
 import '../services/auth_service.dart';
+import '../services/local_data_service.dart';
 import '../services/offline_queue_service.dart';
 import '../services/print_queue_service.dart';
 import '../services/printer_service.dart';
@@ -45,6 +46,7 @@ class InitialBinding extends Bindings {
 
     Get.put(ApiClient(), permanent: true);
     Get.put(AuthService(), permanent: true);
+    Get.put(LocalDataService(), permanent: true);
     Get.put(PrinterService(), permanent: true);
 
     Get.put(OfflineQueueService(), permanent: true);

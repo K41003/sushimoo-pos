@@ -36,8 +36,8 @@ class DeviceIntegrityResult {
 class DeviceIntegrityService extends GetxService {
   static DeviceIntegrityService get to => Get.find<DeviceIntegrityService>();
 
-  final Rx<DeviceIntegrityResult> lastResult =
-      Rx<DeviceIntegrityResult>(const DeviceIntegrityResult(true, IntegrityIssue.none));
+  final Rx<DeviceIntegrityResult> lastResult = Rx<DeviceIntegrityResult>(
+      const DeviceIntegrityResult(true, IntegrityIssue.none));
 
   /// true = app menolak berjalan sama sekali di device tidak aman.
   /// Set false jika hanya ingin menampilkan warning non-blocking.
@@ -49,12 +49,13 @@ class DeviceIntegrityService extends GetxService {
       // jalan tapi emulator-check akan sering true — jangan hard-block
       // saat kDebugMode supaya development tidak terganggu.
       if (kDebugMode) {
-        final result = const DeviceIntegrityResult(true, IntegrityIssue.none);
+        const result = DeviceIntegrityResult(true, IntegrityIssue.none);
         lastResult.value = result;
         return result;
       }
 
-      final isJailBroken = await SafeDevice.isJailBroken; // covers root+jailbreak
+      final isJailBroken =
+          await SafeDevice.isJailBroken; // covers root+jailbreak
       if (isJailBroken) {
         final issue = defaultTargetPlatform == TargetPlatform.iOS
             ? IntegrityIssue.jailbroken
@@ -67,7 +68,7 @@ class DeviceIntegrityService extends GetxService {
 
       final isRealDevice = await SafeDevice.isRealDevice;
       if (!isRealDevice) {
-        final result = const DeviceIntegrityResult(false, IntegrityIssue.emulator);
+        const result = DeviceIntegrityResult(false, IntegrityIssue.emulator);
         lastResult.value = result;
         await _onUnsafeDetected(result);
         return result;
@@ -78,19 +79,19 @@ class DeviceIntegrityService extends GetxService {
         // Untuk POS biasanya tidak fatal (bukan app berbasis lokasi),
         // tapi dicatat — ubah ke hard fail jika bisnis butuh lokasi
         // outlet yang valid untuk absensi/shift.
-        final result = const DeviceIntegrityResult(true, IntegrityIssue.mockLocation);
+        const result = DeviceIntegrityResult(true, IntegrityIssue.mockLocation);
         lastResult.value = result;
         return result;
       }
 
-      final result = const DeviceIntegrityResult(true, IntegrityIssue.none);
+      const result = DeviceIntegrityResult(true, IntegrityIssue.none);
       lastResult.value = result;
       return result;
     } catch (e) {
       // Fail-safe policy: jika deteksi sendiri gagal (mis. plugin error
       // di device tertentu), JANGAN otomatis anggap "aman" secara diam2.
       // Tandai unknown supaya UI bisa memilih untuk tetap warn.
-      final result = const DeviceIntegrityResult(true, IntegrityIssue.unknown);
+      const result = DeviceIntegrityResult(true, IntegrityIssue.unknown);
       lastResult.value = result;
       return result;
     }

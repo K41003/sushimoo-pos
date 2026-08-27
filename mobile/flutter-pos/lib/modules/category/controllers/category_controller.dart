@@ -4,7 +4,6 @@ import 'package:get/get.dart';
 import '../../../app/services/api_client.dart';
 import '../../../data/models/category.dart';
 import '../../../data/response/api_response.dart';
-import '../../../shared/widgets/app_button.dart';
 import '../../../shared/widgets/app_dialog.dart';
 import '../widgets/category_form.dart';
 
@@ -47,11 +46,11 @@ class CategoryController extends GetxController {
         'perPage': perPage.value,
         if (search.value.isNotEmpty) 'q': search.value,
       };
-      final res = await Get.find<ApiClient>().get('/categories',
-          query: query, fromData: (d) => d);
+      final res = await Get.find<ApiClient>()
+          .get('/categories', query: query, fromData: (d) => d);
       if (res.success && res.data != null) {
-        final pag = Paginated<Category>.fromJson(
-            {'data': res.data}, Category.fromJson);
+        final pag =
+            Paginated<Category>.fromJson({'data': res.data}, Category.fromJson);
         items.assignAll(pag.items);
         total.value = pag.total;
         lastPage.value = pag.lastPage;
@@ -99,8 +98,8 @@ class CategoryController extends GetxController {
     EasyLoading.show(status: 'Saving...');
     final res = existing == null
         ? await Get.find<ApiClient>().post('/categories', body: body)
-        : await Get.find<ApiClient>().put('/categories/${existing.idKategori}',
-            body: body);
+        : await Get.find<ApiClient>()
+            .put('/categories/${existing.idKategori}', body: body);
     EasyLoading.dismiss();
 
     if (res.success) {

@@ -31,6 +31,25 @@ class AuthController extends Controller
         ], 'Login success');
     }
 
+    public function verifyPin(\Illuminate\Http\Request $request): JsonResponse
+    {
+        $request->validate([
+            'username' => ['required', 'string'],
+            'pin' => ['required', 'string'],
+        ]);
+
+        $valid = $this->auth->verifyAdminPin(
+            $request->input('username'),
+            $request->input('pin')
+        );
+
+        if (! $valid) {
+            return $this->error('Invalid admin username or PIN.', 401);
+        }
+
+        return $this->ok(null, 'PIN verified');
+    }
+
     public function me(): JsonResponse
     {
         $user = auth()->user();

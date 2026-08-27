@@ -28,6 +28,10 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/me', [AuthController::class, 'me']);
+    // Verifies an Admin's username+password (used as an approval "PIN" in
+    // the app) without changing the caller's own session/token. Used to
+    // gate sensitive Kasir-initiated actions (e.g. voiding an order).
+    Route::post('/auth/verify-pin', [AuthController::class, 'verifyPin']);
 
     // Dashboard
     Route::get('/dashboard/admin', [DashboardController::class, 'admin'])->middleware('role:Admin');
@@ -59,7 +63,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/transaksi', [TransactionController::class, 'store'])->middleware('role:Kasir');
     Route::get('/transaksi/{id}', [TransactionController::class, 'show'])->middleware('role:Admin,Kasir');
     Route::put('/transaksi/{id}', [TransactionController::class, 'update'])->middleware('role:Kasir');
-    Route::post('/transaksi/{id}/void', [TransactionController::class, 'void'])->middleware('role:Admin');
+    // Void is initiated by the Kasir (their session sends the request),
+    // but the Flutter app gates it behind an Admin PIN approval dialog
+    // first (see /auth/verify-pin above and VoidOrderController on the
+    // client). The route itself must therefore allow Kasir, not just Admin.
+    Route::post('/transaksi/{id}/void', [TransactionController::class, 'void'])->middleware('role:Admin,Kasir');
 
     // Payment
     Route::post('/transaksi/{id}/pembayaran', [PaymentController::class, 'pay'])->middleware('role:Kasir');
@@ -69,7 +77,9 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Closing
     Route::post('/shifts/{id}/closing', [ClosingController::class, 'store'])->middleware('role:Kasir');
-    Route::get('/closing/history', [ClosingController::class, 'history'])->middleware('role:Admin');
+    // Kasir needs to see their own closing history from the Closing page
+    // (see ClosingController on the Flutter side), not just Admin.
+    Route::get('/closing/history', [ClosingController::class, 'history'])->middleware('role:Admin,Kasir');
 
     // Reports
     Route::get('/reports/daily', [ReportController::class, 'daily']);

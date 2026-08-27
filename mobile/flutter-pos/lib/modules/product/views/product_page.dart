@@ -5,7 +5,6 @@ import '../../../app/routes/app_routes.dart';
 import '../../../shared/widgets/app_chip.dart';
 import '../../../shared/widgets/app_loading.dart';
 import '../../../shared/widgets/app_scaffold.dart';
-import '../../../shared/widgets/app_text_field.dart';
 import '../controllers/product_controller.dart';
 import '../widgets/product_card_widget.dart';
 
@@ -50,8 +49,10 @@ class ProductPage extends GetView<ProductController> {
                           padding: EdgeInsets.only(right: 8.w),
                           child: AppChip(
                             label: c.namaKategori,
-                            selected: controller.selectedCategoryId.value == c.idKategori,
-                            onTap: () => controller.selectCategory(c.idKategori),
+                            selected: controller.selectedCategoryId.value ==
+                                c.idKategori,
+                            onTap: () =>
+                                controller.selectCategory(c.idKategori),
                           ),
                         ),
                       ),

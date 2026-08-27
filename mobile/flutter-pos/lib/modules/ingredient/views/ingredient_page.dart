@@ -6,7 +6,6 @@ import '../../../app/constants/dimensions.dart';
 import '../../../app/routes/app_routes.dart';
 import '../../../shared/widgets/app_loading.dart';
 import '../../../shared/widgets/app_scaffold.dart';
-import '../../../shared/widgets/app_text_field.dart';
 import '../../../shared/widgets/glass_panel.dart';
 import '../controllers/ingredient_controller.dart';
 
@@ -50,7 +49,8 @@ class IngredientPage extends GetView<IngredientController> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(it.namaBahan, style: Theme.of(context).textTheme.headlineSmall),
+                        Text(it.namaBahan,
+                            style: Theme.of(context).textTheme.headlineSmall),
                         SizedBox(height: 4.h),
                         Text(
                           '${it.satuan} • Min ${it.minimalStok}',

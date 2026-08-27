@@ -4,7 +4,6 @@ import 'package:get/get.dart';
 import '../../../app/constants/colors.dart';
 import '../../../app/constants/dimensions.dart';
 import '../../../shared/widgets/app_button.dart';
-import '../../../shared/widgets/app_chip.dart';
 import '../../../shared/widgets/app_text_field.dart';
 import '../../../shared/widgets/glass_panel.dart';
 import '../controllers/login_controller.dart';

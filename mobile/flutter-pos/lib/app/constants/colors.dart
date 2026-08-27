@@ -139,7 +139,7 @@ class AppColors {
             offset: const Offset(0, 8)),
       ];
 
-  static ColorScheme get scheme => ColorScheme(
+  static ColorScheme get scheme => const ColorScheme(
         brightness: Brightness.light,
         primary: salmon,
         onPrimary: Colors.white,
@@ -161,17 +161,17 @@ class AppColors {
         surface: bgBase,
         onSurface: ink,
         onSurfaceVariant: inkMuted,
-        outline: const Color(0xFFE2E8F0),
-        outlineVariant: const Color(0xFFEDF1F7),
+        outline: Color(0xFFE2E8F0),
+        outlineVariant: Color(0xFFEDF1F7),
         surfaceContainerLowest: Colors.white,
         surfaceContainerLow: bgBase,
-        surfaceContainer: const Color(0xFFF1F5F9),
-        surfaceContainerHigh: const Color(0xFFF1F5F9),
-        surfaceContainerHighest: const Color(0xFFE9EDF5),
+        surfaceContainer: Color(0xFFF1F5F9),
+        surfaceContainerHigh: Color(0xFFF1F5F9),
+        surfaceContainerHighest: Color(0xFFE9EDF5),
         inverseSurface: ink,
         onInverseSurface: Colors.white,
-        shadow: const Color(0x1A10182B),
-        scrim: const Color(0x66111315),
+        shadow: Color(0x1A10182B),
+        scrim: Color(0x66111315),
         surfaceTint: salmon,
       );
 }

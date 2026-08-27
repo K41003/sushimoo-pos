@@ -19,7 +19,7 @@ class ClosingController extends Controller
         $shift = \App\Models\Shift::findOrFail($shiftId);
 
         try {
-            $closing = $this->shifts->close($shift, request()->ip());
+            $closing = $this->shifts->closeAndGenerateReport($shift, request()->ip());
         } catch (\RuntimeException $e) {
             return $this->error($e->getMessage(), 422);
         }

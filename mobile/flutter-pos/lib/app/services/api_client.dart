@@ -22,8 +22,11 @@ class ApiClient extends GetxService {
   late final Dio dio;
 
   ApiClient() {
+    final effectiveBaseUrl = AppConstants.apiPort.isEmpty
+        ? AppConstants.baseUrl
+        : '${AppConstants.baseUrl}:${AppConstants.apiPort}';
     dio = Dio(BaseOptions(
-      baseUrl: AppConstants.baseUrl,
+      baseUrl: effectiveBaseUrl,
       connectTimeout: AppConstants.connectTimeout,
       receiveTimeout: AppConstants.receiveTimeout,
       headers: {
@@ -66,7 +69,7 @@ class ApiClient extends GetxService {
   }) async {
     try {
       final response = await dio.request(
-        path,
+        '/api$path',
         data: body,
         queryParameters: query,
         options: Options(method: method),

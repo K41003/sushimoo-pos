@@ -5,12 +5,10 @@ import '../../../app/services/api_client.dart';
 import '../../../data/models/category.dart';
 import '../../../data/models/product.dart';
 import '../../../data/response/api_response.dart';
-import '../../../shared/widgets/app_button.dart';
 import '../../../shared/widgets/app_dialog.dart';
 import '../widgets/product_form.dart';
 
-String money(dynamic v) =>
-    'Rp ${(v is num ? v : 0).toStringAsFixed(0)}';
+String money(dynamic v) => 'Rp ${(v is num ? v : 0).toStringAsFixed(0)}';
 
 class ProductController extends GetxController {
   final items = <Product>[].obs;
@@ -57,11 +55,11 @@ class ProductController extends GetxController {
 
   Future<void> loadCategories() async {
     try {
-      final res = await Get.find<ApiClient>().get('/categories',
-          query: {'perPage': 100}, fromData: (d) => d);
+      final res = await Get.find<ApiClient>()
+          .get('/categories', query: {'perPage': 100}, fromData: (d) => d);
       if (res.success && res.data != null) {
-        final pag = Paginated<Category>.fromJson(
-            {'data': res.data}, Category.fromJson);
+        final pag =
+            Paginated<Category>.fromJson({'data': res.data}, Category.fromJson);
         categories.assignAll(pag.items);
       }
     } catch (_) {
@@ -78,11 +76,11 @@ class ProductController extends GetxController {
         if (selectedCategoryId.value != null)
           'id_kategori': selectedCategoryId.value,
       };
-      final res = await Get.find<ApiClient>().get('/products',
-          query: query, fromData: (d) => d);
+      final res = await Get.find<ApiClient>()
+          .get('/products', query: query, fromData: (d) => d);
       if (res.success && res.data != null) {
-        final pag = Paginated<Product>.fromJson(
-            {'data': res.data}, Product.fromJson);
+        final pag =
+            Paginated<Product>.fromJson({'data': res.data}, Product.fromJson);
         items.assignAll(pag.items);
         total.value = pag.total;
         lastPage.value = pag.lastPage;
@@ -99,8 +97,7 @@ class ProductController extends GetxController {
 
   void openForm(Product? existing) {
     nameController.text = existing?.namaProduk ?? '';
-    priceController.text =
-        existing != null ? existing.harga.toString() : '';
+    priceController.text = existing != null ? existing.harga.toString() : '';
     selectedCategory.value =
         existing?.idKategori ?? categories.firstOrNull?.idKategori;
     selectedStatus.value = existing?.status ?? true;
@@ -144,8 +141,8 @@ class ProductController extends GetxController {
     EasyLoading.show(status: 'Saving...');
     final res = existing == null
         ? await Get.find<ApiClient>().post('/products', body: body)
-        : await Get.find<ApiClient>().put('/products/${existing.idProduk}',
-            body: body);
+        : await Get.find<ApiClient>()
+            .put('/products/${existing.idProduk}', body: body);
     EasyLoading.dismiss();
 
     if (res.success) {

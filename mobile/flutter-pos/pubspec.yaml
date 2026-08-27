@@ -41,7 +41,7 @@ dependencies:
 
   # Security / device integrity
   safe_device: ^1.1.6
-  no_screenshot: ^0.3.1
+  screen_protector: ^1.5.3
 
   cupertino_icons: ^1.0.8
 

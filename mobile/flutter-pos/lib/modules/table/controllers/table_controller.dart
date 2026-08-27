@@ -8,7 +8,6 @@ import '../../../app/constants/dimensions.dart';
 import '../../../app/services/api_client.dart';
 import '../../../data/models/table.dart' as tm;
 import '../../../data/response/api_response.dart';
-import '../../../shared/widgets/app_button.dart';
 import '../../../shared/widgets/app_dialog.dart';
 import '../../../shared/widgets/app_text_field.dart';
 
@@ -80,16 +79,14 @@ class TableController extends GetxController {
             AppTextField(
               label: 'Nomor Meja',
               controller: nomor,
-              validator: (v) =>
-                  (v == null || v.isEmpty) ? 'Required' : null,
+              validator: (v) => (v == null || v.isEmpty) ? 'Required' : null,
             ),
             SizedBox(height: 14.h),
             AppTextField(
               label: 'Kapasitas',
               controller: kapasitas,
               keyboardType: TextInputType.number,
-              validator: (v) =>
-                  (v == null || v.isEmpty) ? 'Required' : null,
+              validator: (v) => (v == null || v.isEmpty) ? 'Required' : null,
             ),
             SizedBox(height: 14.h),
             Text(
@@ -102,13 +99,16 @@ class TableController extends GetxController {
             ),
             SizedBox(height: 6.h),
             Obx(() => Container(
-                  padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 4.h),
-                  decoration: AppDecorations.control(radius: AppDimensions.radiusMd),
+                  padding:
+                      EdgeInsets.symmetric(horizontal: 14.w, vertical: 4.h),
+                  decoration:
+                      AppDecorations.control(radius: AppDimensions.radiusMd),
                   child: DropdownButtonHideUnderline(
                     child: DropdownButton<String>(
                       isExpanded: true,
                       value: status.value,
-                      icon: const Icon(Icons.keyboard_arrow_down_rounded, color: AppColors.inkMuted),
+                      icon: const Icon(Icons.keyboard_arrow_down_rounded,
+                          color: AppColors.inkMuted),
                       items: statusOptions
                           .map((s) => DropdownMenuItem(
                                 value: s,
@@ -154,8 +154,7 @@ class TableController extends GetxController {
     EasyLoading.dismiss();
 
     if (res.success) {
-      EasyLoading.showSuccess(
-          res.message.isNotEmpty ? res.message : 'Saved');
+      EasyLoading.showSuccess(res.message.isNotEmpty ? res.message : 'Saved');
       await load();
     } else {
       EasyLoading.showError(res.message);
@@ -178,8 +177,7 @@ class TableController extends GetxController {
     EasyLoading.dismiss();
 
     if (res.success) {
-      EasyLoading.showSuccess(
-          res.message.isNotEmpty ? res.message : 'Deleted');
+      EasyLoading.showSuccess(res.message.isNotEmpty ? res.message : 'Deleted');
       await load();
     } else {
       EasyLoading.showError(res.message);

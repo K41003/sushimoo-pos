@@ -16,7 +16,7 @@ class TransactionController extends Controller
     public function store(StoreTransactionRequest $request): JsonResponse
     {
         try {
-            $transaction = $this->service->createWithRetry($request->validated(), auth()->id());
+            $transaction = $this->service->create($request->validated(), auth()->id());
         } catch (\RuntimeException $e) {
             return $this->error($e->getMessage(), 422);
         }
@@ -60,12 +60,7 @@ class TransactionController extends Controller
     public function void(int $id, VoidTransactionRequest $request): JsonResponse
     {
         try {
-            $transaction = $this->service->void(
-                $id,
-                (string) $request->input('alasan', ''),
-                auth()->id(),
-                $request->ip()
-            );
+            $transaction = $this->service->void($id, (string) $request->input('alasan', ''));
         } catch (\RuntimeException $e) {
             return $this->error($e->getMessage(), 422);
         }

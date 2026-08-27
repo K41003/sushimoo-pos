@@ -4,7 +4,6 @@ import 'package:get/get.dart';
 import '../../../app/constants/colors.dart';
 import '../../../app/constants/dimensions.dart';
 import '../../../app/routes/app_routes.dart';
-import '../../../shared/widgets/app_button.dart';
 import '../../../shared/widgets/app_dialog.dart';
 import '../../../shared/widgets/app_loading.dart';
 import '../../../shared/widgets/app_scaffold.dart';
@@ -44,20 +43,22 @@ class ExpensePage extends GetView<ExpenseController> {
               padding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 6.h),
               child: ListTile(
                 contentPadding: EdgeInsets.zero,
-                title: Text(e.kategori, style: Theme.of(context).textTheme.headlineSmall),
-                subtitle: Text(e.keterangan ?? '-', style: Theme.of(context).textTheme.bodySmall),
+                title: Text(e.kategori,
+                    style: Theme.of(context).textTheme.headlineSmall),
+                subtitle: Text(e.keterangan ?? '-',
+                    style: Theme.of(context).textTheme.bodySmall),
                 trailing: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
                       'Rp ${e.nominal.toStringAsFixed(0)}',
-                      style: Theme.of(context)
-                          .textTheme
-                          .bodyLarge
-                          ?.copyWith(fontWeight: FontWeight.w800, color: AppColors.salmonDark),
+                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.salmonDark),
                     ),
                     IconButton(
-                      icon: const Icon(Icons.delete_outline, color: AppColors.danger),
+                      icon: const Icon(Icons.delete_outline,
+                          color: AppColors.danger),
                       onPressed: () => controller.delete(e.idPengeluaran),
                     ),
                   ],
@@ -79,7 +80,8 @@ class ExpensePage extends GetView<ExpenseController> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          AppTextField(label: 'Kategori', controller: controller.kategoriController),
+          AppTextField(
+              label: 'Kategori', controller: controller.kategoriController),
           SizedBox(height: 14.h),
           AppTextField(
             label: 'Nominal',
@@ -87,7 +89,8 @@ class ExpensePage extends GetView<ExpenseController> {
             keyboardType: TextInputType.number,
           ),
           SizedBox(height: 14.h),
-          AppTextField(label: 'Keterangan', controller: controller.keteranganController),
+          AppTextField(
+              label: 'Keterangan', controller: controller.keteranganController),
         ],
       ),
       onConfirm: () async {

@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import '../../../app/constants/app_constants.dart';
 import '../../../app/routes/app_routes.dart';
 import '../../../app/services/api_client.dart';
+import '../../../app/services/local_data_service.dart';
 import '../../../app/services/offline_queue_service.dart';
 import '../../../app/services/print_queue_service.dart';
 import '../../../data/models/category.dart';
@@ -15,6 +16,7 @@ import '../widgets/table_select_sheet.dart';
 
 class PosController extends GetxController {
   final ApiClient _api = ApiClient.to;
+  final LocalDataService _local = LocalDataService.to;
 
   final categories = <Category>[].obs;
   final products = <Product>[].obs;
@@ -25,9 +27,6 @@ class PosController extends GetxController {
   final loading = false.obs;
   final taxRate = AppConstants.taxRate;
 
-  /// Free-text product search. When non-empty this searches across ALL
-  /// categories (the cashier doesn't need to tap a category chip first),
-  /// and category selection is temporarily ignored until search is cleared.
   final searchQuery = ''.obs;
   int _searchToken = 0;
 
@@ -46,6 +45,13 @@ class PosController extends GetxController {
   }
 
   Future<void> loadCategories() async {
+    if (AppConstants.localMode) {
+      categories.assignAll(await _local.getAppCategories());
+      if (categories.isNotEmpty) {
+        selectCategory(categories.first.idKategori);
+      }
+      return;
+    }
     final res = await _api.get('/categories', query: {'perPage': 100},
         fromData: (d) => d);
     if (res.success && res.data != null) {
@@ -59,6 +65,10 @@ class PosController extends GetxController {
   }
 
   Future<void> loadTables() async {
+    if (AppConstants.localMode) {
+      tables.assignAll(await _local.getAppTables());
+      return;
+    }
     final res = await _api.get('/meja', query: {'perPage': 100},
         fromData: (d) => d);
     if (res.success && res.data != null) {
@@ -70,12 +80,17 @@ class PosController extends GetxController {
 
   Future<void> selectCategory(int id) async {
     selectedCategoryId.value = id;
-    // Picking a category explicitly cancels any active search so the
-    // grid reflects the tapped category right away.
     if (isSearching) {
       searchQuery.value = '';
     }
     loading.value = true;
+    if (AppConstants.localMode) {
+      final all = await _local.getAppProducts();
+      final filtered = all.where((p) => p.idKategori == id).toList();
+      products.assignAll(filtered);
+      loading.value = false;
+      return;
+    }
     final res = await _api.get('/products',
         query: {'id_kategori': id, 'perPage': 100}, fromData: (d) => d);
     loading.value = false;
@@ -86,8 +101,6 @@ class PosController extends GetxController {
     }
   }
 
-  /// Called from the search bar on every keystroke. Empty text restores
-  /// the currently selected category's product list.
   void onSearchChanged(String value) {
     searchQuery.value = value;
     final query = value.trim();
@@ -105,13 +118,22 @@ class PosController extends GetxController {
   }
 
   Future<void> _searchProducts(String query) async {
-    // Token guard so a slow earlier request can't overwrite a newer one
-    // if the cashier keeps typing quickly.
     final token = ++_searchToken;
     loading.value = true;
+    if (AppConstants.localMode) {
+      final all = await _local.getAppProducts();
+      final filtered = all
+          .where((p) => p.namaProduk.toLowerCase().contains(query.toLowerCase()))
+          .toList();
+      if (token == _searchToken) {
+        products.assignAll(filtered);
+        loading.value = false;
+      }
+      return;
+    }
     final res = await _api.get('/products',
         query: {'q': query, 'perPage': 100}, fromData: (d) => d);
-    if (token != _searchToken) return; // a newer search superseded this one
+    if (token != _searchToken) return;
     loading.value = false;
     if (res.success && res.data != null) {
       final pag = Paginated<Product>.fromJson(
@@ -204,6 +226,30 @@ class PosController extends GetxController {
 
     loading.value = true;
     EasyLoading.show(status: 'Placing order...');
+
+    if (AppConstants.localMode) {
+      final total = grandTotal.toInt();
+      final tx = LocalTransaction(
+        tableId: idMeja,
+        tableName: selectedTable.value!.nomorMeja,
+        total: total,
+        createdAt: DateTime.now().toIso8601String(),
+        items: items.map((it) => LocalTransactionItem(
+          transactionId: 0,
+          productId: it['id_produk'] as int,
+          productName: it['nama_produk'] as String,
+          quantity: it['qty'] as int,
+          price: (it['harga'] as double).toInt(),
+        )).toList(),
+      );
+      await _local.createTransaction(tx);
+      loading.value = false;
+      EasyLoading.dismiss();
+      clearCart();
+      EasyLoading.showSuccess('Order placed (local)');
+      return;
+    }
+
     final res = await _api.post('/transaksi', body: {
       'id_meja': idMeja,
       'items': items,

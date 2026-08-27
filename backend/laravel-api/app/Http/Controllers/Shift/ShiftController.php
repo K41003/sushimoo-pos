@@ -50,12 +50,12 @@ class ShiftController extends Controller
         $shift = \App\Models\Shift::findOrFail($id);
 
         try {
-            $closing = $this->service->close($shift, request()->ip());
+            $shift = $this->service->close($shift, request()->ip());
         } catch (\RuntimeException $e) {
             return $this->error($e->getMessage(), 422);
         }
 
-        return $this->created($closing->load('shift'), 'Shift closed');
+        return $this->created($shift, 'Shift closed');
     }
 
     public function history(): JsonResponse

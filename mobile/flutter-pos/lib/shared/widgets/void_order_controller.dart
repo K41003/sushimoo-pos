@@ -10,8 +10,8 @@ import 'app_button.dart';
 import 'app_text_field.dart';
 import 'glass_panel.dart';
 
-/// Voids an order via `PATCH /transaksi/:id` (body: `{status: 'void',
-/// alasan: '...'}'`), gated on two things:
+/// Voids an order via `POST /transaksi/:id/void` (body: `{alasan: '...'}`),
+/// gated on two things:
 ///
 ///  1. The order must not already be paid — `Transaction.status` other
 ///     than `'paid'` is treated as voidable. This mirrors the product
@@ -21,12 +21,11 @@ import 'glass_panel.dart';
 ///     before the void request is sent. The cashier only supplies a
 ///     reason; they cannot void without an admin present to approve.
 ///
-/// NOTE ON BACKEND CONTRACT: `PATCH /transaksi/:id` with a `status`
-/// field is assumed here to be how the existing `ApiClient.put()` path
-/// updates a transaction's status (same request shape used elsewhere,
-/// e.g. `ShiftController` posting to `/shifts/:id/close`). If the real
-/// endpoint differs (different verb, different field name for the
-/// reason), only `VoidOrderController.voidOrder()` needs updating.
+/// BACKEND CONTRACT: `POST /transaksi/{id}/void` is the real endpoint
+/// (see `routes/api.php` -> `TransactionController::void`), which takes
+/// `alasan` and moves the transaction to `status: 'cancelled'` server
+/// side. There is no `'void'` status in the database — `'cancelled'` is
+/// the terminal status for a pre-payment order, applied by the backend.
 class VoidOrderController {
   /// Returns `true` if the order was successfully voided (caller should
   /// refresh/navigate away), `false` if cancelled or blocked.
@@ -49,9 +48,9 @@ class VoidOrderController {
     }
 
     EasyLoading.show(status: 'Voiding order...');
-    final res = await ApiClient.to.put(
-      '/transaksi/${trx.idTransaksi}',
-      body: {'status': 'void', 'alasan': reason.trim()},
+    final res = await ApiClient.to.post(
+      '/transaksi/${trx.idTransaksi}/void',
+      body: {'alasan': reason.trim()},
     );
     EasyLoading.dismiss();
 

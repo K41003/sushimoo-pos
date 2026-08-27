@@ -5,7 +5,6 @@ import 'package:get/get.dart';
 import '../../../app/services/api_client.dart';
 import '../../../data/models/ingredient.dart';
 import '../../../data/response/api_response.dart';
-import '../../../shared/widgets/app_button.dart';
 import '../../../shared/widgets/app_dialog.dart';
 import '../../../shared/widgets/app_text_field.dart';
 
@@ -66,23 +65,21 @@ class IngredientController extends GetxController {
             AppTextField(
               label: 'Nama Bahan',
               controller: nama,
-              validator: (v) =>
-                  (v == null || v.isEmpty) ? 'Required' : null,
+              validator: (v) => (v == null || v.isEmpty) ? 'Required' : null,
             ),
             SizedBox(height: 14.h),
             AppTextField(
               label: 'Satuan (e.g. gram, ml, pcs)',
               controller: satuan,
-              validator: (v) =>
-                  (v == null || v.isEmpty) ? 'Required' : null,
+              validator: (v) => (v == null || v.isEmpty) ? 'Required' : null,
             ),
             SizedBox(height: 14.h),
             AppTextField(
               label: 'Minimal Stok',
               controller: minimal,
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
-              validator: (v) =>
-                  (v == null || v.isEmpty) ? 'Required' : null,
+              keyboardType:
+                  const TextInputType.numberWithOptions(decimal: true),
+              validator: (v) => (v == null || v.isEmpty) ? 'Required' : null,
             ),
           ],
         ),
@@ -110,8 +107,7 @@ class IngredientController extends GetxController {
     EasyLoading.dismiss();
 
     if (res.success) {
-      EasyLoading.showSuccess(
-          res.message.isNotEmpty ? res.message : 'Saved');
+      EasyLoading.showSuccess(res.message.isNotEmpty ? res.message : 'Saved');
       await load();
     } else {
       EasyLoading.showError(res.message);
@@ -134,8 +130,7 @@ class IngredientController extends GetxController {
     EasyLoading.dismiss();
 
     if (res.success) {
-      EasyLoading.showSuccess(
-          res.message.isNotEmpty ? res.message : 'Deleted');
+      EasyLoading.showSuccess(res.message.isNotEmpty ? res.message : 'Deleted');
       await load();
     } else {
       EasyLoading.showError(res.message);

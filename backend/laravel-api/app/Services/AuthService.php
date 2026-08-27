@@ -28,6 +28,32 @@ class AuthService
         return $user;
     }
 
+    /**
+     * Verifies that `$username`/`$pin` belongs to an active Admin account.
+     * Reuses the same password hash Admin already logs in with — there is
+     * no separate "PIN" concept/column in the schema, so the Admin's
+     * regular password doubles as the approval PIN in the UI. Does NOT
+     * issue a token or touch the caller's session; this is purely a
+     * yes/no check used to gate sensitive Kasir-initiated actions (e.g.
+     * voiding an unpaid order) behind Admin approval.
+     */
+    public function verifyAdminPin(string $username, string $pin): bool
+    {
+        $user = $this->users->findByUsername($username);
+
+        if (! $user || ! Hash::check($pin, $user->password)) {
+            return false;
+        }
+
+        if (! $user->status) {
+            return false;
+        }
+
+        $roleName = optional($user->role)->nama_role;
+
+        return $roleName === 'Admin';
+    }
+
     public function issueToken(\App\Models\User $user, string $device = 'pos'): string
     {
         return $user->createToken('pos-' . $device)->plainTextToken;

@@ -41,7 +41,8 @@ class CategoryForm extends StatelessWidget {
           SizedBox(height: 16.h),
           Obx(() => Container(
                 padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 8.h),
-                decoration: AppDecorations.control(radius: AppDimensions.radiusMd),
+                decoration:
+                    AppDecorations.control(radius: AppDimensions.radiusMd),
                 child: Row(
                   children: [
                     Text(
@@ -54,7 +55,7 @@ class CategoryForm extends StatelessWidget {
                     Switch(
                       value: controller.selectedStatus.value,
                       onChanged: (v) => controller.selectedStatus.value = v,
-                      activeColor: AppColors.salmon,
+                      activeThumbColor: AppColors.salmon,
                     ),
                   ],
                 ),
@@ -64,4 +65,3 @@ class CategoryForm extends StatelessWidget {
     );
   }
 }
-

@@ -6,7 +6,6 @@ import '../../../app/constants/dimensions.dart';
 import '../../../app/routes/app_routes.dart';
 import '../../../shared/widgets/app_loading.dart';
 import '../../../shared/widgets/app_scaffold.dart';
-import '../../../shared/widgets/app_text_field.dart';
 import '../../../shared/widgets/glass_panel.dart';
 import '../controllers/category_controller.dart';
 
@@ -58,27 +57,37 @@ class CategoryPage extends GetView<CategoryController> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(c.namaKategori,
-                                    style: Theme.of(context).textTheme.headlineSmall),
-                                if (c.deskripsi != null && c.deskripsi!.isNotEmpty) ...[
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .headlineSmall),
+                                if (c.deskripsi != null &&
+                                    c.deskripsi!.isNotEmpty) ...[
                                   SizedBox(height: 4.h),
-                                  Text(c.deskripsi!, style: Theme.of(context).textTheme.bodySmall),
+                                  Text(c.deskripsi!,
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodySmall),
                                 ],
                               ],
                             ),
                           ),
                           Container(
-                            padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
+                            padding: EdgeInsets.symmetric(
+                                horizontal: 10.w, vertical: 4.h),
                             decoration: BoxDecoration(
                               color: c.status
                                   ? AppColors.emerald.withValues(alpha: 0.14)
                                   : AppColors.danger.withValues(alpha: 0.14),
-                              borderRadius: BorderRadius.circular(AppDimensions.radiusFull),
+                              borderRadius: BorderRadius.circular(
+                                  AppDimensions.radiusFull),
                             ),
                             child: Text(
                               c.status ? 'Active' : 'Inactive',
                               style: TextStyle(
                                 fontSize: 12.sp,
-                                color: c.status ? Colors.green.shade800 : Colors.red.shade800,
+                                color: c.status
+                                    ? Colors.green.shade800
+                                    : Colors.red.shade800,
                                 fontWeight: FontWeight.w600,
                               ),
                             ),

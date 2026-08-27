@@ -6,7 +6,6 @@ import '../../../app/constants/dimensions.dart';
 import '../../../app/routes/app_routes.dart';
 import '../../../shared/widgets/app_loading.dart';
 import '../../../shared/widgets/app_scaffold.dart';
-import '../../../shared/widgets/app_text_field.dart';
 import '../../../shared/widgets/glass_panel.dart';
 import '../controllers/stock_controller.dart';
 
@@ -51,7 +50,8 @@ class StockPage extends GetView<StockController> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(name, style: Theme.of(context).textTheme.headlineSmall),
+                        Text(name,
+                            style: Theme.of(context).textTheme.headlineSmall),
                         SizedBox(height: 4.h),
                         Text(
                           '${it.jumlah} ${it.ingredient?.satuan ?? ''}',

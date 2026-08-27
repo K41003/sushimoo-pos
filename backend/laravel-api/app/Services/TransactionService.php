@@ -4,14 +4,11 @@ namespace App\Services;
 
 use App\Models\Shift;
 use App\Models\Transaction;
-use App\Repositories\Eloquent\ActivityLogRepository;
 use App\Repositories\Eloquent\ProductRepository;
 use App\Repositories\Eloquent\TableRepository;
 use App\Repositories\Eloquent\TransactionDetailRepository;
 use App\Repositories\Eloquent\TransactionRepository;
-use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Schema;
 
 class TransactionService
 {
@@ -20,7 +17,6 @@ class TransactionService
         private TransactionDetailRepository $details,
         private TableRepository $tables,
         private ProductRepository $products,
-        private ActivityLogRepository $activityLogs,
     ) {}
 
     private function invoiceNumber(): string
@@ -88,25 +84,7 @@ class TransactionService
             }
 
             return $transaction->load('details.product', 'table', 'user');
-        }, 3);
-    }
-
-    public function createWithRetry(array $data, int $userId): Transaction
-    {
-        $attempts = 0;
-
-        do {
-            try {
-                return $this->create($data, $userId);
-            } catch (QueryException $e) {
-                $attempts++;
-                if (! $this->isDuplicateInvoiceException($e) || $attempts >= 3) {
-                    throw $e;
-                }
-            }
-        } while ($attempts < 3);
-
-        throw new \RuntimeException('Unable to create a unique invoice number.');
+        });
     }
 
     public function list(?string $status, ?int $tableId, int $perPage = 15)
@@ -137,69 +115,26 @@ class TransactionService
         });
     }
 
-    public function void(int $id, string $reason, ?int $userId = null, ?string $ip = null): Transaction
+    public function void(int $id, string $reason): Transaction
     {
-        return DB::transaction(function () use ($id, $reason, $userId, $ip) {
-            $transaction = Transaction::query()
-                ->whereKey($id)
-                ->lockForUpdate()
-                ->firstOrFail();
+        return DB::transaction(function () use ($id) {
+            $transaction = $this->transactions->findOrFail($id);
 
             if ($transaction->status === 'paid') {
                 throw new \RuntimeException('Paid transaction cannot be voided.');
             }
-
             if ($transaction->status === 'cancelled') {
                 throw new \RuntimeException('Transaction already voided.');
             }
 
-            $updates = ['status' => 'cancelled'];
-            if (Schema::hasColumn('transaksi', 'void_reason')) {
-                $updates['void_reason'] = $reason;
-            }
-            if (Schema::hasColumn('transaksi', 'voided_by')) {
-                $updates['voided_by'] = $userId;
-            }
-            if (Schema::hasColumn('transaksi', 'voided_at')) {
-                $updates['voided_at'] = now();
-            }
-
-            $this->transactions->update($transaction, $updates);
+            $this->transactions->update($transaction, ['status' => 'cancelled']);
 
             $table = $this->tables->find($transaction->id_meja);
-            $hasOtherOpenTransactions = Transaction::query()
-                ->where('id_meja', $transaction->id_meja)
-                ->where('id_transaksi', '!=', $transaction->id_transaksi)
-                ->where('status', 'pending')
-                ->exists();
-
-            if ($table && ! $hasOtherOpenTransactions) {
+            if ($table) {
                 $this->tables->update($table, ['status' => 'available']);
             }
 
-            if ($userId !== null) {
-                $this->activityLogs->log(
-                    $userId,
-                    sprintf(
-                        'Void transaction %s. Reason: %s',
-                        $transaction->invoice_number,
-                        $reason !== '' ? $reason : '-'
-                    ),
-                    $ip
-                );
-            }
-
             return $transaction->load('details.product', 'table', 'user');
-        }, 3);
-    }
-
-    private function isDuplicateInvoiceException(QueryException $e): bool
-    {
-        $sqlState = (string) ($e->errorInfo[0] ?? '');
-        $driverCode = (string) ($e->errorInfo[1] ?? '');
-        $message = strtolower($e->getMessage());
-
-        return $sqlState === '23000'
-            && ($driverCode === '1062' || str_contains($message, 'invoice_number'));
+        });
     }
 }

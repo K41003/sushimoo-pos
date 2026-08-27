@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/scheduler.dart';
-import 'package:no_screenshot/no_screenshot.dart';
+import 'package:screen_protector/screen_protector.dart';
 
 /// Widget wrapper yang mengaktifkan screen shielding (mencegah
 /// screenshot & screen recording di Android; menyamarkan tampilan saat
@@ -9,6 +8,26 @@ import 'package:no_screenshot/no_screenshot.dart';
 /// OWASP MASVS-STORAGE-1 (mencegah kebocoran data sensitif lewat
 /// screenshot/recording, mis. nomor kartu, jumlah kembalian tunai, atau
 /// invoice detail).
+///
+/// PAKET DIGANTI (build fix): sebelumnya pakai `no_screenshot ^0.3.6`,
+/// yang source Kotlin-nya (`NoScreenshotPlugin.kt`) mendeklarasikan
+/// konstanta yang sama baik sebagai top-level property maupun di dalam
+/// companion object — bentrok ("Conflicting declarations" / "Overload
+/// resolution ambiguity") saat dikompilasi dengan Kotlin/AGP versi baru,
+/// sehingga `flutter run` gagal total di step `compileDebugKotlin`. Ini
+/// bug di dalam plugin itu sendiri, bukan di kode aplikasi, dan belum
+/// ada rilis perbaikan dari upstream-nya per saat ini.
+///
+/// Diganti ke `screen_protector`, paket yang lebih aktif dipelihara dan
+/// menyediakan kapabilitas yang sama (blokir screenshot & screen
+/// recording di Android via FLAG_SECURE, plus app-switcher blur di iOS).
+/// API publik widget ini (`ScreenShieldWrapper({child})`) TIDAK berubah,
+/// jadi tidak ada call site lain yang perlu disentuh.
+///
+/// WAJIB: tambahkan `screen_protector: ^1.4.2` (atau versi stabil
+/// terbaru) ke `pubspec.yaml`, lalu hapus baris `no_screenshot` dari
+/// `pubspec.yaml` dan jalankan `flutter pub get`. Paket lama tidak lagi
+/// dipakai di mana pun setelah perubahan ini.
 ///
 /// PEMAKAIAN: bungkus body dari PaymentPage / ReceiptPage:
 /// ```dart
@@ -26,8 +45,6 @@ class ScreenShieldWrapper extends StatefulWidget {
 
 class _ScreenShieldWrapperState extends State<ScreenShieldWrapper>
     with WidgetsBindingObserver {
-  final _noScreenshot = NoScreenshot.instance;
-
   @override
   void initState() {
     super.initState();
@@ -37,7 +54,7 @@ class _ScreenShieldWrapperState extends State<ScreenShieldWrapper>
 
   Future<void> _enableShield() async {
     try {
-      await _noScreenshot.screenshotOff();
+      await ScreenProtector.preventScreenshotOn();
     } catch (_) {
       // Non-fatal: beberapa device/OS version bisa menolak; jangan
       // crash alur pembayaran karena ini.
@@ -46,7 +63,7 @@ class _ScreenShieldWrapperState extends State<ScreenShieldWrapper>
 
   Future<void> _disableShield() async {
     try {
-      await _noScreenshot.screenshotOn();
+      await ScreenProtector.preventScreenshotOff();
     } catch (_) {}
   }
 

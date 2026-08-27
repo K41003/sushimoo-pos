@@ -142,7 +142,8 @@ class AppTheme {
         margin: EdgeInsets.zero,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppDimensions.radiusLg.r),
-          side: BorderSide(color: AppColors.glassBorder(opacity: 0.7), width: 1.2),
+          side: BorderSide(
+              color: AppColors.glassBorder(opacity: 0.7), width: 1.2),
         ),
       ),
 
@@ -189,7 +190,8 @@ class AppTheme {
           disabledForegroundColor: AppColors.inkFaint,
           backgroundColor: Colors.white.withValues(alpha: 0.4),
           minimumSize: Size(double.infinity, AppDimensions.buttonHeight.h),
-          side: BorderSide(color: AppColors.glassBorder(opacity: 0.7), width: 1.4),
+          side: BorderSide(
+              color: AppColors.glassBorder(opacity: 0.7), width: 1.4),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppDimensions.radiusMd.r),
           ),
@@ -218,11 +220,13 @@ class AppTheme {
         hintStyle: TextStyle(color: AppColors.inkFaint, fontSize: 15.sp),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppDimensions.radiusMd.r),
-          borderSide: BorderSide(color: AppColors.glassBorder(opacity: 0.7), width: 1.2),
+          borderSide: BorderSide(
+              color: AppColors.glassBorder(opacity: 0.7), width: 1.2),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppDimensions.radiusMd.r),
-          borderSide: BorderSide(color: AppColors.glassBorder(opacity: 0.7), width: 1.2),
+          borderSide: BorderSide(
+              color: AppColors.glassBorder(opacity: 0.7), width: 1.2),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppDimensions.radiusMd.r),
@@ -257,7 +261,7 @@ class AppTheme {
         ),
       ),
 
-      dividerTheme: DividerThemeData(
+      dividerTheme: const DividerThemeData(
         color: AppColors.hairline,
         thickness: 1,
         space: 1,

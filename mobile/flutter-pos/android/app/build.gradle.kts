@@ -15,9 +15,11 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
 
-    kotlinOptions {
-        jvmTarget = JavaVersion.VERSION_17.toString()
-    }
+    // MIGRASI: `kotlinOptions { jvmTarget = "17" }` sudah dihapus dari
+    // Kotlin Gradle Plugin versi terbaru ("Using 'kotlinOptions(...)' is
+    // an error. Please migrate to the compilerOptions DSL."). Diganti ke
+    // `tasks.withType<KotlinCompile>().configureEach { compilerOptions {...} }`
+    // di bawah, yang merupakan cara resmi yang menggantikannya.
 
     defaultConfig {
         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
@@ -36,6 +38,12 @@ android {
             // Signing with the debug keys for now, so `flutter run --release` works.
             signingConfig = signingConfigs.getByName("debug")
         }
+    }
+}
+
+tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
+    compilerOptions {
+        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
     }
 }
 

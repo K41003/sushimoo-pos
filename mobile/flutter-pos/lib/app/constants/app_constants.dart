@@ -8,7 +8,22 @@ class AppConstants {
   /// `--dart-define=API_BASE_URL=https://api.example.com/api`
   static const String baseUrl = String.fromEnvironment(
     'API_BASE_URL',
-    defaultValue: 'http://10.0.2.2/api',
+    defaultValue: 'http://10.0.2.2',
+  );
+
+  /// API port. Leave empty to use the default for the scheme (80 for http,
+  /// 443 for https). Useful when backend runs on `php artisan serve` (8000).
+  static const String apiPort = String.fromEnvironment(
+    'API_PORT',
+    defaultValue: '',
+  );
+
+  /// Enable fully local/demo mode without backend.
+  ///
+  /// Use: `flutter run --dart-define=LOCAL_MODE=true`
+  static const bool localMode = bool.fromEnvironment(
+    'LOCAL_MODE',
+    defaultValue: false,
   );
 
   /// Optional host override for local virtual-host setups only.
@@ -16,7 +31,7 @@ class AppConstants {
   /// Leave empty in normal staging/production builds.
   static const String apiHostHeader = String.fromEnvironment(
     'API_HOST_HEADER',
-    defaultValue: '',
+    defaultValue: 'laravel-api.test',
   );
 
   static const Duration connectTimeout = Duration(seconds: 15);

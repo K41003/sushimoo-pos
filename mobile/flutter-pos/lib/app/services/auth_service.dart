@@ -1,7 +1,10 @@
 import 'package:get/get.dart';
+import '../../app/constants/app_constants.dart';
+import '../../data/models/role.dart';
 import '../../data/models/user.dart';
 import '../../data/response/api_response.dart';
 import 'api_client.dart';
+import 'local_data_service.dart';
 import 'secure_storage_service.dart';
 
 class AuthSession {
@@ -14,9 +17,34 @@ class AuthService extends GetxService {
   static AuthService get to => Get.find<AuthService>();
 
   final ApiClient _api = ApiClient.to;
+  final LocalDataService _local = LocalDataService.to;
 
   Future<ApiResponse<AuthSession>> login(
       String username, String password) async {
+    if (AppConstants.localMode) {
+      final localUser = await _local.login(username, password);
+      if (localUser == null) {
+        return ApiResponse(
+          success: false,
+          message: 'Username atau password salah',
+        );
+      }
+      final user = User(
+        idUser: localUser.id ?? 0,
+        idRole: localUser.role == 'Admin' ? 1 : 2,
+        nama: localUser.name,
+        username: localUser.username,
+        status: true,
+        role: Role(idRole: localUser.id ?? 0, namaRole: localUser.role, deskripsi: null),
+      );
+      final session = AuthSession(token: localUser.token, user: user);
+      await SecureStorageService.to.saveSession(
+        token: session.token,
+        user: session.user,
+      );
+      return ApiResponse(success: true, message: 'Login berhasil', data: session);
+    }
+
     final res = await _api.post('/login', body: {
       'username': username,
       'password': password,
@@ -29,8 +57,6 @@ class AuthService extends GetxService {
     });
 
     if (res.success && res.data != null) {
-      // Token & user sekarang tersimpan di Keystore/Keychain, bukan
-      // GetStorage plaintext. Lihat secure_storage_service.dart.
       await SecureStorageService.to.saveSession(
         token: res.data!.token,
         user: res.data!.user,
