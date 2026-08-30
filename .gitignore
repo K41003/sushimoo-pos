@@ -38,3 +38,4 @@ backend/laravel-api/.env.*
 # Node / Web App
 node_modules/
 dist/
+mobile/flutter-pos.zip
