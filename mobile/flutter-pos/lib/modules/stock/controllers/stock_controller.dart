@@ -7,6 +7,7 @@ import '../../../app/constants/colors.dart';
 import '../../../app/constants/decorations.dart';
 import '../../../app/constants/dimensions.dart';
 import '../../../app/services/api_client.dart';
+import '../../../app/services/local_data_service.dart';
 import '../../../data/models/ingredient.dart';
 import '../../../data/models/stock.dart';
 import '../../../data/response/api_response.dart';
@@ -15,6 +16,7 @@ import '../../../shared/widgets/app_text_field.dart';
 
 class StockController extends GetxController {
   final ApiClient _api = Get.find<ApiClient>();
+  final LocalDataService _local = LocalDataService.to;
   final items = <Stock>[].obs;
   final ingredients = <Ingredient>[].obs;
   final loading = false.obs;
@@ -29,7 +31,7 @@ class StockController extends GetxController {
 
   Future<void> loadIngredients() async {
     if (AppConstants.localMode) {
-      ingredients.clear();
+      ingredients.value = await _local.getAppIngredients();
       return;
     }
     final res = await _api.get(
@@ -49,7 +51,7 @@ class StockController extends GetxController {
   Future<void> load() async {
     loading.value = true;
     if (AppConstants.localMode) {
-      items.clear();
+      items.value = await _local.getAppStock(search: search.value);
       loading.value = false;
       return;
     }
@@ -76,10 +78,6 @@ class StockController extends GetxController {
   }
 
   Future<void> addAdjustment() async {
-    if (AppConstants.localMode) {
-      EasyLoading.showError('Not available in local mode');
-      return;
-    }
     if (ingredients.isEmpty) await loadIngredients();
     final selected = Rxn<Ingredient>();
     final jumlah = TextEditingController();
@@ -156,6 +154,17 @@ class StockController extends GetxController {
 
     loading.value = true;
     EasyLoading.show(status: 'Saving...');
+    if (AppConstants.localMode) {
+      await _local.addStockAdjustment(
+        ingredientId: selected.value!.idBahan,
+        jumlah: double.tryParse(jumlah.text) ?? 0,
+      );
+      loading.value = false;
+      EasyLoading.dismiss();
+      EasyLoading.showSuccess('Saved');
+      await load();
+      return;
+    }
     final res = await _api.post(
       '/stok-bahan',
       body: {
@@ -176,10 +185,6 @@ class StockController extends GetxController {
   }
 
   Future<void> adjust(Stock stock) async {
-    if (AppConstants.localMode) {
-      EasyLoading.showError('Not available in local mode');
-      return;
-    }
     final jumlah = TextEditingController(text: stock.jumlah.toString());
     final formKey = GlobalKey<FormState>();
 
@@ -208,12 +213,16 @@ class StockController extends GetxController {
   }
 
   Future<void> updateStock(int id, double jumlah) async {
-    if (AppConstants.localMode) {
-      EasyLoading.showError('Not available in local mode');
-      return;
-    }
     loading.value = true;
     EasyLoading.show(status: 'Updating...');
+    if (AppConstants.localMode) {
+      await _local.updateStock(id, jumlah);
+      loading.value = false;
+      EasyLoading.dismiss();
+      EasyLoading.showSuccess('Updated');
+      await load();
+      return;
+    }
     final res = await _api.put(
       '/stok-bahan/$id',
       body: {'jumlah': jumlah},
@@ -231,10 +240,6 @@ class StockController extends GetxController {
   }
 
   Future<void> delete(int id) async {
-    if (AppConstants.localMode) {
-      EasyLoading.showError('Not available in local mode');
-      return;
-    }
     final confirm = await AppDialog.confirm(
       title: 'Delete Stock',
       message: 'Are you sure you want to delete this stock entry?',
@@ -245,6 +250,14 @@ class StockController extends GetxController {
 
     loading.value = true;
     EasyLoading.show(status: 'Deleting...');
+    if (AppConstants.localMode) {
+      await _local.deleteStock(id);
+      loading.value = false;
+      EasyLoading.dismiss();
+      EasyLoading.showSuccess('Deleted');
+      await load();
+      return;
+    }
     final res = await _api.delete('/stok-bahan/$id', fromData: (d) => d);
     loading.value = false;
     EasyLoading.dismiss();

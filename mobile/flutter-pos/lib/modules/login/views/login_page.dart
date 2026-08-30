@@ -37,7 +37,7 @@ class LoginPage extends GetView<LoginController> {
                         _loginCard(context),
                         SizedBox(height: 20.h),
                         Text(
-                          'Gunakan username "admin" password "password" untuk uji coba.',
+                          'Gunakan username "admin" password "admin" (atau "kasir"/"kasir") untuk uji coba.',
                           textAlign: TextAlign.center,
                           style: TextStyle(
                               fontSize: 11.5.sp, color: AppColors.inkFaint),

@@ -4,6 +4,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import '../../../app/constants/app_constants.dart';
 import '../../../app/services/api_client.dart';
+import '../../../app/services/local_data_service.dart';
 import '../../../data/models/ingredient.dart';
 import '../../../data/response/api_response.dart';
 import '../../../shared/widgets/app_dialog.dart';
@@ -11,6 +12,7 @@ import '../../../shared/widgets/app_text_field.dart';
 
 class IngredientController extends GetxController {
   final ApiClient _api = Get.find<ApiClient>();
+  final LocalDataService _local = LocalDataService.to;
   final items = <Ingredient>[].obs;
   final loading = false.obs;
   final RxString search = ''.obs;
@@ -24,7 +26,7 @@ class IngredientController extends GetxController {
   Future<void> load() async {
     loading.value = true;
     if (AppConstants.localMode) {
-      items.clear();
+      items.value = await _local.getAppIngredients(search: search.value);
       loading.value = false;
       return;
     }
@@ -51,10 +53,6 @@ class IngredientController extends GetxController {
   }
 
   Future<void> save(Ingredient? existing) async {
-    if (AppConstants.localMode) {
-      EasyLoading.showError('Not available in local mode');
-      return;
-    }
     final nama = TextEditingController(text: existing?.namaBahan ?? '');
     final satuan = TextEditingController(text: existing?.satuan ?? '');
     final minimal = TextEditingController(
@@ -109,6 +107,19 @@ class IngredientController extends GetxController {
 
     loading.value = true;
     EasyLoading.show(status: 'Saving...');
+    if (AppConstants.localMode) {
+      await _local.saveIngredient(
+        id: existing?.idBahan,
+        name: body['nama_bahan'] as String,
+        unit: body['satuan'] as String,
+        minimalStock: body['minimal_stok'] as double,
+      );
+      loading.value = false;
+      EasyLoading.dismiss();
+      EasyLoading.showSuccess('Saved');
+      await load();
+      return;
+    }
     final res = existing == null
         ? await _api.post('/bahan-baku', body: body, fromData: (d) => d)
         : await _api.put('/bahan-baku/${existing.idBahan}',
@@ -125,10 +136,6 @@ class IngredientController extends GetxController {
   }
 
   Future<void> delete(int id) async {
-    if (AppConstants.localMode) {
-      EasyLoading.showError('Not available in local mode');
-      return;
-    }
     final confirm = await AppDialog.confirm(
       title: 'Delete Ingredient',
       message: 'Are you sure you want to delete this ingredient?',
@@ -139,6 +146,14 @@ class IngredientController extends GetxController {
 
     loading.value = true;
     EasyLoading.show(status: 'Deleting...');
+    if (AppConstants.localMode) {
+      await _local.deleteIngredient(id);
+      loading.value = false;
+      EasyLoading.dismiss();
+      EasyLoading.showSuccess('Deleted');
+      await load();
+      return;
+    }
     final res = await _api.delete('/bahan-baku/$id', fromData: (d) => d);
     loading.value = false;
     EasyLoading.dismiss();

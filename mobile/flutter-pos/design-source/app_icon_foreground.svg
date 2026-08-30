@@ -1,0 +1,52 @@
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <radialGradient id="riceGrad" cx="35%" cy="30%" r="75%">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="100%" stop-color="#F2EEE0"/>
+    </radialGradient>
+    <linearGradient id="salmonPieceGrad" x1="10%" y1="0%" x2="90%" y2="100%">
+      <stop offset="0%" stop-color="#FFB69A"/>
+      <stop offset="55%" stop-color="#FF7A59"/>
+      <stop offset="100%" stop-color="#E85A38"/>
+    </linearGradient>
+    <linearGradient id="noriGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#232F49"/>
+      <stop offset="100%" stop-color="#121A2C"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Transparent canvas: Android adaptive icons mask ~66% of this frame,
+       so the roll is sized/centered to survive circle, squircle, and
+       rounded-square masks without clipping the rice ring. -->
+  <g transform="rotate(-6 512 512)">
+    <circle cx="512" cy="512" r="230" fill="url(#noriGrad)"/>
+    <path d="M 512 282 A 230 230 0 0 1 512 742" fill="none" stroke="#0B111E" stroke-width="5" opacity="0.5"/>
+
+    <circle cx="512" cy="512" r="196" fill="url(#riceGrad)"/>
+
+    <g fill="#FFFFFF" opacity="0.95">
+      <ellipse cx="512" cy="330" rx="8" ry="13" transform="rotate(4 512 330)"/>
+      <ellipse cx="586" cy="344" rx="7" ry="12" transform="rotate(28 586 344)"/>
+      <ellipse cx="438" cy="344" rx="7" ry="12" transform="rotate(-28 438 344)"/>
+      <ellipse cx="512" cy="694" rx="8" ry="13" transform="rotate(-2 512 694)"/>
+      <ellipse cx="586" cy="680" rx="7" ry="12" transform="rotate(-24 586 680)"/>
+      <ellipse cx="438" cy="680" rx="7" ry="12" transform="rotate(24 438 680)"/>
+      <ellipse cx="330" cy="512" rx="8" ry="13" transform="rotate(90 330 512)"/>
+      <ellipse cx="694" cy="512" rx="8" ry="13" transform="rotate(90 694 512)"/>
+      <ellipse cx="348" cy="438" rx="7" ry="11" transform="rotate(65 348 438)"/>
+      <ellipse cx="676" cy="438" rx="7" ry="11" transform="rotate(-65 676 438)"/>
+      <ellipse cx="348" cy="586" rx="7" ry="11" transform="rotate(115 348 586)"/>
+      <ellipse cx="676" cy="586" rx="7" ry="11" transform="rotate(-115 676 586)"/>
+    </g>
+
+    <circle cx="512" cy="512" r="150" fill="url(#noriGrad)"/>
+
+    <circle cx="512" cy="512" r="114" fill="url(#salmonPieceGrad)"/>
+    <g stroke="#FFFFFF" stroke-width="5.5" stroke-linecap="round" opacity="0.35">
+      <path d="M 424 484 Q 512 460 600 484" fill="none"/>
+      <path d="M 418 538 Q 512 516 606 538" fill="none"/>
+      <path d="M 430 590 Q 512 570 594 590" fill="none"/>
+    </g>
+    <circle cx="476" cy="476" r="33" fill="#FFFFFF" opacity="0.20"/>
+  </g>
+</svg>

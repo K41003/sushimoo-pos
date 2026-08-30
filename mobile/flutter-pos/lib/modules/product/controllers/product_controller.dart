@@ -13,7 +13,6 @@ import '../widgets/product_form.dart';
 String money(dynamic v) => 'Rp ${(v is num ? v : 0).toStringAsFixed(0)}';
 
 class ProductController extends GetxController {
-  final ApiClient _api = Get.find<ApiClient>();
   final LocalDataService _local = LocalDataService.to;
   final items = <Product>[].obs;
   final categories = <Category>[].obs;
@@ -163,10 +162,11 @@ class ProductController extends GetxController {
         id: existing?.idProduk,
         categoryId: selectedCategory.value!,
         name: nama,
-        price: (harga * 100).toInt(),
+        price: harga,
         imageUrl: existing?.gambar,
         isAvailable: selectedStatus.value,
       );
+      Get.back();
       EasyLoading.dismiss();
       EasyLoading.showSuccess('Saved');
       await load();
@@ -194,12 +194,6 @@ class ProductController extends GetxController {
   }
 
   Future<void> delete(int id) async {
-    if (AppConstants.localMode) {
-      await _local.deleteProduct(id);
-      EasyLoading.showSuccess('Deleted');
-      await load();
-      return;
-    }
     final confirmed = await AppDialog.confirm(
       title: 'Delete Product',
       message: 'Are you sure you want to delete this product?',
@@ -209,6 +203,13 @@ class ProductController extends GetxController {
     if (confirmed != true) return;
 
     EasyLoading.show(status: 'Deleting...');
+    if (AppConstants.localMode) {
+      await _local.deleteProduct(id);
+      EasyLoading.dismiss();
+      EasyLoading.showSuccess('Deleted');
+      await load();
+      return;
+    }
     final res = await Get.find<ApiClient>().delete('/products/$id');
     EasyLoading.dismiss();
 

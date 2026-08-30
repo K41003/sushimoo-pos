@@ -3,12 +3,15 @@ import 'package:get/get.dart';
 import 'package:flutter/material.dart';
 import '../../../app/constants/app_constants.dart';
 import '../../../app/services/api_client.dart';
+import '../../../app/services/auth_service.dart';
+import '../../../app/services/local_data_service.dart';
 import '../../../app/services/storage_service.dart';
 import '../../../data/models/shift.dart';
 import '../../../shared/widgets/app_dialog.dart';
 
 class ShiftController extends GetxController {
   final ApiClient _api = ApiClient.to;
+  final LocalDataService _local = LocalDataService.to;
   final activeShift = Rx<Shift?>(null);
   final pettyCashController = TextEditingController();
   final pettyController = TextEditingController();
@@ -30,8 +33,14 @@ class ShiftController extends GetxController {
   Future<void> loadActive() async {
     loading.value = true;
     if (AppConstants.localMode) {
-      activeShift.value = null;
-      await StorageService.to.clearShift();
+      final userId = AuthService.to.currentUser?.idUser;
+      final shift = userId == null ? null : await _local.getActiveShift(userId);
+      activeShift.value = shift;
+      if (shift != null) {
+        await StorageService.to.saveShift(shift.idShift);
+      } else {
+        await StorageService.to.clearShift();
+      }
       loading.value = false;
       return;
     }
@@ -51,13 +60,24 @@ class ShiftController extends GetxController {
   }
 
   Future<void> openShift() async {
-    if (AppConstants.localMode) {
-      EasyLoading.showError('Not available in local mode');
-      return;
-    }
     final petty = double.tryParse(pettyCashController.text) ?? 0;
     loading.value = true;
     EasyLoading.show(status: 'Opening...');
+    if (AppConstants.localMode) {
+      final userId = AuthService.to.currentUser?.idUser;
+      if (userId == null) {
+        loading.value = false;
+        EasyLoading.dismiss();
+        EasyLoading.showError('No logged-in user');
+        return;
+      }
+      await _local.openShift(userId: userId, pettyCash: petty);
+      loading.value = false;
+      EasyLoading.dismiss();
+      EasyLoading.showSuccess('Shift opened');
+      await loadActive();
+      return;
+    }
     final res = await _api.post('/shifts/open', body: {'petty_cash': petty});
     loading.value = false;
     EasyLoading.dismiss();
@@ -70,10 +90,6 @@ class ShiftController extends GetxController {
   }
 
   Future<void> addPettyCash() async {
-    if (AppConstants.localMode) {
-      EasyLoading.showError('Not available in local mode');
-      return;
-    }
     if (activeShift.value == null) return;
     final nominal = double.tryParse(pettyController.text) ?? 0;
     if (nominal <= 0) {
@@ -81,6 +97,14 @@ class ShiftController extends GetxController {
       return;
     }
     EasyLoading.show(status: 'Saving...');
+    if (AppConstants.localMode) {
+      await _local.addPettyCash(activeShift.value!.idShift, nominal);
+      EasyLoading.dismiss();
+      pettyController.clear();
+      EasyLoading.showSuccess('Petty cash recorded');
+      await loadActive();
+      return;
+    }
     final res = await _api.post(
       '/shifts/${activeShift.value!.idShift}/petty-cash',
       body: {'nominal': nominal, 'keterangan': 'Petty cash'},
@@ -95,10 +119,6 @@ class ShiftController extends GetxController {
   }
 
   Future<void> closeShift() async {
-    if (AppConstants.localMode) {
-      EasyLoading.showError('Not available in local mode');
-      return;
-    }
     if (activeShift.value == null) return;
     final confirmed = await AppDialog.confirm(
       title: 'Close Shift',
@@ -108,6 +128,13 @@ class ShiftController extends GetxController {
     if (confirmed != true) return;
 
     EasyLoading.show(status: 'Closing...');
+    if (AppConstants.localMode) {
+      await _local.closeShift(activeShift.value!.idShift);
+      EasyLoading.dismiss();
+      EasyLoading.showSuccess('Shift closed');
+      await loadActive();
+      return;
+    }
     final res = await _api.post(
       '/shifts/${activeShift.value!.idShift}/close',
     );

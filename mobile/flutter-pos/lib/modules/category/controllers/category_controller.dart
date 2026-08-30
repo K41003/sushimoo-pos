@@ -10,7 +10,6 @@ import '../../../shared/widgets/app_dialog.dart';
 import '../widgets/category_form.dart';
 
 class CategoryController extends GetxController {
-  final ApiClient _api = Get.find<ApiClient>();
   final LocalDataService _local = LocalDataService.to;
   final items = <Category>[].obs;
   final loading = false.obs;
@@ -110,7 +109,9 @@ class CategoryController extends GetxController {
         id: existing?.idKategori,
         name: nama,
         description: descController.text.trim(),
+        status: selectedStatus.value,
       );
+      Get.back();
       EasyLoading.dismiss();
       EasyLoading.showSuccess('Saved');
       await load();
@@ -137,12 +138,6 @@ class CategoryController extends GetxController {
   }
 
   Future<void> delete(int id) async {
-    if (AppConstants.localMode) {
-      await _local.deleteCategory(id);
-      EasyLoading.showSuccess('Deleted');
-      await load();
-      return;
-    }
     final confirmed = await AppDialog.confirm(
       title: 'Delete Category',
       message: 'Are you sure you want to delete this category?',
@@ -152,6 +147,13 @@ class CategoryController extends GetxController {
     if (confirmed != true) return;
 
     EasyLoading.show(status: 'Deleting...');
+    if (AppConstants.localMode) {
+      await _local.deleteCategory(id);
+      EasyLoading.dismiss();
+      EasyLoading.showSuccess('Deleted');
+      await load();
+      return;
+    }
     final res = await Get.find<ApiClient>().delete('/categories/$id');
     EasyLoading.dismiss();
 

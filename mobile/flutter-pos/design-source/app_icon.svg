@@ -1,0 +1,68 @@
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FF8A65"/>
+      <stop offset="50%" stop-color="#FF7A59"/>
+      <stop offset="100%" stop-color="#F2643D"/>
+    </linearGradient>
+    <radialGradient id="riceGrad" cx="35%" cy="30%" r="75%">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="100%" stop-color="#F2EEE0"/>
+    </radialGradient>
+    <linearGradient id="salmonPieceGrad" x1="10%" y1="0%" x2="90%" y2="100%">
+      <stop offset="0%" stop-color="#FFB69A"/>
+      <stop offset="55%" stop-color="#FF7A59"/>
+      <stop offset="100%" stop-color="#E85A38"/>
+    </linearGradient>
+    <linearGradient id="noriGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#232F49"/>
+      <stop offset="100%" stop-color="#121A2C"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1024" height="1024" fill="url(#bgGrad)"/>
+  <circle cx="800" cy="190" r="240" fill="#FFFFFF" opacity="0.07"/>
+  <circle cx="150" cy="900" r="200" fill="#10182B" opacity="0.06"/>
+
+  <!-- Maki roll, tilted slightly for a hand-cut, less "logo target" feel -->
+  <g transform="rotate(-6 512 512)">
+    <!-- Nori wrap: full ring but with a visible overlap seam (characteristic of a cut maki piece) -->
+    <circle cx="512" cy="512" r="292" fill="url(#noriGrad)"/>
+    <path d="M 512 220 A 292 292 0 0 1 512 804" fill="none" stroke="#0B111E" stroke-width="6" opacity="0.5"/>
+
+    <!-- Rice ring -->
+    <circle cx="512" cy="512" r="248" fill="url(#riceGrad)"/>
+
+    <!-- Rice grains: organic short capsules instead of plain dots -->
+    <g fill="#FFFFFF" opacity="0.95">
+      <ellipse cx="512" cy="284" rx="10" ry="16" transform="rotate(4 512 284)"/>
+      <ellipse cx="600" cy="300" rx="9" ry="15" transform="rotate(28 600 300)"/>
+      <ellipse cx="424" cy="300" rx="9" ry="15" transform="rotate(-28 424 300)"/>
+      <ellipse cx="676" cy="346" rx="9" ry="14" transform="rotate(46 676 346)"/>
+      <ellipse cx="348" cy="346" rx="9" ry="14" transform="rotate(-46 348 346)"/>
+      <ellipse cx="512" cy="740" rx="10" ry="16" transform="rotate(-2 512 740)"/>
+      <ellipse cx="600" cy="724" rx="9" ry="15" transform="rotate(-24 600 724)"/>
+      <ellipse cx="424" cy="724" rx="9" ry="15" transform="rotate(24 424 724)"/>
+      <ellipse cx="284" cy="512" rx="10" ry="16" transform="rotate(90 284 512)"/>
+      <ellipse cx="740" cy="512" rx="10" ry="16" transform="rotate(90 740 512)"/>
+      <ellipse cx="304" cy="420" rx="9" ry="14" transform="rotate(65 304 420)"/>
+      <ellipse cx="720" cy="420" rx="9" ry="14" transform="rotate(-65 720 420)"/>
+      <ellipse cx="304" cy="604" rx="9" ry="14" transform="rotate(115 304 604)"/>
+      <ellipse cx="720" cy="604" rx="9" ry="14" transform="rotate(-115 720 604)"/>
+    </g>
+
+    <!-- Inner nori ring -->
+    <circle cx="512" cy="512" r="192" fill="url(#noriGrad)"/>
+
+    <!-- Salmon filling -->
+    <circle cx="512" cy="512" r="146" fill="url(#salmonPieceGrad)"/>
+    <!-- Filling striations, like a fatty salmon slice -->
+    <g stroke="#FFFFFF" stroke-width="7" stroke-linecap="round" opacity="0.35">
+      <path d="M 400 470 Q 512 440 624 470" fill="none"/>
+      <path d="M 392 540 Q 512 512 632 540" fill="none"/>
+      <path d="M 408 606 Q 512 580 616 606" fill="none"/>
+    </g>
+    <circle cx="466" cy="466" r="42" fill="#FFFFFF" opacity="0.20"/>
+  </g>
+</svg>

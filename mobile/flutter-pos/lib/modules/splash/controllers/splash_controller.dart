@@ -1,6 +1,7 @@
 import 'package:get/get.dart';
 import 'package:sushimoo_pos/app/routes/app_routes.dart';
 import 'package:sushimoo_pos/app/services/auth_service.dart';
+import 'package:sushimoo_pos/app/services/database_helper.dart';
 import 'package:sushimoo_pos/app/services/device_integrity_service.dart';
 import 'package:sushimoo_pos/app/services/secure_storage_service.dart';
 import 'package:sushimoo_pos/app/services/sync_service.dart';
@@ -16,6 +17,19 @@ class SplashController extends GetxController {
   }
 
   Future<void> _runSecurityGateThenCheckSession() async {
+    // Local mode reads straight from SQLite from the very first screen
+    // (login checks `users`, dashboard checks shifts/transactions, etc.),
+    // so the database must be created/seeded before routing anywhere.
+    if (AppConstants.localMode) {
+      try {
+        await DatabaseHelper.to.ready;
+      } catch (_) {
+        // Falls through — DatabaseHelper.database getter will retry the
+        // open on first real query, so a failed initial open here isn't
+        // fatal to the splash flow.
+      }
+    }
+
     final result = await DeviceIntegrityService.to.check();
 
     if (!result.isSafe && DeviceIntegrityService.hardBlock) {

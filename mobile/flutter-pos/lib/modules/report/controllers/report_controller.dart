@@ -2,9 +2,11 @@ import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:get/get.dart';
 import '../../../app/constants/app_constants.dart';
 import '../../../app/services/api_client.dart';
+import '../../../app/services/local_data_service.dart';
 
 class ReportController extends GetxController {
   final ApiClient _api = ApiClient.to;
+  final LocalDataService _local = LocalDataService.to;
   final loading = true.obs;
   final daily = RxMap();
   final last7 = RxMap();
@@ -19,9 +21,9 @@ class ReportController extends GetxController {
   Future<void> load() async {
     loading.value = true;
     if (AppConstants.localMode) {
-      daily.clear();
-      last7.clear();
-      monthly.clear();
+      daily.value = await _local.getDailyReport();
+      last7.value = await _local.getLast7DaysReport();
+      monthly.value = await _local.getMonthlyReport();
       loading.value = false;
       return;
     }

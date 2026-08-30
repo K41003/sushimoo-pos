@@ -7,6 +7,7 @@ import '../../../app/services/local_data_service.dart';
 
 class DashboardController extends GetxController {
   final ApiClient _api = ApiClient.to;
+  final LocalDataService _local = LocalDataService.to;
   final loading = true.obs;
   final isAdmin = false.obs;
 
@@ -23,32 +24,11 @@ class DashboardController extends GetxController {
   Future<void> load() async {
     loading.value = true;
     if (AppConstants.localMode) {
-      final transactions = await LocalDataService.to.getTransactions();
-      final totalOrders = transactions.length;
-      final totalRevenue = transactions.fold<int>(0, (sum, t) => sum + t.total);
-      final pendingOrders = transactions.where((t) => t.status == 'pending').length;
-      final tables = await LocalDataService.to.getTables();
-      final occupiedTables = tables.where((t) => t.isOccupied).length;
-
-      final map = <String, dynamic>{
-        'total_orders': totalOrders,
-        'total_revenue': totalRevenue,
-        'pending_orders': pendingOrders,
-        'occupied_tables': occupiedTables,
-        'available_tables': tables.length - occupiedTables,
-        'recent_transactions': transactions.take(5).map((t) => {
-              'id': t.id,
-              'table_name': t.tableName,
-              'total': t.total,
-              'status': t.status,
-              'created_at': t.createdAt,
-            }).toList(),
-      };
-
       if (isAdmin.value) {
-        adminData.value = map;
+        adminData.value = await _local.getAdminDashboard();
       } else {
-        cashierData.value = map;
+        final userId = AuthService.to.currentUser?.idUser ?? 0;
+        cashierData.value = await _local.getCashierDashboard(userId);
       }
       loading.value = false;
       return;

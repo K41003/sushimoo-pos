@@ -65,8 +65,15 @@ class PaymentController extends GetxController {
     loading.value = true;
     EasyLoading.show(status: 'Paying...');
     if (AppConstants.localMode) {
-      final methodName = methods.firstWhere((m) => m['id'] == selectedMethod.value, orElse: () => methods.first)['name'] as String;
-      await _local.updateTransactionPayment(transaction.idTransaksi, methodName);
+      final received = isCash ? (double.tryParse(receivedController.text) ?? 0) : transaction.total;
+      final kembalian = isCash ? (received - transaction.total).clamp(0, double.infinity).toDouble() : 0.0;
+      final payment = await _local.payTransaction(
+        transactionId: transaction.idTransaksi,
+        methodId: selectedMethod.value!,
+        totalBayar: transaction.total,
+        uangDiterima: received,
+        kembalian: kembalian,
+      );
       loading.value = false;
       EasyLoading.dismiss();
       EasyLoading.showSuccess('Payment success');
@@ -82,22 +89,13 @@ class PaymentController extends GetxController {
         details: transaction.details,
         table: transaction.table,
         user: transaction.user,
-        payment: Payment(
-          idPembayaran: 0,
-          idTransaksi: transaction.idTransaksi,
-          idMetode: selectedMethod.value!,
-          totalBayar: transaction.total,
-          uangDiterima: isCash ? (double.tryParse(receivedController.text) ?? 0) : 0,
-          kembalian: change,
-          waktuBayar: DateTime.now().toIso8601String(),
-          status: 'success',
-        ),
+        payment: payment,
       );
       Get.offAndToNamed(
         AppRoutes.receipt,
         arguments: {
           'transaction': paidTransaction,
-          'payment': paidTransaction.payment,
+          'payment': payment,
         },
       );
       return;

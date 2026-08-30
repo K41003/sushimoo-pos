@@ -5,6 +5,7 @@ import '../../app/constants/app_constants.dart';
 import '../../app/constants/colors.dart';
 import '../../app/constants/dimensions.dart';
 import '../../app/services/api_client.dart';
+import '../../app/services/local_data_service.dart';
 import 'app_button.dart';
 import 'app_text_field.dart';
 import 'glass_panel.dart';
@@ -14,9 +15,6 @@ class AdminPinDialog {
     required String title,
     required String message,
   }) async {
-    if (AppConstants.localMode) {
-      return true;
-    }
     final result = await Get.dialog<bool>(
       _AdminPinDialogContent(title: title, message: message),
       barrierDismissible: false,
@@ -60,6 +58,21 @@ class _AdminPinDialogContentState extends State<_AdminPinDialogContent> {
       _loading = true;
       _error = null;
     });
+
+    if (AppConstants.localMode) {
+      // "PIN" in local mode is that admin user's own password — verified
+      // against the same `users` table Auth uses, and the user must
+      // actually hold the Admin role (a cashier's own password does not
+      // count as approval).
+      final result = await LocalDataService.to.login(username, pin);
+      setState(() => _loading = false);
+      if (result != null && result.user.isAdmin) {
+        Get.back(result: true);
+      } else {
+        setState(() => _error = 'Invalid admin username or PIN');
+      }
+      return;
+    }
 
     final res = await ApiClient.to.post(
       '/auth/verify-pin',

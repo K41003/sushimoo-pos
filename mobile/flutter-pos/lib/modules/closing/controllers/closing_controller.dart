@@ -2,6 +2,8 @@ import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:get/get.dart';
 import '../../../app/constants/app_constants.dart';
 import '../../../app/services/api_client.dart';
+import '../../../app/services/auth_service.dart';
+import '../../../app/services/local_data_service.dart';
 import '../../../app/services/printer_service.dart';
 import '../../../data/models/closing.dart';
 import '../../../data/models/shift.dart';
@@ -10,6 +12,7 @@ import '../../../shared/widgets/app_dialog.dart';
 
 class ClosingController extends GetxController {
   final ApiClient _api = ApiClient.to;
+  final LocalDataService _local = LocalDataService.to;
   final activeShift = Rx<Shift?>(null);
   final history = <Closing>[].obs;
   final lastClosing = Rx<Closing?>(null);
@@ -25,8 +28,12 @@ class ClosingController extends GetxController {
   Future<void> load() async {
     loading.value = true;
     if (AppConstants.localMode) {
-      activeShift.value = null;
-      history.clear();
+      final userId = AuthService.to.currentUser?.idUser;
+      activeShift.value = userId == null ? null : await _local.getActiveShift(userId);
+      history.assignAll(await _local.getClosingHistory());
+      if (lastClosing.value == null && history.isNotEmpty) {
+        lastClosing.value = history.first;
+      }
       loading.value = false;
       return;
     }
@@ -49,10 +56,6 @@ class ClosingController extends GetxController {
   }
 
   Future<void> doClosing({int? shiftId}) async {
-    if (AppConstants.localMode) {
-      EasyLoading.showError('Not available in local mode');
-      return;
-    }
     final targetShiftId = shiftId ?? activeShift.value?.idShift;
     if (targetShiftId == null) {
       EasyLoading.showError('No shift to close.');
@@ -67,6 +70,15 @@ class ClosingController extends GetxController {
     if (confirmed != true) return;
 
     EasyLoading.show(status: 'Closing...');
+    if (AppConstants.localMode) {
+      final closing = await _local.generateClosing(targetShiftId);
+      lastClosing.value = closing;
+      await _printReport(closing);
+      EasyLoading.dismiss();
+      EasyLoading.showSuccess('Closing recorded');
+      await load();
+      return;
+    }
     final res = await _api.post(
       '/shifts/$targetShiftId/closing',
       fromData: (d) => Closing.fromJson(d as Map<String, dynamic>),

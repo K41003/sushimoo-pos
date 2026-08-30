@@ -1,6 +1,7 @@
 import 'package:get/get.dart';
 import '../services/api_client.dart';
 import '../services/auth_service.dart';
+import '../services/database_helper.dart';
 import '../services/local_data_service.dart';
 import '../services/offline_queue_service.dart';
 import '../services/print_queue_service.dart';
@@ -23,15 +24,17 @@ import '../services/sync_service.dart';
 /// seluruh basis kode sekaligus. Token & user WAJIB lewat
 /// SecureStorageService saja mulai sekarang — lihat auth_service.dart.
 ///
-/// OFFLINE QUEUE (this pass): `OfflineQueueService` (sqflite-backed
-/// queue for orders placed without connectivity) and `SyncService`
-/// (drains that queue against `/transaksi`) are registered here as
-/// permanent singletons, same lifecycle as every other cross-app
-/// service. `OfflineQueueService` must exist before `PosController`
-/// can be used (it's read directly in `PosController.placeOrder()`),
-/// and `SyncService` must exist before `SplashController` runs its
-/// post-login auto-sync — both are safe to construct eagerly here
-/// since neither does any network/db I/O until first called.
+/// LOCAL DATABASE (this pass): `DatabaseHelper` (single SQLite database
+/// covering every module — categories, products, ingredients, stock,
+/// tables, shifts, transactions, payments, expenses, closing reports)
+/// is registered first since `LocalDataService` (and therefore most
+/// controllers, which now run fully offline via
+/// `AppConstants.localMode`) depend on it. `ApiClient` and the
+/// offline-queue/sync services are kept registered — and their source
+/// files untouched — purely so the app can be switched back to the
+/// Laravel backend later (`--dart-define=LOCAL_MODE=false`) without
+/// any binding changes; they simply sit unused while `localMode` is
+/// true.
 class InitialBinding extends Bindings {
   @override
   void dependencies() {
@@ -44,6 +47,7 @@ class InitialBinding extends Bindings {
       Get.put(DeviceIntegrityService(), permanent: true);
     }
 
+    Get.put(DatabaseHelper(), permanent: true);
     Get.put(ApiClient(), permanent: true);
     Get.put(LocalDataService(), permanent: true);
     Get.put(AuthService(), permanent: true);

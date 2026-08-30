@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Matches AppColors.salmonDark (lib/app/constants/colors.dart) so the
+         adaptive icon background is consistent with the in-app brand accent. -->
+    <color name="ic_launcher_background">#F2643D</color>
+</resources>

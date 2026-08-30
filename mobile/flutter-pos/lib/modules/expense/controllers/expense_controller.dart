@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:flutter/material.dart';
 import '../../../app/constants/app_constants.dart';
 import '../../../app/services/api_client.dart';
+import '../../../app/services/local_data_service.dart';
 import '../../../app/services/storage_service.dart';
 import '../../../data/models/expense.dart';
 import '../../../data/response/api_response.dart';
@@ -10,6 +11,7 @@ import '../../../shared/widgets/app_dialog.dart';
 
 class ExpenseController extends GetxController {
   final ApiClient _api = ApiClient.to;
+  final LocalDataService _local = LocalDataService.to;
   final items = <Expense>[].obs;
   final loading = false.obs;
 
@@ -36,7 +38,7 @@ class ExpenseController extends GetxController {
   Future<void> load() async {
     loading.value = true;
     if (AppConstants.localMode) {
-      items.clear();
+      items.value = await _local.getExpenses(shiftId: shiftId);
       loading.value = false;
       return;
     }
@@ -52,10 +54,6 @@ class ExpenseController extends GetxController {
   }
 
   Future<void> save() async {
-    if (AppConstants.localMode) {
-      EasyLoading.showError('Not available in local mode');
-      return;
-    }
     final kategori = kategoriController.text.trim();
     final nominal = double.tryParse(nominalController.text) ?? 0;
     if (kategori.isEmpty || nominal <= 0) {
@@ -63,6 +61,28 @@ class ExpenseController extends GetxController {
       return;
     }
     EasyLoading.show(status: 'Saving...');
+    if (AppConstants.localMode) {
+      final currentShiftId = shiftId;
+      if (currentShiftId == null) {
+        EasyLoading.dismiss();
+        EasyLoading.showError('No active shift. Open a shift first.');
+        return;
+      }
+      await _local.addExpense(
+        shiftId: currentShiftId,
+        kategori: kategori,
+        nominal: nominal,
+        keterangan: keteranganController.text.trim(),
+      );
+      kategoriController.clear();
+      nominalController.clear();
+      keteranganController.clear();
+      Get.back();
+      EasyLoading.dismiss();
+      EasyLoading.showSuccess('Expense recorded');
+      await load();
+      return;
+    }
     final res = await _api.post('/pengeluaran', body: {
       'kategori': kategori,
       'nominal': nominal,
@@ -83,10 +103,6 @@ class ExpenseController extends GetxController {
   }
 
   Future<void> delete(int id) async {
-    if (AppConstants.localMode) {
-      EasyLoading.showError('Not available in local mode');
-      return;
-    }
     final confirmed = await AppDialog.confirm(
       title: 'Delete Expense',
       message: 'Are you sure you want to delete this expense record?',
@@ -95,6 +111,13 @@ class ExpenseController extends GetxController {
     );
     if (confirmed != true) return;
     EasyLoading.show(status: 'Deleting...');
+    if (AppConstants.localMode) {
+      await _local.deleteExpense(id);
+      EasyLoading.dismiss();
+      EasyLoading.showSuccess('Deleted');
+      await load();
+      return;
+    }
     final res = await _api.delete('/pengeluaran/$id');
     EasyLoading.dismiss();
     if (res.success) {

@@ -1,6 +1,5 @@
 import 'package:get/get.dart';
 import '../../app/constants/app_constants.dart';
-import '../../data/models/role.dart';
 import '../../data/models/user.dart';
 import '../../data/response/api_response.dart';
 import 'api_client.dart';
@@ -22,22 +21,14 @@ class AuthService extends GetxService {
   Future<ApiResponse<AuthSession>> login(
       String username, String password) async {
     if (AppConstants.localMode) {
-      final localUser = await _local.login(username, password);
-      if (localUser == null) {
+      final result = await _local.login(username, password);
+      if (result == null) {
         return const ApiResponse(
           success: false,
           message: 'Username atau password salah',
         );
       }
-      final user = User(
-        idUser: localUser.id ?? 0,
-        idRole: localUser.role == 'Admin' ? 1 : 2,
-        nama: localUser.name,
-        username: localUser.username,
-        status: true,
-        role: Role(idRole: localUser.id ?? 0, namaRole: localUser.role, deskripsi: null),
-      );
-      final session = AuthSession(token: localUser.token, user: user);
+      final session = AuthSession(token: result.token, user: result.user);
       await SecureStorageService.to.saveSession(
         token: session.token,
         user: session.user,

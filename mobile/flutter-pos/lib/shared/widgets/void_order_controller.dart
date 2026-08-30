@@ -33,7 +33,11 @@ class VoidOrderController {
 
     EasyLoading.show(status: 'Voiding order...');
     if (AppConstants.localMode) {
-      await LocalDataService.to.updateTransactionPayment(trx.idTransaksi, 'void');
+      await LocalDataService.to.updateTransactionStatus(
+        trx.idTransaksi,
+        'void',
+        reason: reason.trim(),
+      );
       EasyLoading.dismiss();
       EasyLoading.showSuccess('Order ${trx.invoiceNumber} voided');
       return true;

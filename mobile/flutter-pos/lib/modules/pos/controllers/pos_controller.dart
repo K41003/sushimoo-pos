@@ -3,9 +3,12 @@ import 'package:get/get.dart';
 import '../../../app/constants/app_constants.dart';
 import '../../../app/routes/app_routes.dart';
 import '../../../app/services/api_client.dart';
+import '../../../app/services/auth_service.dart';
 import '../../../app/services/local_data_service.dart';
 import '../../../app/services/offline_queue_service.dart';
 import '../../../app/services/print_queue_service.dart';
+import '../../../app/services/printer_service.dart';
+import '../../../app/services/storage_service.dart';
 import '../../../data/models/category.dart';
 import '../../../data/models/product.dart';
 import '../../../data/models/table.dart';
@@ -228,25 +231,30 @@ class PosController extends GetxController {
     EasyLoading.show(status: 'Placing order...');
 
     if (AppConstants.localMode) {
-      final total = grandTotal.toInt();
-      final tx = LocalTransaction(
+      final shiftId = StorageService.to.shiftId;
+      final userId = AuthService.to.currentUser?.idUser;
+      if (shiftId == null || userId == null) {
+        loading.value = false;
+        EasyLoading.dismiss();
+        EasyLoading.showError('No active shift. Open a shift first.');
+        return;
+      }
+      final trx = await _local.createTransaction(
+        shiftId: shiftId,
+        userId: userId,
         tableId: idMeja,
-        tableName: selectedTable.value!.nomorMeja,
-        total: total,
-        createdAt: DateTime.now().toIso8601String(),
-        items: items.map((it) => LocalTransactionItem(
-          transactionId: 0,
-          productId: it['id_produk'] as int,
-          productName: it['nama_produk'] as String,
-          quantity: it['qty'] as int,
-          price: (it['harga'] as double).toInt(),
-        )).toList(),
+        items: items,
       );
-      await _local.createTransaction(tx);
       loading.value = false;
       EasyLoading.dismiss();
+      try {
+        await PrinterService.to.printKitchenTicket(trx);
+      } catch (_) {
+        // Non-fatal: printer may be disconnected — order still proceeds.
+      }
       clearCart();
-      EasyLoading.showSuccess('Order placed (local)');
+      EasyLoading.showSuccess('Order placed');
+      Get.toNamed(AppRoutes.payment, arguments: trx);
       return;
     }
 

@@ -94,9 +94,17 @@ class GlassPanel extends StatelessWidget {
   }
 }
 
-/// Full-screen gradient backdrop with soft floating color blobs, meant to
-/// sit behind every [GlassPanel] so the frosted effect has something
-/// colorful to blur. Place once per page as the outermost body layer.
+/// Full-screen backdrop for every page: the app's background gradient,
+/// soft floating color blobs, AND a very low-opacity sushi line-art motif
+/// (maki roll, nigiri, chopsticks, nori, sesame — see
+/// `assets/images/app_background.png`), meant to sit behind every
+/// [GlassPanel] so the frosted effect has something to blur. Place once
+/// per page as the outermost body layer.
+///
+/// The artwork is intentionally subtle — it reads clearly in the gaps
+/// between glass panels (see any page's margins) but disappears into a
+/// soft blur wherever a [GlassPanel] sits on top of it, so it never
+/// competes with foreground text or cards.
 class GlassBackground extends StatelessWidget {
   final Widget child;
   final bool showBlobs;
@@ -112,23 +120,17 @@ class GlassBackground extends StatelessWidget {
       child: Stack(
         fit: StackFit.expand,
         children: [
-          if (showBlobs) ...[
-            Positioned(top: -80, right: -60, child: _blob(320, AppColors.blobSalmon)),
-            Positioned(top: 260, left: -100, child: _blob(280, AppColors.blobBlue)),
-            Positioned(bottom: -100, right: -40, child: _blob(300, AppColors.blobMint)),
-          ],
+          if (showBlobs)
+            Image.asset(
+              'assets/images/app_background.png',
+              fit: BoxFit.cover,
+              // The gradient/blob artwork is baked into the PNG itself,
+              // so if the asset is ever missing this silently falls back
+              // to the plain canvasGradient above instead of crashing.
+              errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+            ),
           child,
         ],
-      ),
-    );
-  }
-
-  Widget _blob(double size, Color color) {
-    return IgnorePointer(
-      child: Container(
-        width: size,
-        height: size,
-        decoration: BoxDecoration(shape: BoxShape.circle, color: color),
       ),
     );
   }
