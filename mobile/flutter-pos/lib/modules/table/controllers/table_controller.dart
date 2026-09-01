@@ -6,6 +6,7 @@ import '../../../app/constants/app_constants.dart';
 import '../../../app/constants/colors.dart';
 import '../../../app/constants/decorations.dart';
 import '../../../app/constants/dimensions.dart';
+import '../../../app/constants/strings.dart';
 import '../../../app/services/api_client.dart';
 import '../../../app/services/local_data_service.dart';
 import '../../../data/models/table.dart' as tm;
@@ -79,7 +80,7 @@ class TableController extends GetxController {
     final formKey = GlobalKey<FormState>();
 
     final result = await AppDialog.form<bool>(
-      title: existing == null ? 'Add Table' : 'Edit Table',
+      title: existing == null ? 'Tambah Meja' : 'Ubah Meja',
       icon: Icons.table_restaurant_rounded,
       maxWidth: 420.w,
       content: Form(
@@ -91,20 +92,20 @@ class TableController extends GetxController {
             AppTextField(
               label: 'Nomor Meja',
               controller: nomor,
-              validator: (v) => (v == null || v.isEmpty) ? 'Required' : null,
+              validator: (v) => (v == null || v.isEmpty) ? 'Wajib diisi' : null,
             ),
             SizedBox(height: 14.h),
             AppTextField(
               label: 'Kapasitas',
               controller: kapasitas,
               keyboardType: TextInputType.number,
-              validator: (v) => (v == null || v.isEmpty) ? 'Required' : null,
+              validator: (v) => (v == null || v.isEmpty) ? 'Wajib diisi' : null,
             ),
             SizedBox(height: 14.h),
             Text(
               'Status Meja',
               style: TextStyle(
-                fontSize: 13.sp,
+                fontSize: 14.sp,
                 fontWeight: FontWeight.w600,
                 color: AppColors.inkMuted,
               ),
@@ -125,9 +126,9 @@ class TableController extends GetxController {
                           .map((s) => DropdownMenuItem(
                                 value: s,
                                 child: Text(
-                                  s.toUpperCase(),
+                                  statusLabel(s),
                                   style: TextStyle(
-                                    fontSize: 13.5.sp,
+                                    fontSize: 14.5.sp,
                                     fontWeight: FontWeight.w600,
                                     color: AppColors.ink,
                                   ),
@@ -157,7 +158,7 @@ class TableController extends GetxController {
     };
 
     loading.value = true;
-    EasyLoading.show(status: 'Saving...');
+    EasyLoading.show(status: AppStrings.saving);
     if (AppConstants.localMode) {
       await _local.saveTable(
         id: existing?.idMeja,
@@ -167,7 +168,7 @@ class TableController extends GetxController {
       );
       loading.value = false;
       EasyLoading.dismiss();
-      EasyLoading.showSuccess('Saved');
+      EasyLoading.showSuccess(AppStrings.saved);
       await load();
       return;
     }
@@ -179,7 +180,7 @@ class TableController extends GetxController {
     EasyLoading.dismiss();
 
     if (res.success) {
-      EasyLoading.showSuccess(res.message.isNotEmpty ? res.message : 'Saved');
+      EasyLoading.showSuccess(res.message.isNotEmpty ? res.message : AppStrings.saved);
       await load();
     } else {
       EasyLoading.showError(res.message);
@@ -188,20 +189,20 @@ class TableController extends GetxController {
 
   Future<void> delete(int id) async {
     final confirm = await AppDialog.confirm(
-      title: 'Delete Table',
-      message: 'Are you sure you want to delete this table?',
-      confirmText: 'Delete',
+      title: AppStrings.confirmDeleteTitle,
+      message: 'Apakah kamu yakin ingin menghapus meja ini?',
+      confirmText: AppStrings.delete,
       destructive: true,
     );
     if (confirm != true) return;
 
     loading.value = true;
-    EasyLoading.show(status: 'Deleting...');
+    EasyLoading.show(status: AppStrings.deleting);
     if (AppConstants.localMode) {
       await _local.deleteTable(id);
       loading.value = false;
       EasyLoading.dismiss();
-      EasyLoading.showSuccess('Deleted');
+      EasyLoading.showSuccess(AppStrings.deleted);
       await load();
       return;
     }
@@ -210,7 +211,7 @@ class TableController extends GetxController {
     EasyLoading.dismiss();
 
     if (res.success) {
-      EasyLoading.showSuccess(res.message.isNotEmpty ? res.message : 'Deleted');
+      EasyLoading.showSuccess(res.message.isNotEmpty ? res.message : AppStrings.deleted);
       await load();
     } else {
       EasyLoading.showError(res.message);

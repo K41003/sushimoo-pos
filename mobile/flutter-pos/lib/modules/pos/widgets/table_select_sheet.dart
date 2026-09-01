@@ -114,7 +114,7 @@ class _TableCardState extends State<_TableCard> {
               ),
               SizedBox(height: 2.h),
               Text(
-                '${widget.table.kapasitas} seats',
+                '${widget.table.kapasitas} kursi',
                 style: TextStyle(
                   fontSize: 10.5.sp,
                   fontWeight: FontWeight.w600,
@@ -174,10 +174,10 @@ class TableSelectSheet extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('Select Table', style: Theme.of(context).textTheme.headlineMedium),
+                        Text('Pilih Meja', style: Theme.of(context).textTheme.headlineMedium),
                         SizedBox(height: 2.h),
                         Text(
-                          'Tap a table to assign this order',
+                          'Ketuk meja untuk menetapkan pesanan ini',
                           style: Theme.of(context).textTheme.bodySmall,
                         ),
                       ],
@@ -199,28 +199,40 @@ class TableSelectSheet extends StatelessWidget {
                       children: [
                         Icon(Icons.table_bar_outlined, size: 36.sp, color: AppColors.inkFaint),
                         SizedBox(height: 10.h),
-                        Text('No tables available', style: Theme.of(context).textTheme.bodyMedium),
+                        Text('Belum ada meja tersedia', style: Theme.of(context).textTheme.bodyMedium),
                       ],
                     ),
                   ),
                 )
               else
                 Flexible(
-                  child: GridView.builder(
-                    shrinkWrap: true,
-                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 4,
-                      crossAxisSpacing: 10.w,
-                      mainAxisSpacing: 10.h,
-                      childAspectRatio: 0.85,
-                    ),
-                    itemCount: tables.length,
-                    itemBuilder: (_, i) {
-                      final t = tables[i];
-                      return _TableCard(
-                        table: t,
-                        selected: t.idMeja == selectedId,
-                        onTap: () => Get.back(result: t),
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      // Adapts to the dialog's actual available width
+                      // instead of a flat 4 columns — on a narrow phone
+                      // (where this dialog's ConstrainedBox itself
+                      // shrinks to fit the screen) 4 fixed columns made
+                      // each table card too cramped to tap comfortably.
+                      final cols = constraints.maxWidth >= 380
+                          ? 4
+                          : (constraints.maxWidth >= 260 ? 3 : 2);
+                      return GridView.builder(
+                        shrinkWrap: true,
+                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: cols,
+                          crossAxisSpacing: 10.w,
+                          mainAxisSpacing: 10.h,
+                          childAspectRatio: 0.85,
+                        ),
+                        itemCount: tables.length,
+                        itemBuilder: (_, i) {
+                          final t = tables[i];
+                          return _TableCard(
+                            table: t,
+                            selected: t.idMeja == selectedId,
+                            onTap: () => Get.back(result: t),
+                          );
+                        },
                       );
                     },
                   ),
@@ -230,10 +242,10 @@ class TableSelectSheet extends StatelessWidget {
                 spacing: 14.w,
                 runSpacing: 6.h,
                 children: [
-                  _legendDot(context, AppColors.emerald, 'Available'),
-                  _legendDot(context, AppColors.warning, 'Occupied'),
-                  _legendDot(context, const Color(0xFF2F6FED), 'Reserved'),
-                  _legendDot(context, AppColors.inkFaint, 'Cleaning'),
+                  _legendDot(context, AppColors.emerald, 'Tersedia'),
+                  _legendDot(context, AppColors.warning, 'Terpakai'),
+                  _legendDot(context, const Color(0xFF2F6FED), 'Dipesan'),
+                  _legendDot(context, AppColors.inkFaint, 'Dibersihkan'),
                 ],
               ),
             ],

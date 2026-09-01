@@ -3,8 +3,10 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import '../../../app/constants/colors.dart';
 import '../../../app/constants/dimensions.dart';
+import '../../../app/constants/strings.dart';
 import '../../../app/routes/app_routes.dart';
 import '../../../data/models/table.dart' as tm;
+import '../../../shared/utils/responsive.dart';
 import '../../../shared/widgets/app_chip.dart';
 import '../../../shared/widgets/app_loading.dart';
 import '../../../shared/widgets/app_scaffold.dart';
@@ -15,23 +17,15 @@ import '../controllers/table_controller.dart';
 class TablePage extends GetView<TableController> {
   const TablePage({super.key});
 
-  int _crossAxisCount(BuildContext context) {
-    final w = MediaQuery.of(context).size.width;
-    if (w > 1200) return 5;
-    if (w > 900) return 4;
-    if (w > 600) return 3;
-    return 2;
-  }
-
   @override
   Widget build(BuildContext context) {
     return AppScaffold(
-      title: 'Table',
+      title: 'Meja',
       currentRoute: AppRoutes.table,
       actions: [
         AppGlassActionButton(
           icon: Icons.add,
-          tooltip: 'Add Table',
+          tooltip: 'Tambah Meja',
           onPressed: () => controller.save(null),
         ),
       ],
@@ -45,11 +39,11 @@ class TablePage extends GetView<TableController> {
                 _filterChips(context),
                 Expanded(
                   child: controller.items.isEmpty
-                      ? const AppEmptyState(message: 'No tables found')
+                      ? const AppEmptyState(message: 'Belum ada meja')
                       : GridView.builder(
-                          padding: EdgeInsets.all(AppDimensions.marginTablet.w),
+                          padding: EdgeInsets.all(Responsive.padding(context)),
                           gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: _crossAxisCount(context),
+                            crossAxisCount: Responsive.gridColumns(context, max: 5),
                             crossAxisSpacing: 12.w,
                             mainAxisSpacing: 12.h,
                             childAspectRatio: 1.2,
@@ -70,10 +64,13 @@ class TablePage extends GetView<TableController> {
     final options = ['', ...controller.statusOptions];
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
-      padding: EdgeInsets.symmetric(horizontal: AppDimensions.marginTablet.w),
+      padding: EdgeInsets.symmetric(horizontal: Responsive.padding(context)),
       child: Row(
         children: options.map((s) {
-          final label = s.isEmpty ? 'All' : s;
+          // `s` is the internal status value (available/occupied/...);
+          // show its Indonesian label, not the raw key, while the
+          // comparison/filter logic below still uses the raw `s`.
+          final label = s.isEmpty ? 'Semua' : statusLabel(s);
           return Padding(
             padding: EdgeInsets.only(right: 8.w),
             child: Obx(() => AppChip(
@@ -102,7 +99,7 @@ class TablePage extends GetView<TableController> {
                 textAlign: TextAlign.center,
               ),
               SizedBox(height: 8.h),
-              Text('${t.kapasitas} seats', style: Theme.of(context).textTheme.bodyMedium),
+              Text('${t.kapasitas} kursi', style: Theme.of(context).textTheme.bodyMedium),
               SizedBox(height: 10.h),
               StatusChip(status: t.status),
             ],

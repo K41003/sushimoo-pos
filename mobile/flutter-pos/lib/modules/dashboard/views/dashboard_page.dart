@@ -4,6 +4,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import '../../../app/constants/colors.dart';
 import '../../../app/constants/dimensions.dart';
+import '../../../shared/utils/responsive.dart';
 import '../../../app/routes/app_routes.dart';
 import '../../../shared/widgets/app_button.dart';
 import '../../../shared/widgets/app_scaffold.dart';
@@ -64,14 +65,28 @@ class DashboardPage extends GetView<DashboardController> {
     final salesTrendLabel = _trendLabel(trend);
 
     return SingleChildScrollView(
-      padding: EdgeInsets.all(AppDimensions.marginTablet.w),
+      padding: EdgeInsets.all(Responsive.padding(context)),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _header(context, 'Dashboard', 'Ringkasan performa hari ini'),
           SizedBox(height: AppDimensions.xl.h),
           LayoutBuilder(builder: (context, constraints) {
-            final cols = constraints.maxWidth > 900 ? 4 : (constraints.maxWidth > 560 ? 2 : 1);
+            // Reads the *content area* width (post-sidebar, if any) via
+            // LayoutBuilder rather than MediaQuery, so this stays
+            // accurate on the landscape-tablet rail layout too — but the
+            // breakpoints themselves now match Responsive.wideBreakpoint
+            // / tabletBreakpoint instead of the ad-hoc 900/560 values
+            // this previously used (which had no 3-column tier at all,
+            // jumping straight from 1 to 2 to 4).
+            final w = constraints.maxWidth;
+            final cols = w >= Responsive.wideBreakpoint
+                ? 4
+                : w >= 700
+                    ? 3
+                    : w >= 420
+                        ? 2
+                        : 1;
             return GridView.count(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
@@ -81,25 +96,25 @@ class DashboardPage extends GetView<DashboardController> {
               childAspectRatio: 1.5,
               children: [
                 StatCard(
-                  label: 'Total Sales',
+                  label: 'Total Penjualan',
                   value: _money(d['totalSales']),
                   icon: Icons.payments_outlined,
                   trend: salesTrendLabel,
                 ),
                 StatCard(
-                  label: 'Transactions',
+                  label: 'Transaksi',
                   value: '${d['transactions'] ?? 0}',
                   icon: Icons.receipt_long_outlined,
                   accent: const Color(0xFF2F6FED),
                 ),
                 StatCard(
-                  label: 'Products',
+                  label: 'Produk',
                   value: '${d['products'] ?? 0}',
                   icon: Icons.fastfood_outlined,
                   accent: AppColors.emerald,
                 ),
                 StatCard(
-                  label: 'Expenses',
+                  label: 'Pengeluaran',
                   value: _money(d['expenses']),
                   icon: Icons.money_off_outlined,
                   accent: AppColors.danger,
@@ -112,7 +127,7 @@ class DashboardPage extends GetView<DashboardController> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Sales Trend', style: Theme.of(context).textTheme.headlineSmall),
+                Text('Tren Penjualan', style: Theme.of(context).textTheme.headlineSmall),
                 SizedBox(height: AppDimensions.sm.h),
                 SizedBox(height: 220.h, child: _trendChart(trend)),
               ],
@@ -123,7 +138,7 @@ class DashboardPage extends GetView<DashboardController> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Top Products', style: Theme.of(context).textTheme.headlineSmall),
+                Text('Produk Terlaris', style: Theme.of(context).textTheme.headlineSmall),
                 SizedBox(height: AppDimensions.sm.h),
                 ...top.map((p) => Padding(
                       padding: EdgeInsets.symmetric(vertical: AppDimensions.xs.h),
@@ -153,7 +168,7 @@ class DashboardPage extends GetView<DashboardController> {
                 if (top.isEmpty)
                   Padding(
                     padding: EdgeInsets.symmetric(vertical: AppDimensions.sm.h),
-                    child: Text('No data available', style: Theme.of(context).textTheme.bodyMedium),
+                    child: Text('Belum ada data', style: Theme.of(context).textTheme.bodyMedium),
                   ),
               ],
             ),
@@ -168,14 +183,15 @@ class DashboardPage extends GetView<DashboardController> {
     final shift = d['currentShift'];
 
     return SingleChildScrollView(
-      padding: EdgeInsets.all(AppDimensions.marginTablet.w),
+      padding: EdgeInsets.all(Responsive.padding(context)),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _header(context, 'Selamat Bekerja', 'Ringkasan shift kamu hari ini'),
           SizedBox(height: AppDimensions.xl.h),
           LayoutBuilder(builder: (context, constraints) {
-            final cols = constraints.maxWidth > 700 ? 3 : 1;
+            final w = constraints.maxWidth;
+            final cols = w >= 700 ? 3 : (w >= 420 ? 2 : 1);
             return GridView.count(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
@@ -185,18 +201,18 @@ class DashboardPage extends GetView<DashboardController> {
               childAspectRatio: 1.6,
               children: [
                 StatCard(
-                  label: 'Current Shift',
-                  value: shift != null ? '#${shift['id_shift']}' : 'None',
+                  label: 'Shift Aktif',
+                  value: shift != null ? '#${shift['id_shift']}' : 'Tidak ada',
                   icon: Icons.schedule_outlined,
                   accent: const Color(0xFF2F6FED),
                 ),
                 StatCard(
-                  label: 'Sales Today',
+                  label: 'Penjualan Hari Ini',
                   value: _money(d['salesToday']),
                   icon: Icons.payments_outlined,
                 ),
                 StatCard(
-                  label: 'Orders Today',
+                  label: 'Order Hari Ini',
                   value: '${d['ordersToday'] ?? 0}',
                   icon: Icons.receipt_long_outlined,
                   accent: AppColors.emerald,
@@ -209,7 +225,7 @@ class DashboardPage extends GetView<DashboardController> {
             children: [
               Expanded(
                 child: AppButton(
-                  label: 'Open Shift',
+                  label: 'Buka Shift',
                   icon: Icons.login,
                   primary: false,
                   onPressed: () => Get.toNamed(AppRoutes.shift),
@@ -218,7 +234,7 @@ class DashboardPage extends GetView<DashboardController> {
               SizedBox(width: AppDimensions.md.w),
               Expanded(
                 child: AppButton(
-                  label: 'Go to POS',
+                  label: 'Ke Kasir',
                   icon: Icons.point_of_sale,
                   onPressed: () => Get.toNamed(AppRoutes.pos),
                 ),
@@ -249,7 +265,7 @@ class DashboardPage extends GetView<DashboardController> {
   Widget _trendChart(Map<String, num> trend) {
     final entries = trend.entries.toList();
     if (entries.isEmpty) {
-      return const Center(child: Text('No data'));
+      return const Center(child: Text('Belum ada data'));
     }
     final spots = entries.asMap().entries.map((e) {
       final v = e.value.value.toDouble();

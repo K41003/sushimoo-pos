@@ -53,7 +53,7 @@ class SyncStatusButton extends StatelessWidget {
                     Icon(Icons.cloud_off_rounded, size: 16.sp, color: AppColors.warning),
                   SizedBox(width: 6.w),
                   Text(
-                    syncing ? 'Syncing...' : 'Sync Now ($pending)',
+                    syncing ? 'Menyinkron...' : 'Sinkron Sekarang ($pending)',
                     style: TextStyle(
                       fontSize: 12.sp,
                       fontWeight: FontWeight.w700,

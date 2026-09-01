@@ -74,7 +74,7 @@ class ProductCardWidget extends StatelessWidget {
               if (!product.status) ...[
                 SizedBox(height: 4.h),
                 Text(
-                  'Inactive',
+                  'Nonaktif',
                   style: TextStyle(fontSize: 11.sp, color: AppColors.danger, fontWeight: FontWeight.w600),
                 ),
               ],

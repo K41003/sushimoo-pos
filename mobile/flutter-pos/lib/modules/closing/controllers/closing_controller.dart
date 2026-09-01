@@ -58,24 +58,24 @@ class ClosingController extends GetxController {
   Future<void> doClosing({int? shiftId}) async {
     final targetShiftId = shiftId ?? activeShift.value?.idShift;
     if (targetShiftId == null) {
-      EasyLoading.showError('No shift to close.');
+      EasyLoading.showError('Tidak ada shift untuk ditutup.');
       return;
     }
 
     final confirmed = await AppDialog.confirm(
       title: 'Closing Kasir',
-      message: 'Generate closing report for this shift?',
-      confirmText: 'Close',
+      message: 'Buat laporan tutup kasir untuk shift ini?',
+      confirmText: 'Tutup',
     );
     if (confirmed != true) return;
 
-    EasyLoading.show(status: 'Closing...');
+    EasyLoading.show(status: 'Menutup kasir...');
     if (AppConstants.localMode) {
       final closing = await _local.generateClosing(targetShiftId);
       lastClosing.value = closing;
       await _printReport(closing);
       EasyLoading.dismiss();
-      EasyLoading.showSuccess('Closing recorded');
+      EasyLoading.showSuccess('Tutup kasir tercatat');
       await load();
       return;
     }
@@ -88,7 +88,7 @@ class ClosingController extends GetxController {
       final closing = res.data as Closing;
       lastClosing.value = closing;
       await _printReport(closing);
-      EasyLoading.showSuccess('Closing recorded');
+      EasyLoading.showSuccess('Tutup kasir tercatat');
       await load();
     } else {
       EasyLoading.showError(res.message);
@@ -116,7 +116,7 @@ class ClosingController extends GetxController {
         ),
       );
     } catch (_) {
-      EasyLoading.showError('Failed to print closing report');
+      EasyLoading.showError('Gagal mencetak laporan tutup kasir');
     } finally {
       printing.value = false;
     }

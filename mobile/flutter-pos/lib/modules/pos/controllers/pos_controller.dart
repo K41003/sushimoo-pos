@@ -216,7 +216,7 @@ class PosController extends GetxController {
   ///     invalid payload later would just fail again silently.
   Future<void> placeOrder() async {
     if (cart.isEmpty) {
-      EasyLoading.showError('Cart is empty');
+      EasyLoading.showError('Keranjang masih kosong');
       return;
     }
     if (selectedTable.value == null) {
@@ -228,7 +228,7 @@ class PosController extends GetxController {
     final idMeja = selectedTable.value!.idMeja;
 
     loading.value = true;
-    EasyLoading.show(status: 'Placing order...');
+    EasyLoading.show(status: 'Membuat pesanan...');
 
     if (AppConstants.localMode) {
       final shiftId = StorageService.to.shiftId;
@@ -236,7 +236,7 @@ class PosController extends GetxController {
       if (shiftId == null || userId == null) {
         loading.value = false;
         EasyLoading.dismiss();
-        EasyLoading.showError('No active shift. Open a shift first.');
+        EasyLoading.showError('Tidak ada shift aktif. Buka shift terlebih dahulu.');
         return;
       }
       final trx = await _local.createTransaction(
@@ -253,7 +253,7 @@ class PosController extends GetxController {
         // Non-fatal: printer may be disconnected — order still proceeds.
       }
       clearCart();
-      EasyLoading.showSuccess('Order placed');
+      EasyLoading.showSuccess('Pesanan berhasil dibuat');
       Get.toNamed(AppRoutes.payment, arguments: trx);
       return;
     }
@@ -269,7 +269,7 @@ class PosController extends GetxController {
       final trx = res.data as Transaction;
       await PrintQueueService.to.printKitchenTicket(trx);
       clearCart();
-      EasyLoading.showSuccess('Order placed');
+      EasyLoading.showSuccess('Pesanan berhasil dibuat');
       Get.toNamed(AppRoutes.payment, arguments: trx);
       return;
     }
@@ -278,7 +278,7 @@ class PosController extends GetxController {
       await OfflineQueueService.to.enqueue(idMeja: idMeja, items: items);
       clearCart();
       EasyLoading.showInfo(
-        'No connection — order saved locally and will sync automatically.',
+        'Tidak ada koneksi — pesanan disimpan secara lokal dan akan tersinkron otomatis.',
       );
       return;
     }

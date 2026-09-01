@@ -26,7 +26,7 @@ class ReceiptController extends GetxController {
 
   Future<void> reprint() async {
     loading.value = true;
-    EasyLoading.show(status: 'Printing...');
+    EasyLoading.show(status: 'Mencetak...');
     await PrintQueueService.to.printCustomerReceipt(transaction);
     loading.value = false;
     EasyLoading.dismiss();

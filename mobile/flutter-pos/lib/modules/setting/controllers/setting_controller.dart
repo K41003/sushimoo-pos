@@ -26,12 +26,12 @@ class SettingController extends GetxController {
     try {
       final devices = await PrinterService.to.getDevices();
       if (devices.isEmpty) {
-        EasyLoading.showError('No paired bluetooth printer');
+        EasyLoading.showError('Tidak ada printer bluetooth yang terpasang');
         return;
       }
       final picked = await Get.dialog<dynamic>(
         SimpleDialog(
-          title: const Text('Select Printer'),
+          title: const Text('Pilih Printer'),
           children: devices
               .map((d) => SimpleDialogOption(
                     onPressed: () => Get.back(result: d),
@@ -44,13 +44,13 @@ class SettingController extends GetxController {
         final ok = await PrinterService.to.connect(picked);
         printerConnected.value = ok;
         if (ok) {
-          EasyLoading.showSuccess('Printer connected');
+          EasyLoading.showSuccess('Printer terhubung');
         } else {
-          EasyLoading.showError('Failed to connect');
+          EasyLoading.showError('Gagal terhubung');
         }
       }
     } catch (e) {
-      EasyLoading.showError('Bluetooth error: ${e.toString()}');
+      EasyLoading.showError('Kesalahan bluetooth: ${e.toString()}');
     }
   }
 

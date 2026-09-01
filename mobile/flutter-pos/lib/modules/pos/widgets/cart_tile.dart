@@ -90,9 +90,9 @@ class CartTile extends StatelessWidget {
               ),
               child: TextField(
                 onChanged: (v) => controller.updateNote(index, v),
-                style: TextStyle(fontSize: 13.sp),
+                style: TextStyle(fontSize: 14.sp),
                 decoration: InputDecoration(
-                  hintText: 'Add a note',
+                  hintText: 'Tambah catatan',
                   isDense: true,
                   filled: false,
                   border: InputBorder.none,

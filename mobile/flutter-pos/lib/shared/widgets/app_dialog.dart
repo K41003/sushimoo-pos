@@ -29,8 +29,8 @@ class AppDialog {
   static Future<bool?> confirm({
     required String title,
     required String message,
-    String confirmText = 'Yes',
-    String cancelText = 'Cancel',
+    String confirmText = 'Ya',
+    String cancelText = 'Batal',
     bool destructive = false,
   }) {
     return Get.dialog<bool>(
@@ -53,8 +53,8 @@ class AppDialog {
   static Future<T?> form<T>({
     required String title,
     required Widget content,
-    String confirmText = 'Save',
-    String cancelText = 'Cancel',
+    String confirmText = 'Simpan',
+    String cancelText = 'Batal',
     IconData? icon,
     double? maxWidth,
     Future<bool> Function()? onConfirm,

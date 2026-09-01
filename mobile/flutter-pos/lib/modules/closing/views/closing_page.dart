@@ -3,6 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import '../../../app/constants/colors.dart';
 import '../../../app/constants/dimensions.dart';
+import '../../../shared/utils/responsive.dart';
 import '../../../app/routes/app_routes.dart';
 import '../../../data/models/closing.dart';
 import '../../../shared/widgets/app_button.dart';
@@ -28,7 +29,7 @@ class ClosingPage extends GetView<ClosingController> {
   @override
   Widget build(BuildContext context) {
     return AppScaffold(
-      title: 'Closing',
+      title: 'Tutup Kasir',
       currentRoute: AppRoutes.closing,
       body: Obx(() {
         if (controller.loading.value) return const AppLoading();
@@ -36,7 +37,7 @@ class ClosingPage extends GetView<ClosingController> {
         final hasReportToShow = controller.lastClosing.value != null;
 
         return SingleChildScrollView(
-          padding: EdgeInsets.all(AppDimensions.marginTablet.w),
+          padding: EdgeInsets.all(Responsive.padding(context)),
           child: Column(
             children: [
               GlassPanel(
@@ -44,11 +45,11 @@ class ClosingPage extends GetView<ClosingController> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Current Shift', style: Theme.of(context).textTheme.headlineMedium),
+                    Text('Shift Aktif', style: Theme.of(context).textTheme.headlineMedium),
                     SizedBox(height: 8.h),
                     Text(shift != null
-                        ? 'Shift #${shift.idShift} is open'
-                        : 'No active shift'),
+                        ? 'Shift #${shift.idShift} sedang berjalan'
+                        : 'Tidak ada shift aktif'),
                     SizedBox(height: 16.h),
                     AppButton(
                       label: 'Closing Kasir',
@@ -64,14 +65,14 @@ class ClosingPage extends GetView<ClosingController> {
               SizedBox(height: 16.h),
               Align(
                 alignment: Alignment.centerLeft,
-                child: Text('Closing History', style: Theme.of(context).textTheme.headlineMedium),
+                child: Text('Riwayat Tutup Kasir', style: Theme.of(context).textTheme.headlineMedium),
               ),
               SizedBox(height: 8.h),
               if (controller.history.isEmpty)
                 Padding(
                   padding: EdgeInsets.symmetric(vertical: 12.h),
                   child: Text(
-                    'No closing reports yet.',
+                    'Belum ada laporan tutup kasir.',
                     style: Theme.of(context).textTheme.bodyMedium,
                   ),
                 )
@@ -102,9 +103,9 @@ class ClosingPage extends GetView<ClosingController> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('Closing #${c.idClosing}', style: Theme.of(context).textTheme.bodyLarge),
+              Text('Tutup Kasir #${c.idClosing}', style: Theme.of(context).textTheme.bodyLarge),
               Obx(() => IconButton(
-                    tooltip: 'Print report',
+                    tooltip: 'Cetak laporan',
                     icon: controller.printing.value
                         ? SizedBox(
                             width: 18.r,
@@ -118,7 +119,7 @@ class ClosingPage extends GetView<ClosingController> {
           ),
           SizedBox(height: 6.h),
           Text('Total Penjualan: Rp ${c.totalPenjualan.toStringAsFixed(0)}'),
-          Text('Total Cash: Rp ${c.totalCash.toStringAsFixed(0)}'),
+          Text('Total Tunai: Rp ${c.totalCash.toStringAsFixed(0)}'),
           Text('Total QRIS: Rp ${c.totalQris.toStringAsFixed(0)}'),
           Text('Total Pengeluaran: Rp ${c.totalPengeluaran.toStringAsFixed(0)}'),
           Text('Saldo Akhir: Rp ${c.saldoAkhir.toStringAsFixed(0)}'),

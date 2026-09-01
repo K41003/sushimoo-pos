@@ -4,6 +4,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import '../../../app/constants/colors.dart';
 import '../../../app/constants/dimensions.dart';
+import '../../../shared/utils/responsive.dart';
 import '../../../app/routes/app_routes.dart';
 import '../../../shared/widgets/app_loading.dart';
 import '../../../shared/widgets/app_scaffold.dart';
@@ -17,31 +18,31 @@ class ReportPage extends GetView<ReportController> {
   @override
   Widget build(BuildContext context) {
     return AppScaffold(
-      title: 'Report',
+      title: 'Laporan',
       currentRoute: AppRoutes.report,
       body: Obx(() {
         if (controller.loading.value) return const AppLoading();
         return SingleChildScrollView(
-          padding: EdgeInsets.all(AppDimensions.marginTablet.w),
+          padding: EdgeInsets.all(Responsive.padding(context)),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _card('Daily Sales', controller.daily['sales'] ?? 0),
+              _card('Penjualan Hari Ini', controller.daily['sales'] ?? 0),
               SizedBox(height: 10.h),
-              _card('Daily Orders', controller.daily['orders'] ?? 0, isCurrency: false),
+              _card('Order Hari Ini', controller.daily['orders'] ?? 0, isCurrency: false),
               SizedBox(height: 10.h),
-              _card('Daily Cash', controller.daily['cash'] ?? 0),
+              _card('Tunai Hari Ini', controller.daily['cash'] ?? 0),
               SizedBox(height: 10.h),
-              _card('Daily QRIS', controller.daily['qris'] ?? 0),
+              _card('QRIS Hari Ini', controller.daily['qris'] ?? 0),
               SizedBox(height: 10.h),
-              _card('Daily Expenses', controller.daily['expenses'] ?? 0),
+              _card('Pengeluaran Hari Ini', controller.daily['expenses'] ?? 0),
               SizedBox(height: 24.h),
               GlassPanel(
                 radius: AppDimensions.radiusLg,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Last 7 Days', style: Theme.of(context).textTheme.headlineMedium),
+                    Text('7 Hari Terakhir', style: Theme.of(context).textTheme.headlineMedium),
                     SizedBox(height: 12.h),
                     SizedBox(height: 240.h, child: _barChart()),
                   ],
@@ -78,7 +79,7 @@ class ReportPage extends GetView<ReportController> {
     final totals = (controller.last7['totals'] as List? ?? List.filled(7, 0))
         .map((e) => (e is num ? e : 0).toDouble())
         .toList();
-    if (days.isEmpty) return const Center(child: Text('No data'));
+    if (days.isEmpty) return const Center(child: Text('Belum ada data'));
     final spots = totals.asMap().entries.map((e) {
       return BarChartRodData(toY: e.value, width: 18, color: AppColors.salmon, borderRadius: BorderRadius.circular(6));
     }).toList();

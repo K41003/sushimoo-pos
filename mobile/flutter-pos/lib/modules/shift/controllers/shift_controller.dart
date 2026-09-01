@@ -2,6 +2,7 @@ import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:get/get.dart';
 import 'package:flutter/material.dart';
 import '../../../app/constants/app_constants.dart';
+import '../../../app/constants/strings.dart';
 import '../../../app/services/api_client.dart';
 import '../../../app/services/auth_service.dart';
 import '../../../app/services/local_data_service.dart';
@@ -62,19 +63,19 @@ class ShiftController extends GetxController {
   Future<void> openShift() async {
     final petty = double.tryParse(pettyCashController.text) ?? 0;
     loading.value = true;
-    EasyLoading.show(status: 'Opening...');
+    EasyLoading.show(status: 'Membuka shift...');
     if (AppConstants.localMode) {
       final userId = AuthService.to.currentUser?.idUser;
       if (userId == null) {
         loading.value = false;
         EasyLoading.dismiss();
-        EasyLoading.showError('No logged-in user');
+        EasyLoading.showError('Tidak ada pengguna yang login');
         return;
       }
       await _local.openShift(userId: userId, pettyCash: petty);
       loading.value = false;
       EasyLoading.dismiss();
-      EasyLoading.showSuccess('Shift opened');
+      EasyLoading.showSuccess('Shift dibuka');
       await loadActive();
       return;
     }
@@ -82,7 +83,7 @@ class ShiftController extends GetxController {
     loading.value = false;
     EasyLoading.dismiss();
     if (res.success) {
-      EasyLoading.showSuccess('Shift opened');
+      EasyLoading.showSuccess('Shift dibuka');
       await loadActive();
     } else {
       EasyLoading.showError(res.message);
@@ -93,15 +94,15 @@ class ShiftController extends GetxController {
     if (activeShift.value == null) return;
     final nominal = double.tryParse(pettyController.text) ?? 0;
     if (nominal <= 0) {
-      EasyLoading.showError('Nominal required');
+      EasyLoading.showError('Nominal wajib diisi');
       return;
     }
-    EasyLoading.show(status: 'Saving...');
+    EasyLoading.show(status: AppStrings.saving);
     if (AppConstants.localMode) {
       await _local.addPettyCash(activeShift.value!.idShift, nominal);
       EasyLoading.dismiss();
       pettyController.clear();
-      EasyLoading.showSuccess('Petty cash recorded');
+      EasyLoading.showSuccess('Kas kecil tercatat');
       await loadActive();
       return;
     }
@@ -112,7 +113,7 @@ class ShiftController extends GetxController {
     EasyLoading.dismiss();
     if (res.success) {
       pettyController.clear();
-      EasyLoading.showSuccess('Petty cash recorded');
+      EasyLoading.showSuccess('Kas kecil tercatat');
     } else {
       EasyLoading.showError(res.message);
     }
@@ -121,17 +122,17 @@ class ShiftController extends GetxController {
   Future<void> closeShift() async {
     if (activeShift.value == null) return;
     final confirmed = await AppDialog.confirm(
-      title: 'Close Shift',
-      message: 'Are you sure you want to close this shift?',
-      confirmText: 'Close',
+      title: 'Tutup Shift',
+      message: 'Apakah kamu yakin ingin menutup shift ini?',
+      confirmText: 'Tutup',
     );
     if (confirmed != true) return;
 
-    EasyLoading.show(status: 'Closing...');
+    EasyLoading.show(status: 'Menutup shift...');
     if (AppConstants.localMode) {
       await _local.closeShift(activeShift.value!.idShift);
       EasyLoading.dismiss();
-      EasyLoading.showSuccess('Shift closed');
+      EasyLoading.showSuccess('Shift ditutup');
       await loadActive();
       return;
     }
@@ -140,7 +141,7 @@ class ShiftController extends GetxController {
     );
     EasyLoading.dismiss();
     if (res.success) {
-      EasyLoading.showSuccess('Shift closed');
+      EasyLoading.showSuccess('Shift ditutup');
       await loadActive();
     } else {
       EasyLoading.showError(res.message);

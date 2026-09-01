@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import '../../app/constants/app_constants.dart';
 import '../../app/constants/colors.dart';
 import '../../app/constants/dimensions.dart';
+import '../../app/constants/strings.dart';
 import '../../app/services/api_client.dart';
 import '../../app/services/local_data_service.dart';
 import '../../data/models/transaction.dart';
@@ -15,7 +16,7 @@ import 'glass_panel.dart';
 class VoidOrderController {
   static Future<bool> attemptVoid(BuildContext context, Transaction trx) async {
     if (trx.status.toLowerCase() == 'paid') {
-      EasyLoading.showError('Cannot void an order that has already been paid.');
+      EasyLoading.showError('Order yang sudah dibayar tidak bisa dibatalkan.');
       return false;
     }
 
@@ -23,15 +24,15 @@ class VoidOrderController {
     if (reason == null || reason.trim().isEmpty) return false;
 
     final approved = await AdminPinDialog.show(
-      title: 'Admin Approval Required',
-      message: 'Voiding order ${trx.invoiceNumber} requires admin approval.',
+      title: 'Persetujuan Admin Diperlukan',
+      message: 'Membatalkan order ${trx.invoiceNumber} memerlukan persetujuan admin.',
     );
     if (!approved) {
-      EasyLoading.showInfo('Void cancelled — admin approval required.');
+      EasyLoading.showInfo('Pembatalan dibatalkan — persetujuan admin diperlukan.');
       return false;
     }
 
-    EasyLoading.show(status: 'Voiding order...');
+    EasyLoading.show(status: 'Membatalkan order...');
     if (AppConstants.localMode) {
       await LocalDataService.to.updateTransactionStatus(
         trx.idTransaksi,
@@ -39,7 +40,7 @@ class VoidOrderController {
         reason: reason.trim(),
       );
       EasyLoading.dismiss();
-      EasyLoading.showSuccess('Order ${trx.invoiceNumber} voided');
+      EasyLoading.showSuccess('Order ${trx.invoiceNumber} dibatalkan');
       return true;
     }
     final res = await ApiClient.to.post(
@@ -49,7 +50,7 @@ class VoidOrderController {
     EasyLoading.dismiss();
 
     if (res.success) {
-      EasyLoading.showSuccess('Order ${trx.invoiceNumber} voided');
+      EasyLoading.showSuccess('Order ${trx.invoiceNumber} dibatalkan');
       return true;
     } else {
       EasyLoading.showError(res.message);
@@ -88,25 +89,25 @@ class VoidOrderController {
                     child: const Icon(Icons.cancel_outlined, color: AppColors.danger),
                   ),
                   const SizedBox(height: AppDimensions.md),
-                  Text('Void Order', style: Theme.of(Get.context!).textTheme.headlineMedium),
+                  Text('Batalkan Order', style: Theme.of(Get.context!).textTheme.headlineMedium),
                   const SizedBox(height: 8),
                   Text(
-                    'Please state the reason for voiding this order. Admin approval will be required next.',
+                    'Sebutkan alasan pembatalan order ini. Persetujuan admin akan diminta selanjutnya.',
                     style: Theme.of(Get.context!).textTheme.bodyMedium,
                   ),
                   const SizedBox(height: AppDimensions.lg),
                   AppTextField(
-                    label: 'Reason',
+                    label: 'Alasan',
                     controller: controller,
                     maxLines: 3,
-                    validator: (v) => (v == null || v.trim().isEmpty) ? 'Required' : null,
+                    validator: (v) => (v == null || v.trim().isEmpty) ? AppStrings.required : null,
                   ),
                   const SizedBox(height: AppDimensions.lg),
                   Row(
                     children: [
                       Expanded(
                         child: AppButton(
-                          label: 'Cancel',
+                          label: AppStrings.cancel,
                           primary: false,
                           onPressed: () => Get.back(result: null),
                         ),
@@ -114,7 +115,7 @@ class VoidOrderController {
                       const SizedBox(width: AppDimensions.sm),
                       Expanded(
                         child: AppButton(
-                          label: 'Continue',
+                          label: 'Lanjutkan',
                           onPressed: () {
                             if (formKey.currentState!.validate()) {
                               Get.back(result: controller.text);

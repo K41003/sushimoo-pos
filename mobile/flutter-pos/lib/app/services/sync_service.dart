@@ -44,7 +44,7 @@ class SyncService extends GetxService {
 
     isSyncing.value = true;
     if (showToast) {
-      EasyLoading.show(status: 'Syncing ${orders.length} order(s)...');
+      EasyLoading.show(status: 'Menyinkronkan ${orders.length} pesanan...');
     }
 
     var succeeded = 0;
@@ -87,9 +87,9 @@ class SyncService extends GetxService {
       if (showToast) {
         EasyLoading.dismiss();
         if (failed == 0) {
-          EasyLoading.showSuccess('$succeeded order(s) synced');
+          EasyLoading.showSuccess('$succeeded pesanan tersinkron');
         } else {
-          EasyLoading.showError('$succeeded synced, $failed still pending');
+          EasyLoading.showError('$succeeded tersinkron, $failed masih tertunda');
         }
       }
     }

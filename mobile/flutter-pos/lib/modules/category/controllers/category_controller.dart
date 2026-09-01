@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:get/get.dart';
 import '../../../app/constants/app_constants.dart';
+import '../../../app/constants/strings.dart';
 import '../../../app/services/api_client.dart';
 import '../../../app/services/local_data_service.dart';
 import '../../../data/models/category.dart';
@@ -85,7 +86,7 @@ class CategoryController extends GetxController {
     selectedStatus.value = existing?.status ?? true;
 
     AppDialog.form(
-      title: existing == null ? 'Add Category' : 'Edit Category',
+      title: existing == null ? 'Tambah Kategori' : 'Ubah Kategori',
       icon: Icons.category_rounded,
       maxWidth: 440,
       content: CategoryForm(controller: this, existing: existing),
@@ -99,11 +100,11 @@ class CategoryController extends GetxController {
   Future<void> createOrUpdate(Category? existing) async {
     final nama = nameController.text.trim();
     if (nama.isEmpty) {
-      EasyLoading.showError('Nama kategori required');
+      EasyLoading.showError('Nama kategori ${AppStrings.required}');
       return;
     }
 
-    EasyLoading.show(status: 'Saving...');
+    EasyLoading.show(status: AppStrings.saving);
     if (AppConstants.localMode) {
       await _local.saveCategory(
         id: existing?.idKategori,
@@ -113,7 +114,7 @@ class CategoryController extends GetxController {
       );
       Get.back();
       EasyLoading.dismiss();
-      EasyLoading.showSuccess('Saved');
+      EasyLoading.showSuccess(AppStrings.saved);
       await load();
       return;
     }
@@ -130,7 +131,7 @@ class CategoryController extends GetxController {
 
     if (res.success) {
       Get.back();
-      EasyLoading.showSuccess(res.message.isNotEmpty ? res.message : 'Saved');
+      EasyLoading.showSuccess(res.message.isNotEmpty ? res.message : AppStrings.saved);
       await load();
     } else {
       EasyLoading.showError(res.message);
@@ -139,18 +140,18 @@ class CategoryController extends GetxController {
 
   Future<void> delete(int id) async {
     final confirmed = await AppDialog.confirm(
-      title: 'Delete Category',
-      message: 'Are you sure you want to delete this category?',
-      confirmText: 'Delete',
+      title: AppStrings.confirmDeleteTitle,
+      message: 'Apakah kamu yakin ingin menghapus kategori ini?',
+      confirmText: AppStrings.delete,
       destructive: true,
     );
     if (confirmed != true) return;
 
-    EasyLoading.show(status: 'Deleting...');
+    EasyLoading.show(status: AppStrings.deleting);
     if (AppConstants.localMode) {
       await _local.deleteCategory(id);
       EasyLoading.dismiss();
-      EasyLoading.showSuccess('Deleted');
+      EasyLoading.showSuccess(AppStrings.deleted);
       await load();
       return;
     }
@@ -158,7 +159,7 @@ class CategoryController extends GetxController {
     EasyLoading.dismiss();
 
     if (res.success) {
-      EasyLoading.showSuccess(res.message.isNotEmpty ? res.message : 'Deleted');
+      EasyLoading.showSuccess(res.message.isNotEmpty ? res.message : AppStrings.deleted);
       await load();
     } else {
       EasyLoading.showError(res.message);

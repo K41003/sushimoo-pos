@@ -4,6 +4,8 @@ import 'package:get/get.dart';
 import '../../../app/constants/colors.dart';
 import '../../../app/constants/dimensions.dart';
 import '../../../app/routes/app_routes.dart';
+import '../../../app/themes/theme.dart';
+import '../../../shared/utils/responsive.dart';
 import '../../../shared/widgets/app_button.dart';
 import '../../../shared/widgets/glass_panel.dart';
 import '../controllers/receipt_controller.dart';
@@ -43,7 +45,7 @@ class ReceiptPage extends GetView<ReceiptController> {
             children: [
               Padding(
                 padding: EdgeInsets.symmetric(vertical: AppDimensions.sm.h),
-                child: Text('Receipt View',
+                child: Text('Tampilan Struk',
                     style: theme.textTheme.headlineMedium,
                     textAlign: TextAlign.center),
               ),
@@ -51,7 +53,7 @@ class ReceiptPage extends GetView<ReceiptController> {
                 child: Center(
                   child: SingleChildScrollView(
                     padding: EdgeInsets.symmetric(
-                        horizontal: AppDimensions.marginTablet.w,
+                        horizontal: Responsive.padding(context),
                         vertical: AppDimensions.md.h),
                     child: ConstrainedBox(
                       constraints: BoxConstraints(maxWidth: 440.w),
@@ -78,7 +80,7 @@ class ReceiptPage extends GetView<ReceiptController> {
                                         Icon(Icons.check_circle, color: AppColors.emerald, size: 16.sp),
                                         SizedBox(width: 6.w),
                                         Text(
-                                          'PAYMENT SUCCESSFUL',
+                                          'PEMBAYARAN BERHASIL',
                                           style: TextStyle(
                                             color: AppColors.emerald,
                                             fontSize: 10.sp,
@@ -96,7 +98,7 @@ class ReceiptPage extends GetView<ReceiptController> {
                                       Text(
                                         'SUSHIMOO',
                                         style: TextStyle(
-                                          fontFamily: 'Serif',
+                                          fontFamily: AppTypography.fontFamilyDisplay,
                                           fontSize: 24.sp,
                                           fontWeight: FontWeight.w800,
                                           letterSpacing: 2.5,
@@ -105,7 +107,7 @@ class ReceiptPage extends GetView<ReceiptController> {
                                       ),
                                       SizedBox(height: 2.h),
                                       Text(
-                                        'Zen Japanese Dining',
+                                        'Restoran Jepang Zen',
                                         style: TextStyle(fontSize: 11.sp, color: AppColors.inkMuted, letterSpacing: 1),
                                       ),
                                       SizedBox(height: 4.h),
@@ -119,15 +121,15 @@ class ReceiptPage extends GetView<ReceiptController> {
                                 SizedBox(height: AppDimensions.lg.h),
                                 _buildDashedDivider(),
                                 SizedBox(height: AppDimensions.md.h),
-                                _buildReceiptRow('Invoice', trx.invoiceNumber, isMonospace: true),
+                                _buildReceiptRow('No. Invoice', trx.invoiceNumber, isMonospace: true),
                                 _buildReceiptRow('Tanggal',
                                     trx.tanggal.substring(0, trx.tanggal.length > 16 ? 16 : trx.tanggal.length)),
                                 _buildReceiptRow(
-                                    'Table / Layanan', trx.table?.nomorMeja != null ? 'Meja ${trx.table!.nomorMeja}' : 'Takeaway'),
+                                    'Meja / Layanan', trx.table?.nomorMeja != null ? 'Meja ${trx.table!.nomorMeja}' : 'Bawa Pulang'),
                                 SizedBox(height: AppDimensions.xs.h),
                                 _buildDashedDivider(),
                                 SizedBox(height: AppDimensions.md.h),
-                                Text('ITEMS ORDERED',
+                                Text('DAFTAR PESANAN',
                                     style: theme.textTheme.labelSmall?.copyWith(letterSpacing: 1.5)),
                                 SizedBox(height: 10.h),
                                 ...?trx.details?.map(
@@ -141,7 +143,7 @@ class ReceiptPage extends GetView<ReceiptController> {
                                                 fontFamily: 'Courier', fontWeight: FontWeight.bold, fontSize: 14.sp, color: AppColors.ink)),
                                         Expanded(
                                           child: Text(
-                                            d.product?.namaProduk ?? 'Item #${d.idProduk}',
+                                            d.product?.namaProduk ?? 'Produk #${d.idProduk}',
                                             style: TextStyle(fontFamily: 'Courier', fontSize: 14.sp, color: AppColors.ink),
                                           ),
                                         ),

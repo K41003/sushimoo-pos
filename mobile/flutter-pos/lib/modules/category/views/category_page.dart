@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import '../../../app/constants/colors.dart';
 import '../../../app/constants/dimensions.dart';
 import '../../../app/routes/app_routes.dart';
+import '../../../shared/utils/responsive.dart';
 import '../../../shared/widgets/app_loading.dart';
 import '../../../shared/widgets/app_scaffold.dart';
 import '../../../shared/widgets/glass_panel.dart';
@@ -17,31 +18,31 @@ class CategoryPage extends GetView<CategoryController> {
   @override
   Widget build(BuildContext context) {
     return AppScaffold(
-      title: 'Category',
+      title: 'Kategori',
       currentRoute: AppRoutes.category,
       actions: [
         AppHeaderSearchField(
-          hint: 'Search category...',
+          hint: 'Cari kategori...',
           width: 180.w,
           onChanged: controller.onSearchChanged,
         ),
         AppGlassActionButton(
           icon: Icons.add,
-          tooltip: 'Add Category',
+          tooltip: 'Tambah Kategori',
           onPressed: () => controller.openForm(null),
         ),
       ],
       body: Padding(
-        padding: EdgeInsets.all(24.w),
+        padding: EdgeInsets.all(Responsive.padding(context)),
         child: Column(
           children: [
             Expanded(
               child: Obx(() {
                 if (controller.loading.value) {
-                  return const AppLoading(message: 'Loading categories...');
+                  return const AppLoading(message: 'Memuat kategori...');
                 }
                 if (controller.items.isEmpty) {
-                  return const AppEmptyState(message: 'No categories found');
+                  return const AppEmptyState(message: 'Belum ada kategori');
                 }
                 return ListView.separated(
                   itemCount: controller.items.length,
@@ -82,7 +83,7 @@ class CategoryPage extends GetView<CategoryController> {
                                   AppDimensions.radiusFull),
                             ),
                             child: Text(
-                              c.status ? 'Active' : 'Inactive',
+                              c.status ? 'Aktif' : 'Nonaktif',
                               style: TextStyle(
                                 fontSize: 12.sp,
                                 color: c.status

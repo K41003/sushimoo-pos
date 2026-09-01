@@ -55,25 +55,35 @@ class PosPage extends GetView<PosController> {
   @override
   Widget build(BuildContext context) {
     return AppScaffold(
-      title: 'POS',
+      title: 'Kasir',
       currentRoute: '/pos',
       actions: const [SyncStatusButton(), PrintQueueButton()],
       body: GetX<PosController>(
         builder: (c) {
-          return Responsive.isLandscapeTablet(context)
-              ? _landscape(context, c)
-              : _portrait(context, c);
+          // Orientation is locked per device at startup (phones =
+          // portrait-only, tablets = landscape-only — see main.dart),
+          // so `Responsive.isTablet` alone is now enough to pick the
+          // layout; there's no live-rotation state to react to anymore.
+          return Responsive.isTablet(context)
+              ? _tabletLayout(context, c)
+              : _phoneLayout(context, c);
         },
       ),
     );
   }
 
-  Widget _landscape(BuildContext context, PosController c) {
+  /// This app's primary/reference layout: side rail + menu grid + a
+  /// permanent cart panel. Only ever shown on a tablet (always
+  /// landscape).
+  Widget _tabletLayout(BuildContext context, PosController c) {
     return Row(
       children: [
         Expanded(
           flex: 3,
-          child: _menuPanel(context, c, crossAxisCount: 4),
+          // Still adapts between 3–5 columns depending on actual rail
+          // width instead of a flat "always 4" (a 7" tablet and a 12"
+          // tablet don't have the same room).
+          child: _menuPanel(context, c, crossAxisCount: Responsive.gridColumns(context, max: 5)),
         ),
         SizedBox(
           width: 400.w,
@@ -91,7 +101,12 @@ class PosPage extends GetView<PosController> {
     );
   }
 
-  Widget _portrait(BuildContext context, PosController c) {
+  /// Phone layout: menu grid + a floating "Keranjang" button that opens
+  /// the cart as a bottom sheet. Only ever shown on a phone (always
+  /// portrait), so this always gets a simple 2-column grid — there's no
+  /// "phone but somehow has tablet-sized width" case to plan for once
+  /// orientation is locked per device.
+  Widget _phoneLayout(BuildContext context, PosController c) {
     return Stack(
       children: [
         Column(
@@ -124,7 +139,7 @@ class PosPage extends GetView<PosController> {
                       const Icon(Icons.shopping_bag_outlined, color: Colors.white, size: 20),
                       SizedBox(width: 8.w),
                       Text(
-                        'Cart (${c.cart.length})',
+                        'Keranjang (${c.cart.length})',
                         style: TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.bold,
@@ -190,9 +205,9 @@ class PosPage extends GetView<PosController> {
         ),
         child: TextField(
           onChanged: c.onSearchChanged,
-          style: TextStyle(fontSize: 15.sp, fontWeight: FontWeight.w500, color: AppColors.ink),
+          style: TextStyle(fontSize: 16.5.sp, fontWeight: FontWeight.w500, color: AppColors.ink),
           decoration: InputDecoration(
-            hintText: 'Search menu...',
+            hintText: 'Cari menu...',
             prefixIcon: Icon(Icons.search, size: 22.sp, color: AppColors.inkMuted),
             suffixIcon: c.isSearching
                 ? IconButton(
@@ -218,10 +233,10 @@ class PosPage extends GetView<PosController> {
           children: [
             Icon(Icons.search_off, size: 40.sp, color: AppColors.inkFaint),
             SizedBox(height: 14.h),
-            Text('No results', style: Theme.of(context).textTheme.headlineMedium),
+            Text('Tidak ditemukan', style: Theme.of(context).textTheme.headlineMedium),
             SizedBox(height: 6.h),
             Text(
-              'Try a different product name.',
+              'Coba nama produk lain.',
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodyMedium,
             ),
@@ -250,7 +265,7 @@ class PosPage extends GetView<PosController> {
                 Text('MENU', style: Theme.of(context).textTheme.labelLarge?.copyWith(letterSpacing: 1.4)),
                 SizedBox(height: 4.h),
                 Text(
-                  category ?? 'All Items',
+                  category ?? 'Semua Menu',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: Theme.of(context).textTheme.headlineLarge,
@@ -299,7 +314,7 @@ class PosPage extends GetView<PosController> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text('Sushimoo', style: Theme.of(context).textTheme.labelLarge?.copyWith(letterSpacing: 1.2)),
-                Text('Point of Sale', style: Theme.of(context).textTheme.headlineMedium),
+                Text('Kasir', style: Theme.of(context).textTheme.headlineMedium),
               ],
             ),
           ),
@@ -317,10 +332,10 @@ class PosPage extends GetView<PosController> {
           children: [
             Icon(Icons.ramen_dining_outlined, size: 40.sp, color: AppColors.inkFaint),
             SizedBox(height: 14.h),
-            Text('No menu items', style: Theme.of(context).textTheme.headlineMedium),
+            Text('Belum ada menu', style: Theme.of(context).textTheme.headlineMedium),
             SizedBox(height: 6.h),
             Text(
-              'Select another category or refresh the menu.',
+              'Pilih kategori lain atau muat ulang menu.',
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodyMedium,
             ),
@@ -343,10 +358,10 @@ class PosPage extends GetView<PosController> {
               Row(
                 children: [
                   Expanded(
-                    child: Text('Current Order', style: Theme.of(context).textTheme.headlineMedium),
+                    child: Text('Pesanan Saat Ini', style: Theme.of(context).textTheme.headlineMedium),
                   ),
                   IconButton(
-                    tooltip: 'Clear cart',
+                    tooltip: 'Kosongkan keranjang',
                     onPressed: c.cart.isEmpty ? null : c.clearCart,
                     icon: Icon(Icons.delete_outline,
                         size: 20.sp,
@@ -374,9 +389,9 @@ class PosPage extends GetView<PosController> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text('TABLE', style: Theme.of(context).textTheme.labelSmall),
+                            Text('MEJA', style: Theme.of(context).textTheme.labelSmall),
                             Text(
-                              c.selectedTable.value?.nomorMeja ?? 'Select table',
+                              c.selectedTable.value?.nomorMeja ?? 'Pilih meja',
                               style: TextStyle(fontSize: 15.sp, fontWeight: FontWeight.w600, color: AppColors.ink),
                             ),
                           ],
@@ -413,10 +428,10 @@ class PosPage extends GetView<PosController> {
           children: [
             Icon(Icons.shopping_bag_outlined, size: 42.sp, color: AppColors.inkFaint),
             SizedBox(height: 14.h),
-            Text('Cart is empty', style: Theme.of(context).textTheme.headlineMedium),
+            Text('Keranjang masih kosong', style: Theme.of(context).textTheme.headlineMedium),
             SizedBox(height: 6.h),
             Text(
-              'Tap menu items to start an order.',
+              'Ketuk menu untuk mulai memesan.',
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodyMedium,
             ),
@@ -439,7 +454,7 @@ class PosPage extends GetView<PosController> {
             _summaryRow(context, 'Subtotal', c.subtotal),
             if (hasTax) ...[
               SizedBox(height: AppDimensions.xs.h),
-              _summaryRow(context, 'Tax', c.tax),
+              _summaryRow(context, 'Pajak', c.tax),
             ],
             Padding(
               padding: EdgeInsets.symmetric(vertical: AppDimensions.sm.h + 2.h),
@@ -448,13 +463,13 @@ class PosPage extends GetView<PosController> {
             Row(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                Expanded(child: Text('Grand Total', style: Theme.of(context).textTheme.bodyLarge)),
+                Expanded(child: Text('Total Bayar', style: Theme.of(context).textTheme.bodyLarge)),
                 Text(_money(c.grandTotal), style: AppTypography.price),
               ],
             ),
             SizedBox(height: AppDimensions.md.h),
             AppButton(
-              label: 'Bayar / Checkout',
+              label: 'Bayar',
               icon: Icons.arrow_forward_rounded,
               loading: c.loading.value,
               onPressed: c.cart.isEmpty ? null : c.placeOrder,

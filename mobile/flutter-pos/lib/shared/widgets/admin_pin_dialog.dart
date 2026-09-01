@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import '../../app/constants/app_constants.dart';
 import '../../app/constants/colors.dart';
 import '../../app/constants/dimensions.dart';
+import '../../app/constants/strings.dart';
 import '../../app/services/api_client.dart';
 import '../../app/services/local_data_service.dart';
 import 'app_button.dart';
@@ -50,7 +51,7 @@ class _AdminPinDialogContentState extends State<_AdminPinDialogContent> {
     final username = _usernameController.text.trim();
     final pin = _pinController.text.trim();
     if (username.isEmpty || pin.isEmpty) {
-      setState(() => _error = 'Username and PIN are required');
+      setState(() => _error = 'Username dan PIN wajib diisi');
       return;
     }
 
@@ -69,7 +70,7 @@ class _AdminPinDialogContentState extends State<_AdminPinDialogContent> {
       if (result != null && result.user.isAdmin) {
         Get.back(result: true);
       } else {
-        setState(() => _error = 'Invalid admin username or PIN');
+        setState(() => _error = 'Username atau PIN admin salah');
       }
       return;
     }
@@ -88,7 +89,7 @@ class _AdminPinDialogContentState extends State<_AdminPinDialogContent> {
     } else {
       setState(() => _error = res.message.isNotEmpty
           ? res.message
-          : 'Invalid admin PIN');
+          : 'PIN admin salah');
     }
   }
 
@@ -124,12 +125,12 @@ class _AdminPinDialogContentState extends State<_AdminPinDialogContent> {
               Text(widget.message, style: Theme.of(context).textTheme.bodyMedium),
               SizedBox(height: AppDimensions.lg.h),
               AppTextField(
-                label: 'Admin Username',
+                label: 'Username Admin',
                 controller: _usernameController,
               ),
               SizedBox(height: 14.h),
               AppTextField(
-                label: 'Admin PIN',
+                label: 'PIN Admin',
                 controller: _pinController,
                 obscure: true,
                 keyboardType: TextInputType.number,
@@ -146,7 +147,7 @@ class _AdminPinDialogContentState extends State<_AdminPinDialogContent> {
                 children: [
                   Expanded(
                     child: AppButton(
-                      label: 'Cancel',
+                      label: AppStrings.cancel,
                       primary: false,
                       onPressed: _loading ? null : () => Get.back(result: false),
                     ),
@@ -154,7 +155,7 @@ class _AdminPinDialogContentState extends State<_AdminPinDialogContent> {
                   SizedBox(width: AppDimensions.sm.w),
                   Expanded(
                     child: AppButton(
-                      label: 'Verify',
+                      label: 'Verifikasi',
                       loading: _loading,
                       onPressed: _verify,
                     ),

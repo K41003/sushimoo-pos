@@ -45,7 +45,10 @@ class AppDimensions {
   static const double railWidth = 88.0;
   static const double sidebarWidth = 320.0;
 
-  /// Page-level horizontal/vertical margins.
+  /// Page-level horizontal/vertical margins, per device tier. Devices
+  /// are now locked to exactly one orientation each (phones: portrait,
+  /// tablets: landscape — see main.dart), so this app only ever needs
+  /// these 2 tiers.
   static const double marginMobile = 18.0;
   static const double marginTablet = 28.0;
 

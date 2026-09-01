@@ -142,7 +142,7 @@ class PrintQueueService extends GetxService {
     for (var i = 0; i < _maxAutoRetries; i++) {
       try {
         if (!PrinterService.to.isConnected.value) {
-          throw StateError('Printer not connected');
+          throw StateError('Printer tidak terhubung');
         }
         await action();
         return; // success, nothing to queue
@@ -255,7 +255,7 @@ class PrintQueueService extends GetxService {
         bool success;
         try {
           if (!PrinterService.to.isConnected.value) {
-            throw StateError('Printer not connected');
+            throw StateError('Printer tidak terhubung');
           }
           if (job.type == PrintJobType.kitchen) {
             await PrinterService.to.printKitchenTicket(trx);
@@ -272,7 +272,7 @@ class PrintQueueService extends GetxService {
         } else {
           await db.update(
             _table,
-            {'retry_count': job.retryCount + 1, 'last_error': 'Retry failed'},
+            {'retry_count': job.retryCount + 1, 'last_error': 'Percobaan ulang gagal'},
             where: 'id = ?',
             whereArgs: [job.id],
           );

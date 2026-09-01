@@ -3,6 +3,7 @@ import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import '../../../app/constants/app_constants.dart';
+import '../../../app/constants/strings.dart';
 import '../../../app/constants/colors.dart';
 import '../../../app/constants/decorations.dart';
 import '../../../app/constants/dimensions.dart';
@@ -84,7 +85,7 @@ class StockController extends GetxController {
     final formKey = GlobalKey<FormState>();
 
     final result = await AppDialog.form<bool>(
-      title: 'Add Stock Adjustment',
+      title: 'Tambah Penyesuaian Stok',
       icon: Icons.inventory_2_rounded,
       maxWidth: 440.w,
       content: Form(
@@ -94,9 +95,9 @@ class StockController extends GetxController {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text(
-              'Ingredient',
+              'Bahan Baku',
               style: TextStyle(
-                fontSize: 13.sp,
+                fontSize: 14.sp,
                 fontWeight: FontWeight.w600,
                 color: AppColors.inkMuted,
               ),
@@ -111,9 +112,9 @@ class StockController extends GetxController {
                     child: DropdownButton<Ingredient>(
                       isExpanded: true,
                       value: selected.value,
-                      hint: Text('Select ingredient',
+                      hint: Text('Pilih bahan baku',
                           style: TextStyle(
-                              color: AppColors.inkFaint, fontSize: 13.5.sp)),
+                              color: AppColors.inkFaint, fontSize: 14.5.sp)),
                       icon: const Icon(Icons.keyboard_arrow_down_rounded,
                           color: AppColors.inkMuted),
                       items: ingredients
@@ -122,7 +123,7 @@ class StockController extends GetxController {
                                 child: Text(
                                   '${e.namaBahan} (${e.satuan})',
                                   style: TextStyle(
-                                      fontSize: 13.5.sp, color: AppColors.ink),
+                                      fontSize: 14.5.sp, color: AppColors.ink),
                                 ),
                               ))
                           .toList(),
@@ -136,14 +137,14 @@ class StockController extends GetxController {
               controller: jumlah,
               keyboardType:
                   const TextInputType.numberWithOptions(decimal: true),
-              validator: (v) => (v == null || v.isEmpty) ? 'Required' : null,
+              validator: (v) => (v == null || v.isEmpty) ? 'Wajib diisi' : null,
             ),
           ],
         ),
       ),
       onConfirm: () async {
         if (selected.value == null) {
-          EasyLoading.showError('Please select an ingredient');
+          EasyLoading.showError('Silakan pilih bahan baku');
           return false;
         }
         if (!formKey.currentState!.validate()) return false;
@@ -153,7 +154,7 @@ class StockController extends GetxController {
     if (result != true || selected.value == null) return;
 
     loading.value = true;
-    EasyLoading.show(status: 'Saving...');
+    EasyLoading.show(status: AppStrings.saving);
     if (AppConstants.localMode) {
       await _local.addStockAdjustment(
         ingredientId: selected.value!.idBahan,
@@ -161,7 +162,7 @@ class StockController extends GetxController {
       );
       loading.value = false;
       EasyLoading.dismiss();
-      EasyLoading.showSuccess('Saved');
+      EasyLoading.showSuccess(AppStrings.saved);
       await load();
       return;
     }
@@ -177,7 +178,7 @@ class StockController extends GetxController {
     EasyLoading.dismiss();
 
     if (res.success) {
-      EasyLoading.showSuccess(res.message.isNotEmpty ? res.message : 'Saved');
+      EasyLoading.showSuccess(res.message.isNotEmpty ? res.message : AppStrings.saved);
       await load();
     } else {
       EasyLoading.showError(res.message);
@@ -189,17 +190,17 @@ class StockController extends GetxController {
     final formKey = GlobalKey<FormState>();
 
     final result = await AppDialog.form<bool>(
-      title: 'Update Stock (${stock.ingredient?.namaBahan ?? 'Item'})',
+      title: 'Perbarui Stok (${stock.ingredient?.namaBahan ?? 'Item'})',
       icon: Icons.edit_note_rounded,
       maxWidth: 400.w,
-      confirmText: 'Update',
+      confirmText: AppStrings.save,
       content: Form(
         key: formKey,
         child: AppTextField(
           label: 'Jumlah (${stock.ingredient?.satuan ?? ''})',
           controller: jumlah,
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
-          validator: (v) => (v == null || v.isEmpty) ? 'Required' : null,
+          validator: (v) => (v == null || v.isEmpty) ? 'Wajib diisi' : null,
         ),
       ),
       onConfirm: () async {
@@ -214,12 +215,12 @@ class StockController extends GetxController {
 
   Future<void> updateStock(int id, double jumlah) async {
     loading.value = true;
-    EasyLoading.show(status: 'Updating...');
+    EasyLoading.show(status: 'Memperbarui...');
     if (AppConstants.localMode) {
       await _local.updateStock(id, jumlah);
       loading.value = false;
       EasyLoading.dismiss();
-      EasyLoading.showSuccess('Updated');
+      EasyLoading.showSuccess(AppStrings.updated);
       await load();
       return;
     }
@@ -232,7 +233,7 @@ class StockController extends GetxController {
     EasyLoading.dismiss();
 
     if (res.success) {
-      EasyLoading.showSuccess(res.message.isNotEmpty ? res.message : 'Updated');
+      EasyLoading.showSuccess(res.message.isNotEmpty ? res.message : AppStrings.updated);
       await load();
     } else {
       EasyLoading.showError(res.message);
@@ -241,20 +242,20 @@ class StockController extends GetxController {
 
   Future<void> delete(int id) async {
     final confirm = await AppDialog.confirm(
-      title: 'Delete Stock',
-      message: 'Are you sure you want to delete this stock entry?',
-      confirmText: 'Delete',
+      title: AppStrings.confirmDeleteTitle,
+      message: 'Apakah kamu yakin ingin menghapus data stok ini?',
+      confirmText: AppStrings.delete,
       destructive: true,
     );
     if (confirm != true) return;
 
     loading.value = true;
-    EasyLoading.show(status: 'Deleting...');
+    EasyLoading.show(status: AppStrings.deleting);
     if (AppConstants.localMode) {
       await _local.deleteStock(id);
       loading.value = false;
       EasyLoading.dismiss();
-      EasyLoading.showSuccess('Deleted');
+      EasyLoading.showSuccess(AppStrings.deleted);
       await load();
       return;
     }
@@ -263,7 +264,7 @@ class StockController extends GetxController {
     EasyLoading.dismiss();
 
     if (res.success) {
-      EasyLoading.showSuccess(res.message.isNotEmpty ? res.message : 'Deleted');
+      EasyLoading.showSuccess(res.message.isNotEmpty ? res.message : AppStrings.deleted);
       await load();
     } else {
       EasyLoading.showError(res.message);

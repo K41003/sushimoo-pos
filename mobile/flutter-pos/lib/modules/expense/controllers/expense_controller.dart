@@ -2,6 +2,7 @@ import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:get/get.dart';
 import 'package:flutter/material.dart';
 import '../../../app/constants/app_constants.dart';
+import '../../../app/constants/strings.dart';
 import '../../../app/services/api_client.dart';
 import '../../../app/services/local_data_service.dart';
 import '../../../app/services/storage_service.dart';
@@ -57,15 +58,15 @@ class ExpenseController extends GetxController {
     final kategori = kategoriController.text.trim();
     final nominal = double.tryParse(nominalController.text) ?? 0;
     if (kategori.isEmpty || nominal <= 0) {
-      EasyLoading.showError('Kategori and nominal required');
+      EasyLoading.showError('Kategori dan nominal wajib diisi');
       return;
     }
-    EasyLoading.show(status: 'Saving...');
+    EasyLoading.show(status: AppStrings.saving);
     if (AppConstants.localMode) {
       final currentShiftId = shiftId;
       if (currentShiftId == null) {
         EasyLoading.dismiss();
-        EasyLoading.showError('No active shift. Open a shift first.');
+        EasyLoading.showError('Tidak ada shift aktif. Buka shift terlebih dahulu.');
         return;
       }
       await _local.addExpense(
@@ -79,7 +80,7 @@ class ExpenseController extends GetxController {
       keteranganController.clear();
       Get.back();
       EasyLoading.dismiss();
-      EasyLoading.showSuccess('Expense recorded');
+      EasyLoading.showSuccess('Pengeluaran tercatat');
       await load();
       return;
     }
@@ -95,7 +96,7 @@ class ExpenseController extends GetxController {
       nominalController.clear();
       keteranganController.clear();
       Get.back();
-      EasyLoading.showSuccess('Expense recorded');
+      EasyLoading.showSuccess('Pengeluaran tercatat');
       await load();
     } else {
       EasyLoading.showError(res.message);
@@ -104,24 +105,24 @@ class ExpenseController extends GetxController {
 
   Future<void> delete(int id) async {
     final confirmed = await AppDialog.confirm(
-      title: 'Delete Expense',
-      message: 'Are you sure you want to delete this expense record?',
-      confirmText: 'Delete',
+      title: AppStrings.confirmDeleteTitle,
+      message: 'Apakah kamu yakin ingin menghapus catatan pengeluaran ini?',
+      confirmText: AppStrings.delete,
       destructive: true,
     );
     if (confirmed != true) return;
-    EasyLoading.show(status: 'Deleting...');
+    EasyLoading.show(status: AppStrings.deleting);
     if (AppConstants.localMode) {
       await _local.deleteExpense(id);
       EasyLoading.dismiss();
-      EasyLoading.showSuccess('Deleted');
+      EasyLoading.showSuccess(AppStrings.deleted);
       await load();
       return;
     }
     final res = await _api.delete('/pengeluaran/$id');
     EasyLoading.dismiss();
     if (res.success) {
-      EasyLoading.showSuccess('Deleted');
+      EasyLoading.showSuccess(AppStrings.deleted);
       await load();
     } else {
       EasyLoading.showError(res.message);

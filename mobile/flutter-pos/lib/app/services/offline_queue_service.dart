@@ -152,7 +152,7 @@ class OfflineQueueService extends GetxService {
       _table,
       {
         'status': QueuedOrderStatus.failed.name,
-        'last_error': 'Previous sync was interrupted',
+        'last_error': 'Sinkronisasi sebelumnya terputus',
       },
       where: 'status = ?',
       whereArgs: [QueuedOrderStatus.syncing.name],

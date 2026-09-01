@@ -70,7 +70,7 @@ class LoginPage extends GetView<LoginController> {
         SizedBox(height: 16.h),
         Text('SUSHIMOO', style: Theme.of(context).textTheme.displayLarge),
         SizedBox(height: 4.h),
-        Text('Point of Sale', style: Theme.of(context).textTheme.titleMedium),
+        Text('Kasir Restoran', style: Theme.of(context).textTheme.titleMedium),
       ],
     );
   }
@@ -87,7 +87,7 @@ class LoginPage extends GetView<LoginController> {
             children: [
               const Spacer(),
               Text(
-                'Login',
+                'Masuk',
                 style: Theme.of(context).textTheme.headlineSmall,
               ),
               const Spacer(),
@@ -101,8 +101,8 @@ class LoginPage extends GetView<LoginController> {
           ),
           SizedBox(height: 16.h),
           AppTextField(
-            label: 'Password',
-            hint: 'Masukkan password',
+            label: 'Kata Sandi',
+            hint: 'Masukkan kata sandi',
             controller: controller.passwordController,
             obscure: true,
           ),

@@ -3,6 +3,7 @@ import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import '../../../app/constants/app_constants.dart';
+import '../../../app/constants/strings.dart';
 import '../../../app/services/api_client.dart';
 import '../../../app/services/local_data_service.dart';
 import '../../../data/models/ingredient.dart';
@@ -61,7 +62,7 @@ class IngredientController extends GetxController {
     final formKey = GlobalKey<FormState>();
 
     final result = await AppDialog.form<bool>(
-      title: existing == null ? 'Add Ingredient' : 'Edit Ingredient',
+      title: existing == null ? 'Tambah Bahan Baku' : 'Ubah Bahan Baku',
       icon: Icons.egg_alt_rounded,
       maxWidth: 420.w,
       content: Form(
@@ -73,13 +74,13 @@ class IngredientController extends GetxController {
             AppTextField(
               label: 'Nama Bahan',
               controller: nama,
-              validator: (v) => (v == null || v.isEmpty) ? 'Required' : null,
+              validator: (v) => (v == null || v.isEmpty) ? 'Wajib diisi' : null,
             ),
             SizedBox(height: 14.h),
             AppTextField(
-              label: 'Satuan (e.g. gram, ml, pcs)',
+              label: 'Satuan (contoh: gram, ml, pcs)',
               controller: satuan,
-              validator: (v) => (v == null || v.isEmpty) ? 'Required' : null,
+              validator: (v) => (v == null || v.isEmpty) ? 'Wajib diisi' : null,
             ),
             SizedBox(height: 14.h),
             AppTextField(
@@ -87,7 +88,7 @@ class IngredientController extends GetxController {
               controller: minimal,
               keyboardType:
                   const TextInputType.numberWithOptions(decimal: true),
-              validator: (v) => (v == null || v.isEmpty) ? 'Required' : null,
+              validator: (v) => (v == null || v.isEmpty) ? 'Wajib diisi' : null,
             ),
           ],
         ),
@@ -106,7 +107,7 @@ class IngredientController extends GetxController {
     };
 
     loading.value = true;
-    EasyLoading.show(status: 'Saving...');
+    EasyLoading.show(status: AppStrings.saving);
     if (AppConstants.localMode) {
       await _local.saveIngredient(
         id: existing?.idBahan,
@@ -116,7 +117,7 @@ class IngredientController extends GetxController {
       );
       loading.value = false;
       EasyLoading.dismiss();
-      EasyLoading.showSuccess('Saved');
+      EasyLoading.showSuccess(AppStrings.saved);
       await load();
       return;
     }
@@ -128,7 +129,7 @@ class IngredientController extends GetxController {
     EasyLoading.dismiss();
 
     if (res.success) {
-      EasyLoading.showSuccess(res.message.isNotEmpty ? res.message : 'Saved');
+      EasyLoading.showSuccess(res.message.isNotEmpty ? res.message : AppStrings.saved);
       await load();
     } else {
       EasyLoading.showError(res.message);
@@ -137,20 +138,20 @@ class IngredientController extends GetxController {
 
   Future<void> delete(int id) async {
     final confirm = await AppDialog.confirm(
-      title: 'Delete Ingredient',
-      message: 'Are you sure you want to delete this ingredient?',
-      confirmText: 'Delete',
+      title: AppStrings.confirmDeleteTitle,
+      message: 'Apakah kamu yakin ingin menghapus bahan baku ini?',
+      confirmText: AppStrings.delete,
       destructive: true,
     );
     if (confirm != true) return;
 
     loading.value = true;
-    EasyLoading.show(status: 'Deleting...');
+    EasyLoading.show(status: AppStrings.deleting);
     if (AppConstants.localMode) {
       await _local.deleteIngredient(id);
       loading.value = false;
       EasyLoading.dismiss();
-      EasyLoading.showSuccess('Deleted');
+      EasyLoading.showSuccess(AppStrings.deleted);
       await load();
       return;
     }
@@ -159,7 +160,7 @@ class IngredientController extends GetxController {
     EasyLoading.dismiss();
 
     if (res.success) {
-      EasyLoading.showSuccess(res.message.isNotEmpty ? res.message : 'Deleted');
+      EasyLoading.showSuccess(res.message.isNotEmpty ? res.message : AppStrings.deleted);
       await load();
     } else {
       EasyLoading.showError(res.message);

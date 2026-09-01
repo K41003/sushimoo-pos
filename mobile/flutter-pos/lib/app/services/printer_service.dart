@@ -50,10 +50,10 @@ class PrinterService extends GetxService {
 
   Future<void> printKitchenTicket(Transaction trx) async {
     final lines = <String>[
-      '=== SUSHIMOO KITCHEN ===',
+      '=== DAPUR SUSHIMOO ===',
       'Invoice: ${trx.invoiceNumber}',
-      'Table: ${trx.table?.nomorMeja ?? "-"}',
-      'Time: ${trx.tanggal}',
+      'Meja: ${trx.table?.nomorMeja ?? "-"}',
+      'Waktu: ${trx.tanggal}',
       '------------------------',
       ...trx.details
               ?.map((d) => '${d.qty}x ${d.product?.namaProduk ?? d.idProduk}')
@@ -66,7 +66,7 @@ class PrinterService extends GetxService {
 
   Future<void> printCustomerReceipt(Transaction trx) async {
     final lines = <String>[
-      '  SUSHIMOO POS RECEIPT',
+      '  STRUK SUSHIMOO POS',
       'Invoice: ${trx.invoiceNumber}',
       '------------------------',
       ...?trx.details?.map((d) =>
@@ -74,8 +74,8 @@ class PrinterService extends GetxService {
       '------------------------',
       'TOTAL: ${trx.total.toStringAsFixed(2)}',
       if (trx.payment != null) ...[
-        'PAID: ${trx.payment!.totalBayar.toStringAsFixed(2)}',
-        'CHANGE: ${trx.payment!.kembalian.toStringAsFixed(2)}',
+        'BAYAR: ${trx.payment!.totalBayar.toStringAsFixed(2)}',
+        'KEMBALI: ${trx.payment!.kembalian.toStringAsFixed(2)}',
       ],
       '   TERIMA KASIH',
       '========================',
@@ -91,7 +91,7 @@ class PrinterService extends GetxService {
         crossAxisAlignment: pw.CrossAxisAlignment.start,
         children: [
           pw.Center(
-              child: pw.Text('SUSHIMOO POS - CLOSING',
+              child: pw.Text('SUSHIMOO POS - TUTUP KASIR',
                   style: pw.TextStyle(
                       fontSize: 18, fontWeight: pw.FontWeight.bold))),
           pw.SizedBox(height: 12),
@@ -99,7 +99,7 @@ class PrinterService extends GetxService {
           pw.Text('Waktu: ${closing.waktuClosing ?? "-"}'),
           pw.Divider(),
           _row('Total Penjualan', closing.totalPenjualan),
-          _row('Total Cash', closing.totalCash),
+          _row('Total Tunai', closing.totalCash),
           _row('Total QRIS', closing.totalQris),
           _row('Total Pengeluaran', closing.totalPengeluaran),
           pw.Divider(),

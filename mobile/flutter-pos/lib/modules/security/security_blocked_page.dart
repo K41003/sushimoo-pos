@@ -3,6 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import '../../app/constants/colors.dart';
 import '../../app/constants/dimensions.dart';
+import '../../shared/utils/responsive.dart';
 import '../../shared/widgets/glass_panel.dart';
 
 /// Halaman terminal — tidak ada tombol "lanjutkan", tidak ada navigasi
@@ -24,7 +25,7 @@ class SecurityBlockedPage extends StatelessWidget {
           child: SafeArea(
             child: Center(
               child: Padding(
-                padding: EdgeInsets.all(AppDimensions.marginTablet.w),
+                padding: EdgeInsets.all(Responsive.padding(context)),
                 child: ConstrainedBox(
                   constraints: BoxConstraints(maxWidth: 440.w),
                   child: GlassPanel(

@@ -26,6 +26,14 @@ class AppTypography {
 
   static String get fontFamily => GoogleFonts.manrope().fontFamily!;
 
+  /// Display/headline font name, exposed for the few spots outside the
+  /// theme's `TextTheme` that still need Plus Jakarta Sans explicitly
+  /// (e.g. the receipt header) instead of the default Manrope body font.
+  /// Kept alongside [fontFamily] rather than replacing it so this app
+  /// stays at exactly 2 UI font families (+ one monospace font reserved
+  /// for printed receipts/invoices — see receipt_page.dart/payment_page.dart).
+  static String get fontFamilyDisplay => GoogleFonts.plusJakartaSans().fontFamily!;
+
   static TextTheme get textTheme => TextTheme(
         displayLarge: _display.copyWith(
           fontSize: 40.sp,
@@ -217,7 +225,7 @@ class AppTheme {
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: Colors.white.withValues(alpha: 0.5),
-        hintStyle: TextStyle(color: AppColors.inkFaint, fontSize: 15.sp),
+        hintStyle: TextStyle(color: AppColors.inkFaint, fontSize: 16.sp),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppDimensions.radiusMd.r),
           borderSide: BorderSide(

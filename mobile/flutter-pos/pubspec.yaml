@@ -1,5 +1,5 @@
 name: sushimoo_pos
-description: SUSHIMOO POS - Japanese Restaurant Point of Sale
+description: SUSHIMOO POS - Kasir Restoran Jepang
 publish_to: "none"
 version: 1.0.0+1
 
@@ -8,6 +8,8 @@ environment:
 
 dependencies:
   flutter:
+    sdk: flutter
+  flutter_localizations:
     sdk: flutter
 
   # State management / DI / routing

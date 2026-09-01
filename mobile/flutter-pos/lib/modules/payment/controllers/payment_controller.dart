@@ -49,21 +49,21 @@ class PaymentController extends GetxController {
 
   Future<void> pay() async {
     if (selectedMethod.value == null) {
-      EasyLoading.showError('Select payment method');
+      EasyLoading.showError('Pilih metode pembayaran');
       return;
     }
     final body = <String, dynamic>{'id_metode': selectedMethod.value};
     if (isCash) {
       final received = double.tryParse(receivedController.text) ?? 0;
       if (received < transaction.total) {
-        EasyLoading.showError('Insufficient amount');
+        EasyLoading.showError('Jumlah uang tidak cukup');
         return;
       }
       body['uang_diterima'] = received;
     }
 
     loading.value = true;
-    EasyLoading.show(status: 'Paying...');
+    EasyLoading.show(status: 'Memproses pembayaran...');
     if (AppConstants.localMode) {
       final received = isCash ? (double.tryParse(receivedController.text) ?? 0) : transaction.total;
       final kembalian = isCash ? (received - transaction.total).clamp(0, double.infinity).toDouble() : 0.0;
@@ -76,7 +76,7 @@ class PaymentController extends GetxController {
       );
       loading.value = false;
       EasyLoading.dismiss();
-      EasyLoading.showSuccess('Payment success');
+      EasyLoading.showSuccess('Pembayaran berhasil');
       final paidTransaction = Transaction(
         idTransaksi: transaction.idTransaksi,
         invoiceNumber: transaction.invoiceNumber,
@@ -109,7 +109,7 @@ class PaymentController extends GetxController {
     EasyLoading.dismiss();
 
     if (res.success && res.data != null) {
-      EasyLoading.showSuccess('Payment success');
+      EasyLoading.showSuccess('Pembayaran berhasil');
       Get.offAndToNamed(
         AppRoutes.receipt,
         arguments: {

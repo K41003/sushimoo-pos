@@ -68,9 +68,19 @@ class StatCard extends StatelessWidget {
             ],
           ),
           SizedBox(height: AppDimensions.sm.h + 2.h),
-          Text(value, style: AppTypography.price),
+          Text(
+            value,
+            style: AppTypography.price,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
           SizedBox(height: 4.h),
-          Text(label, style: Theme.of(context).textTheme.labelLarge),
+          Text(
+            label,
+            style: Theme.of(context).textTheme.labelLarge,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
         ],
       ),
     );

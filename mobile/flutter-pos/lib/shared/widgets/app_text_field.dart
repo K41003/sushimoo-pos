@@ -67,7 +67,7 @@ class _AppTextFieldState extends State<AppTextField> {
             child: Text(
               widget.label!,
               style: TextStyle(
-                fontSize: 13.sp,
+                fontSize: 14.sp,
                 fontWeight: FontWeight.w700,
                 letterSpacing: 0.2,
                 color: AppColors.inkMuted,
@@ -94,7 +94,7 @@ class _AppTextFieldState extends State<AppTextField> {
             onChanged: widget.onChanged,
             maxLines: widget.maxLines,
             style: TextStyle(
-              fontSize: 15.sp,
+              fontSize: 16.5.sp,
               fontWeight: FontWeight.w500,
               color: AppColors.ink,
             ),
@@ -102,7 +102,7 @@ class _AppTextFieldState extends State<AppTextField> {
               isDense: widget.dense,
               hintText: widget.hint,
               hintStyle: TextStyle(
-                fontSize: 14.sp,
+                fontSize: 15.sp,
                 color: AppColors.inkFaint,
                 fontWeight: FontWeight.w400,
               ),
@@ -137,7 +137,7 @@ class AppHeaderSearchField extends StatefulWidget {
 
   const AppHeaderSearchField({
     super.key,
-    this.hint = 'Search...',
+    this.hint = 'Cari...',
     this.onChanged,
     this.onClear,
     this.width,
@@ -190,56 +190,65 @@ class _AppHeaderSearchFieldState extends State<AppHeaderSearchField> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: widget.width ?? 180.w,
-      height: 36,
-      alignment: Alignment.center,
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.55),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: _focused ? AppColors.salmon : AppColors.glassBorder(opacity: 0.7),
-          width: _focused ? 1.4 : 1.0,
-        ),
-        boxShadow: _focused ? AppColors.shadowSm : null,
+    return ConstrainedBox(
+      // Same reasoning as the constraints change above: allow this
+      // field to shrink down to a usable minimum instead of forcing a
+      // flat width and pushing a sibling '+' action button off-screen
+      // on narrow phones.
+      constraints: BoxConstraints(
+        minWidth: 100,
+        maxWidth: widget.width ?? 180.w,
       ),
-      child: TextField(
-        controller: _controller,
-        focusNode: _focusNode,
-        onChanged: widget.onChanged,
-        style: TextStyle(
-          fontSize: 13.sp,
-          fontWeight: FontWeight.w500,
-          color: AppColors.ink,
+      child: Container(
+        height: 36,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.55),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: _focused ? AppColors.salmon : AppColors.glassBorder(opacity: 0.7),
+            width: _focused ? 1.4 : 1.0,
+          ),
+          boxShadow: _focused ? AppColors.shadowSm : null,
         ),
-        textAlignVertical: TextAlignVertical.center,
-        decoration: InputDecoration(
-          isDense: true,
-          hintText: widget.hint,
-          hintStyle: TextStyle(
-            fontSize: 13.sp,
-            color: AppColors.inkFaint,
-            fontWeight: FontWeight.w400,
+        child: TextField(
+          controller: _controller,
+          focusNode: _focusNode,
+          onChanged: widget.onChanged,
+          style: TextStyle(
+            fontSize: 14.sp,
+            fontWeight: FontWeight.w500,
+            color: AppColors.ink,
           ),
-          prefixIcon: Icon(
-            Icons.search_rounded,
-            size: 18.sp,
-            color: _focused ? AppColors.salmon : AppColors.inkMuted,
+          textAlignVertical: TextAlignVertical.center,
+          decoration: InputDecoration(
+            isDense: true,
+            hintText: widget.hint,
+            hintStyle: TextStyle(
+              fontSize: 14.sp,
+              color: AppColors.inkFaint,
+              fontWeight: FontWeight.w400,
+            ),
+            prefixIcon: Icon(
+              Icons.search_rounded,
+              size: 18.sp,
+              color: _focused ? AppColors.salmon : AppColors.inkMuted,
+            ),
+            prefixIconConstraints: const BoxConstraints(minWidth: 32, minHeight: 36),
+            suffixIcon: _hasText
+                ? IconButton(
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(minWidth: 28, minHeight: 36),
+                    icon: Icon(Icons.close_rounded, size: 16.sp, color: AppColors.inkMuted),
+                    onPressed: _handleClear,
+                  )
+                : null,
+            suffixIconConstraints: const BoxConstraints(minWidth: 28, minHeight: 36),
+            border: InputBorder.none,
+            enabledBorder: InputBorder.none,
+            focusedBorder: InputBorder.none,
+            contentPadding: const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
           ),
-          prefixIconConstraints: const BoxConstraints(minWidth: 32, minHeight: 36),
-          suffixIcon: _hasText
-              ? IconButton(
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(minWidth: 28, minHeight: 36),
-                  icon: Icon(Icons.close_rounded, size: 16.sp, color: AppColors.inkMuted),
-                  onPressed: _handleClear,
-                )
-              : null,
-          suffixIconConstraints: const BoxConstraints(minWidth: 28, minHeight: 36),
-          border: InputBorder.none,
-          enabledBorder: InputBorder.none,
-          focusedBorder: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
         ),
       ),
     );

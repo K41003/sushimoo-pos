@@ -1,47 +1,100 @@
+/// Centralized Indonesian-language UI strings. This is the single
+/// source of truth for reusable labels — the whole app now ships in
+/// Bahasa Indonesia only (no language switcher, no English fallback).
 class AppStrings {
   AppStrings._();
 
   static const String appName = 'SUSHIMOO POS';
-  static const String tagline = 'Japanese Restaurant Point of Sale';
+  static const String tagline = 'Kasir Restoran Jepang';
 
-  static const String login = 'Login';
+  static const String login = 'Masuk';
   static const String username = 'Username';
-  static const String password = 'Password';
+  static const String password = 'Kata Sandi';
   static const String dashboard = 'Dashboard';
-  static const String pos = 'POS';
-  static const String cart = 'Cart';
-  static const String payment = 'Payment';
+  static const String pos = 'Kasir';
+  static const String cart = 'Keranjang';
+  static const String payment = 'Pembayaran';
   static const String shift = 'Shift';
-  static const String expense = 'Expense';
-  static const String closing = 'Closing';
-  static const String report = 'Report';
-  static const String setting = 'Setting';
-  static const String category = 'Category';
-  static const String product = 'Product';
-  static const String ingredient = 'Ingredient';
-  static const String stock = 'Stock';
-  static const String table = 'Table';
+  static const String expense = 'Pengeluaran';
+  static const String closing = 'Tutup Kasir';
+  static const String report = 'Laporan';
+  static const String setting = 'Pengaturan';
+  static const String category = 'Kategori';
+  static const String product = 'Produk';
+  static const String ingredient = 'Bahan Baku';
+  static const String stock = 'Stok';
+  static const String table = 'Meja';
 
-  static const String totalSales = 'Total Sales';
-  static const String transactions = 'Transactions';
-  static const String products = 'Products';
-  static const String expenses = 'Expenses';
-  static const String currentShift = 'Current Shift';
-  static const String salesToday = 'Sales Today';
-  static const String ordersToday = 'Orders Today';
+  static const String totalSales = 'Total Penjualan';
+  static const String transactions = 'Transaksi';
+  static const String products = 'Produk';
+  static const String expenses = 'Pengeluaran';
+  static const String currentShift = 'Shift Aktif';
+  static const String salesToday = 'Penjualan Hari Ini';
+  static const String ordersToday = 'Order Hari Ini';
 
   static const String subtotal = 'Subtotal';
-  static const String tax = 'Tax';
-  static const String grandTotal = 'Grand Total';
-  static const String change = 'Change';
-  static const String received = 'Received';
-  static const String placeOrder = 'Place Order';
-  static const String payNow = 'Pay Now';
+  static const String tax = 'Pajak';
+  static const String grandTotal = 'Total Bayar';
+  static const String change = 'Kembalian';
+  static const String received = 'Diterima';
+  static const String placeOrder = 'Buat Pesanan';
+  static const String payNow = 'Bayar Sekarang';
 
-  static const String empty = 'No data available';
-  static const String loading = 'Loading...';
-  static const String errorGeneric = 'Something went wrong';
-  static const String success = 'Success';
+  static const String empty = 'Belum ada data';
+  static const String loading = 'Memuat...';
+  static const String errorGeneric = 'Terjadi kesalahan';
+  static const String success = 'Berhasil';
+
+  // Reusable CRUD action/status labels shared across Category, Product,
+  // Ingredient, Stock, Table, Expense and other simple list+form modules.
+  static const String saving = 'Menyimpan...';
+  static const String deleting = 'Menghapus...';
+  static const String saved = 'Tersimpan';
+  static const String deleted = 'Terhapus';
+  static const String updated = 'Diperbarui';
+  static const String confirmDeleteTitle = 'Hapus Data';
+  static const String cancel = 'Batal';
+  static const String delete = 'Hapus';
+  static const String save = 'Simpan';
+  static const String edit = 'Ubah';
+  static const String add = 'Tambah';
+  static const String required = 'wajib diisi';
+}
+
+/// Maps internal status/enum values (stored in the database and used for
+/// logic comparisons like `status == 'available'`) to their Indonesian
+/// display label. The stored value itself is intentionally left in
+/// English/lowercase — changing it would require touching every seed
+/// row, comparison, and API contract across the app; only what the user
+/// *reads* needs to be Indonesian.
+String statusLabel(String status) {
+  switch (status) {
+    case 'available':
+      return 'TERSEDIA';
+    case 'occupied':
+      return 'TERPAKAI';
+    case 'reserved':
+      return 'DIPESAN';
+    case 'cleaning':
+      return 'DIBERSIHKAN';
+    case 'open':
+      return 'BUKA';
+    case 'closed':
+      return 'TUTUP';
+    case 'pending':
+      return 'MENUNGGU';
+    case 'paid':
+      return 'LUNAS';
+    case 'success':
+      return 'BERHASIL';
+    case 'void':
+      return 'DIBATALKAN';
+    case 'cancelled':
+      return 'DIBATALKAN';
+    default:
+      return status.toUpperCase();
+  }
 }
 
 class AppRoles {

@@ -38,7 +38,7 @@ class AppScaffold extends StatelessWidget {
   Widget build(BuildContext context) {
     final user = AuthService.to.currentUser;
     final items = navItemsForRole(user?.roleName ?? '');
-    final isRail = Responsive.isLandscapeTablet(context);
+    final isRail = Responsive.isTablet(context);
 
     final content = Builder(builder: (scaffoldContext) {
       return Scaffold(
@@ -80,7 +80,7 @@ class AppScaffold extends StatelessWidget {
       await AuthService.to.logout();
       Get.offAllNamed(AppRoutes.login);
     } catch (e) {
-      EasyLoading.showError('Logout failed');
+      EasyLoading.showError('Gagal keluar');
     }
   }
 }
@@ -168,10 +168,19 @@ class _GlassAppBar extends StatelessWidget {
                 )
               else
                 const SizedBox(width: 4),
-              Text(
-                title, 
-                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.w700,
+              // Flexible so a long page title never forces this Row past
+              // the app bar's width on a narrow phone — previously a
+              // bare `Text(title)` here, combined with a wide search
+              // field in `actions` (Product/Category/Stock/Ingredient
+              // pages all pass a 170–180.w AppHeaderSearchField), could
+              // overflow the header on small screens.
+              Flexible(
+                child: Text(
+                  title,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
               ),
               const Spacer(),
@@ -202,7 +211,12 @@ class _GlassAppBar extends StatelessWidget {
                       ),
                       const SizedBox(width: 8),
                       ConstrainedBox(
-                        constraints: const BoxConstraints(maxWidth: 130),
+                        // Shrinks further on narrow screens instead of a
+                        // flat 130px that could itself contribute to
+                        // overflow alongside a wide search action.
+                        constraints: BoxConstraints(
+                          maxWidth: MediaQuery.of(context).size.width < 400 ? 70 : 130,
+                        ),
                         child: Text(
                           userName!,
                           maxLines: 1,
@@ -218,10 +232,12 @@ class _GlassAppBar extends StatelessWidget {
                   ),
                 ),
               if (actions != null)
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: actions!,
+                Flexible(
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: actions!,
+                  ),
                 ),
             ],
           ),

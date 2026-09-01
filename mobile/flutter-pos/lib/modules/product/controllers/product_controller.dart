@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:get/get.dart';
 import '../../../app/constants/app_constants.dart';
+import '../../../app/constants/strings.dart';
 import '../../../app/services/api_client.dart';
 import '../../../app/services/local_data_service.dart';
 import '../../../data/models/category.dart';
@@ -128,7 +129,7 @@ class ProductController extends GetxController {
     selectedStatus.value = existing?.status ?? true;
 
     AppDialog.form(
-      title: existing == null ? 'Add Product' : 'Edit Product',
+      title: existing == null ? 'Tambah Produk' : 'Ubah Produk',
       icon: Icons.fastfood_rounded,
       maxWidth: 440,
       content: ProductForm(controller: this, existing: existing),
@@ -143,20 +144,20 @@ class ProductController extends GetxController {
     final nama = nameController.text.trim();
     final hargaText = priceController.text.trim();
     if (nama.isEmpty) {
-      EasyLoading.showError('Nama produk required');
+      EasyLoading.showError('Nama produk ${AppStrings.required}');
       return;
     }
     if (selectedCategory.value == null) {
-      EasyLoading.showError('Please choose a category');
+      EasyLoading.showError('Silakan pilih kategori');
       return;
     }
     final harga = double.tryParse(hargaText);
     if (harga == null) {
-      EasyLoading.showError('Harga must be a number');
+      EasyLoading.showError('Harga harus berupa angka');
       return;
     }
 
-    EasyLoading.show(status: 'Saving...');
+    EasyLoading.show(status: AppStrings.saving);
     if (AppConstants.localMode) {
       await _local.saveProduct(
         id: existing?.idProduk,
@@ -168,7 +169,7 @@ class ProductController extends GetxController {
       );
       Get.back();
       EasyLoading.dismiss();
-      EasyLoading.showSuccess('Saved');
+      EasyLoading.showSuccess(AppStrings.saved);
       await load();
       return;
     }
@@ -186,7 +187,7 @@ class ProductController extends GetxController {
 
     if (res.success) {
       Get.back();
-      EasyLoading.showSuccess(res.message.isNotEmpty ? res.message : 'Saved');
+      EasyLoading.showSuccess(res.message.isNotEmpty ? res.message : AppStrings.saved);
       await load();
     } else {
       EasyLoading.showError(res.message);
@@ -195,18 +196,18 @@ class ProductController extends GetxController {
 
   Future<void> delete(int id) async {
     final confirmed = await AppDialog.confirm(
-      title: 'Delete Product',
-      message: 'Are you sure you want to delete this product?',
-      confirmText: 'Delete',
+      title: AppStrings.confirmDeleteTitle,
+      message: 'Apakah kamu yakin ingin menghapus produk ini?',
+      confirmText: AppStrings.delete,
       destructive: true,
     );
     if (confirmed != true) return;
 
-    EasyLoading.show(status: 'Deleting...');
+    EasyLoading.show(status: AppStrings.deleting);
     if (AppConstants.localMode) {
       await _local.deleteProduct(id);
       EasyLoading.dismiss();
-      EasyLoading.showSuccess('Deleted');
+      EasyLoading.showSuccess(AppStrings.deleted);
       await load();
       return;
     }
@@ -214,7 +215,7 @@ class ProductController extends GetxController {
     EasyLoading.dismiss();
 
     if (res.success) {
-      EasyLoading.showSuccess(res.message.isNotEmpty ? res.message : 'Deleted');
+      EasyLoading.showSuccess(res.message.isNotEmpty ? res.message : AppStrings.deleted);
       await load();
     } else {
       EasyLoading.showError(res.message);

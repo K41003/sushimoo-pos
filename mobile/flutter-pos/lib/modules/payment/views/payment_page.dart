@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import '../../../app/constants/colors.dart';
 import '../../../app/constants/dimensions.dart';
 import '../../../app/routes/app_routes.dart';
+import '../../../shared/utils/responsive.dart';
 import '../../../shared/widgets/app_button.dart';
 import '../../../shared/widgets/app_scaffold.dart';
 import '../../../shared/widgets/glass_panel.dart';
@@ -31,12 +32,12 @@ class PaymentPage extends GetView<PaymentController> {
     final trx = controller.transaction;
 
     return AppScaffold(
-      title: 'Payment Confirmation',
+      title: 'Konfirmasi Pembayaran',
       currentRoute: AppRoutes.payment,
       actions: [
         AppGlassActionButton(
           icon: Icons.cancel_outlined,
-          tooltip: 'Void Order',
+          tooltip: 'Batalkan Order',
           primary: false,
           onPressed: () async {
             final voided = await VoidOrderController.attemptVoid(context, trx);
@@ -50,7 +51,7 @@ class PaymentPage extends GetView<PaymentController> {
         child: ConstrainedBox(
           constraints: BoxConstraints(maxWidth: 520.w),
           child: SingleChildScrollView(
-            padding: EdgeInsets.symmetric(horizontal: AppDimensions.marginTablet.w, vertical: 24.h),
+            padding: EdgeInsets.symmetric(horizontal: Responsive.padding(context), vertical: 24.h),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
@@ -95,7 +96,7 @@ class PaymentPage extends GetView<PaymentController> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text('Table / Layanan', style: theme.textTheme.bodyMedium),
+                          Text('Meja / Layanan', style: theme.textTheme.bodyMedium),
                           Text(
                             trx.table?.nomorMeja != null
                                 ? 'Meja ${trx.table!.nomorMeja}'
@@ -254,12 +255,12 @@ class PaymentPage extends GetView<PaymentController> {
                               child: TextField(
                                 controller: controller.receivedController,
                                 keyboardType: TextInputType.number,
-                                style: TextStyle(fontFamily: 'Courier', fontSize: 18.sp, fontWeight: FontWeight.bold, color: AppColors.ink),
+                                style: TextStyle(fontFamily: 'Courier', fontSize: 19.sp, fontWeight: FontWeight.bold, color: AppColors.ink),
                                 decoration: InputDecoration(
                                   prefixText: 'Rp ',
-                                  prefixStyle: TextStyle(fontFamily: 'Courier', fontSize: 18.sp, fontWeight: FontWeight.bold, color: AppColors.inkMuted),
+                                  prefixStyle: TextStyle(fontFamily: 'Courier', fontSize: 19.sp, fontWeight: FontWeight.bold, color: AppColors.inkMuted),
                                   hintText: 'Contoh: 100000',
-                                  hintStyle: TextStyle(fontFamily: 'Courier', fontSize: 16.sp, color: AppColors.inkFaint),
+                                  hintStyle: TextStyle(fontFamily: 'Courier', fontSize: 17.sp, color: AppColors.inkFaint),
                                   border: InputBorder.none,
                                   contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
                                 ),
@@ -325,6 +326,8 @@ class PaymentPage extends GetView<PaymentController> {
               Text(
                 name,
                 textAlign: TextAlign.center,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
                 style: TextStyle(
                   fontSize: 11.sp,
                   fontWeight: FontWeight.bold,

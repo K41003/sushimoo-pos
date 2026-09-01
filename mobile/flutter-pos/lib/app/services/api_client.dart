@@ -87,7 +87,7 @@ class ApiClient extends GetxService {
         final data = e.response!.data as Map<String, dynamic>;
         return ApiResponse<T>(
           success: false,
-          message: data['message'] as String? ?? 'Request failed',
+          message: data['message'] as String? ?? 'Permintaan gagal',
           errors: data['errors'] as Map<String, dynamic>?,
         );
       }

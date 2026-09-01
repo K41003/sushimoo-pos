@@ -52,7 +52,7 @@ class PrintQueueButton extends StatelessWidget {
                     Icon(Icons.print_disabled_rounded, size: 16.sp, color: AppColors.danger),
                   SizedBox(width: 6.w),
                   Text(
-                    retrying ? 'Retrying...' : 'Print Queue ($pending)',
+                    retrying ? 'Mencoba ulang...' : 'Antrean Cetak ($pending)',
                     style: TextStyle(
                       fontSize: 12.sp,
                       fontWeight: FontWeight.w700,

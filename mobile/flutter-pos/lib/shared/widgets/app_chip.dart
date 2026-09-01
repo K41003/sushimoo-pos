@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../app/constants/colors.dart';
+import '../../app/constants/strings.dart';
 
 /// REPLACES the old flat `AppChip` 1:1 (same constructor: `label`,
 /// `color`, `onTap`, `selected`). Selected state now fills with the
@@ -115,7 +116,7 @@ class StatusChip extends StatelessWidget {
           ),
           SizedBox(width: 7.w),
           Text(
-            status.toUpperCase(),
+            statusLabel(status),
             style: TextStyle(
               fontSize: 11.sp,
               fontWeight: FontWeight.w700,

@@ -21,12 +21,12 @@ class LoginController extends GetxController {
     final password = passwordController.text;
 
     if (username.isEmpty || password.isEmpty) {
-      EasyLoading.showError('Username and password required');
+      EasyLoading.showError('Username dan kata sandi wajib diisi');
       return;
     }
 
     loading.value = true;
-    EasyLoading.show(status: 'Login...');
+    EasyLoading.show(status: 'Masuk...');
     final res = await AuthService.to.login(username, password);
     loading.value = false;
     EasyLoading.dismiss();

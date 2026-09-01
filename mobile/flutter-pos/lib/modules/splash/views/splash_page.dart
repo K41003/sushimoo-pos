@@ -33,7 +33,7 @@ class SplashPage extends GetView<SplashController> {
               SizedBox(height: 20.h),
               Text('SUSHIMOO', style: Theme.of(context).textTheme.displayLarge),
               SizedBox(height: 8.h),
-              Text('Japanese Restaurant POS', style: Theme.of(context).textTheme.bodyMedium),
+              Text('Kasir Restoran Jepang', style: Theme.of(context).textTheme.bodyMedium),
               SizedBox(height: 28.h),
               const CircularProgressIndicator(color: AppColors.salmon),
             ],

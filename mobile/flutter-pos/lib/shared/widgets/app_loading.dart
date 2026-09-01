@@ -32,7 +32,7 @@ class AppEmptyState extends StatelessWidget {
   final IconData icon;
   const AppEmptyState({
     super.key,
-    this.message = 'No data available',
+    this.message = 'Belum ada data',
     this.icon = Icons.inbox_outlined,
   });
 

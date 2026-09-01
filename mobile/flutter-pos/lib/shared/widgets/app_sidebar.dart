@@ -124,7 +124,16 @@ class AppDrawer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Flutter's Drawer defaults to a flat 304px, which eats most of the
+    // screen width on a small phone (e.g. ~85% of a 360px-wide device)
+    // while looking undersized on a large tablet in portrait. Scaling
+    // it to a percentage of the actual screen width — with sensible
+    // min/max clamps — keeps it proportional across that whole range.
+    final screenWidth = MediaQuery.of(context).size.width;
+    final drawerWidth = (screenWidth * 0.78).clamp(260.0, 360.0);
+
     return Drawer(
+      width: drawerWidth,
       backgroundColor: Colors.transparent,
       child: GlassBackground(
         showBlobs: false,
@@ -157,7 +166,7 @@ class AppDrawer extends StatelessWidget {
             if (onLogout != null)
               ListTile(
                 leading: const Icon(Icons.logout, color: AppColors.danger),
-                title: const Text('Logout', style: TextStyle(color: AppColors.danger)),
+                title: const Text('Keluar', style: TextStyle(color: AppColors.danger)),
                 onTap: onLogout,
               ),
           ],

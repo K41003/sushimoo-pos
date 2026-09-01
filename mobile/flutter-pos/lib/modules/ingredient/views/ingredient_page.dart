@@ -3,6 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import '../../../app/constants/colors.dart';
 import '../../../app/constants/dimensions.dart';
+import '../../../shared/utils/responsive.dart';
 import '../../../app/routes/app_routes.dart';
 import '../../../shared/widgets/app_loading.dart';
 import '../../../shared/widgets/app_scaffold.dart';
@@ -16,27 +17,27 @@ class IngredientPage extends GetView<IngredientController> {
   @override
   Widget build(BuildContext context) {
     return AppScaffold(
-      title: 'Ingredient',
+      title: 'Bahan Baku',
       currentRoute: AppRoutes.ingredient,
       actions: [
         AppHeaderSearchField(
-          hint: 'Search ingredient...',
+          hint: 'Cari bahan baku...',
           width: 170.w,
           onChanged: controller.setSearch,
         ),
         AppGlassActionButton(
           icon: Icons.add,
-          tooltip: 'Add Ingredient',
+          tooltip: 'Tambah Bahan Baku',
           onPressed: () => controller.save(null),
         ),
       ],
       body: Obx(() {
         if (controller.loading.value) return const AppLoading();
         if (controller.items.isEmpty) {
-          return const AppEmptyState(message: 'No ingredients found');
+          return const AppEmptyState(message: 'Belum ada bahan baku');
         }
         return ListView.separated(
-          padding: EdgeInsets.all(AppDimensions.marginTablet.w),
+          padding: EdgeInsets.all(Responsive.padding(context)),
           itemCount: controller.items.length,
           separatorBuilder: (_, __) => SizedBox(height: 10.h),
           itemBuilder: (_, i) {

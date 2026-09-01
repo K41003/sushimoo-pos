@@ -25,7 +25,7 @@ class AuthService extends GetxService {
       if (result == null) {
         return const ApiResponse(
           success: false,
-          message: 'Username atau password salah',
+          message: 'Username atau kata sandi salah',
         );
       }
       final session = AuthSession(token: result.token, user: result.user);
@@ -58,7 +58,7 @@ class AuthService extends GetxService {
 
   Future<ApiResponse<void>> logout() async {
     await SecureStorageService.to.clearSession();
-    return const ApiResponse(success: true, message: 'Logged out');
+    return const ApiResponse(success: true, message: 'Berhasil keluar');
   }
 
   /// Refreshes the cached [User] profile from `/me`.
@@ -72,7 +72,7 @@ class AuthService extends GetxService {
       if (user != null) {
         return ApiResponse(success: true, message: 'OK', data: user);
       }
-      return const ApiResponse(success: false, message: 'Not logged in');
+      return const ApiResponse(success: false, message: 'Belum login');
     }
     final res = await _api.get('/me', fromData: (d) {
       return User.fromJson(d as Map<String, dynamic>);

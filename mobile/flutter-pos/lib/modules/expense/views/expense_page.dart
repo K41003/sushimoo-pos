@@ -3,6 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import '../../../app/constants/colors.dart';
 import '../../../app/constants/dimensions.dart';
+import '../../../shared/utils/responsive.dart';
 import '../../../app/routes/app_routes.dart';
 import '../../../shared/widgets/app_dialog.dart';
 import '../../../shared/widgets/app_loading.dart';
@@ -18,22 +19,22 @@ class ExpensePage extends GetView<ExpenseController> {
   @override
   Widget build(BuildContext context) {
     return AppScaffold(
-      title: 'Expense',
+      title: 'Pengeluaran',
       currentRoute: AppRoutes.expense,
       actions: [
         AppGlassActionButton(
           icon: Icons.add,
-          tooltip: 'Add Expense',
+          tooltip: 'Tambah Pengeluaran',
           onPressed: () => _showForm(context),
         ),
       ],
       body: Obx(() {
         if (controller.loading.value) return const AppLoading();
         if (controller.items.isEmpty) {
-          return const AppEmptyState(message: 'No expenses recorded');
+          return const AppEmptyState(message: 'Belum ada pengeluaran tercatat');
         }
         return ListView.separated(
-          padding: EdgeInsets.all(AppDimensions.marginTablet.w),
+          padding: EdgeInsets.all(Responsive.padding(context)),
           itemCount: controller.items.length,
           separatorBuilder: (_, __) => SizedBox(height: 10.h),
           itemBuilder: (_, i) {
@@ -73,7 +74,7 @@ class ExpensePage extends GetView<ExpenseController> {
 
   void _showForm(BuildContext context) {
     AppDialog.form(
-      title: 'Add Expense',
+      title: 'Tambah Pengeluaran',
       icon: Icons.receipt_long_rounded,
       maxWidth: 420.w,
       content: Column(
