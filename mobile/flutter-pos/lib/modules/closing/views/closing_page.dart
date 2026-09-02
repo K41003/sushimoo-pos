@@ -29,7 +29,7 @@ class ClosingPage extends GetView<ClosingController> {
   @override
   Widget build(BuildContext context) {
     return AppScaffold(
-      title: 'Tutup Kasir',
+      title: 'Tutup Shift',
       currentRoute: AppRoutes.closing,
       body: Obx(() {
         if (controller.loading.value) return const AppLoading();
@@ -45,27 +45,31 @@ class ClosingPage extends GetView<ClosingController> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Shift Aktif', style: Theme.of(context).textTheme.headlineMedium),
+                    Text('Shift Aktif',
+                        style: Theme.of(context).textTheme.headlineMedium),
                     SizedBox(height: 8.h),
                     Text(shift != null
                         ? 'Shift #${shift.idShift} sedang berjalan'
                         : 'Tidak ada shift aktif'),
                     SizedBox(height: 16.h),
                     AppButton(
-                      label: 'Closing Kasir',
+                      label: 'Tutup Shift',
                       primary: shift != null,
-                      onPressed: shift != null ? () => controller.doClosing() : null,
+                      onPressed:
+                          shift != null ? () => controller.doClosing() : null,
                     ),
                   ],
                 ),
               ),
               SizedBox(height: 16.h),
               if (hasReportToShow)
-                _reportCard(context, controller.lastClosing.value!, controller, highlight: true),
+                _reportCard(context, controller.lastClosing.value!, controller,
+                    highlight: true),
               SizedBox(height: 16.h),
               Align(
                 alignment: Alignment.centerLeft,
-                child: Text('Riwayat Tutup Kasir', style: Theme.of(context).textTheme.headlineMedium),
+                child: Text('Riwayat Tutup Kasir',
+                    style: Theme.of(context).textTheme.headlineMedium),
               ),
               SizedBox(height: 8.h),
               if (controller.history.isEmpty)
@@ -103,17 +107,22 @@ class ClosingPage extends GetView<ClosingController> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('Tutup Kasir #${c.idClosing}', style: Theme.of(context).textTheme.bodyLarge),
+              Text('Tutup Kasir #${c.idClosing}',
+                  style: Theme.of(context).textTheme.bodyLarge),
               Obx(() => IconButton(
                     tooltip: 'Cetak laporan',
                     icon: controller.printing.value
                         ? SizedBox(
                             width: 18.r,
                             height: 18.r,
-                            child: const CircularProgressIndicator(strokeWidth: 2, color: AppColors.salmon),
+                            child: const CircularProgressIndicator(
+                                strokeWidth: 2, color: AppColors.salmon),
                           )
-                        : const Icon(Icons.print_outlined, color: AppColors.salmon),
-                    onPressed: controller.printing.value ? null : () => controller.printReport(c),
+                        : const Icon(Icons.print_outlined,
+                            color: AppColors.salmon),
+                    onPressed: controller.printing.value
+                        ? null
+                        : () => controller.printReport(c),
                   )),
             ],
           ),
@@ -121,7 +130,8 @@ class ClosingPage extends GetView<ClosingController> {
           Text('Total Penjualan: Rp ${c.totalPenjualan.toStringAsFixed(0)}'),
           Text('Total Tunai: Rp ${c.totalCash.toStringAsFixed(0)}'),
           Text('Total QRIS: Rp ${c.totalQris.toStringAsFixed(0)}'),
-          Text('Total Pengeluaran: Rp ${c.totalPengeluaran.toStringAsFixed(0)}'),
+          Text(
+              'Total Pengeluaran: Rp ${c.totalPengeluaran.toStringAsFixed(0)}'),
           Text('Saldo Akhir: Rp ${c.saldoAkhir.toStringAsFixed(0)}'),
         ],
       ),

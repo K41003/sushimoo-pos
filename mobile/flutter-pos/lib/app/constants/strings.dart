@@ -16,7 +16,7 @@ class AppStrings {
   static const String payment = 'Pembayaran';
   static const String shift = 'Shift';
   static const String expense = 'Pengeluaran';
-  static const String closing = 'Tutup Kasir';
+  static const String closing = 'Tutup Shift';
   static const String report = 'Laporan';
   static const String setting = 'Pengaturan';
   static const String category = 'Kategori';

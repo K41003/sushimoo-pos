@@ -42,10 +42,11 @@ class ShiftPage extends GetView<ShiftController> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text('Buka Shift', style: Theme.of(context).textTheme.headlineMedium),
+              Text('Buka Shift',
+                  style: Theme.of(context).textTheme.headlineMedium),
               SizedBox(height: 16.h),
               AppTextField(
-                label: 'Kas Kecil',
+                label: 'Petty Cash',
                 controller: controller.pettyCashController,
                 keyboardType: TextInputType.number,
               ),
@@ -73,7 +74,8 @@ class ShiftPage extends GetView<ShiftController> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Shift Aktif #${shift.idShift}', style: Theme.of(context).textTheme.headlineMedium),
+                Text('Shift Aktif #${shift.idShift}',
+                    style: Theme.of(context).textTheme.headlineMedium),
                 SizedBox(height: 8.h),
                 Text('Dibuka: ${shift.openTime ?? '-'}'),
                 Text('Kas Kecil: Rp ${shift.pettyCash.toStringAsFixed(0)}'),
@@ -92,12 +94,17 @@ class ShiftPage extends GetView<ShiftController> {
                   keyboardType: TextInputType.number,
                 ),
                 SizedBox(height: 12.h),
-                AppButton(label: 'Catat Kas Kecil', onPressed: controller.addPettyCash),
+                AppButton(
+                    label: 'Catat Kas Kecil',
+                    onPressed: controller.addPettyCash),
               ],
             ),
           ),
           SizedBox(height: 16.h),
-          AppButton(label: 'Tutup Shift', primary: false, onPressed: controller.closeShift),
+          AppButton(
+              label: 'Tutup Shift',
+              primary: false,
+              onPressed: controller.closeShift),
         ],
       ),
     );
