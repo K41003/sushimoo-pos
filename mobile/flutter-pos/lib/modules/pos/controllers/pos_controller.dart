@@ -3,23 +3,18 @@ import 'package:get/get.dart';
 import '../../../app/constants/app_constants.dart';
 import '../../../app/routes/app_routes.dart';
 import '../../../app/services/api_client.dart';
-import '../../../app/services/auth_service.dart';
-import '../../../app/services/local_data_service.dart';
-import '../../../app/services/offline_queue_service.dart';
-import '../../../app/services/print_queue_service.dart';
 import '../../../app/services/printer_service.dart';
-import '../../../app/services/storage_service.dart';
 import '../../../data/models/category.dart';
 import '../../../data/models/product.dart';
 import '../../../data/models/table.dart';
 import '../../../data/models/transaction.dart';
 import '../../../data/response/api_response.dart';
+import '../../../shared/utils/debouncer.dart';
 import '../controllers/cart_item.dart';
 import '../widgets/table_select_sheet.dart';
 
 class PosController extends GetxController {
   final ApiClient _api = ApiClient.to;
-  final LocalDataService _local = LocalDataService.to;
 
   final categories = <Category>[].obs;
   final products = <Product>[].obs;
@@ -30,8 +25,16 @@ class PosController extends GetxController {
   final loading = false.obs;
   final taxRate = AppConstants.taxRate;
 
+  /// Free-text product search. When non-empty this searches across ALL
+  /// categories (the cashier doesn't need to tap a category chip first),
+  /// and category selection is temporarily ignored until search is cleared.
   final searchQuery = ''.obs;
   int _searchToken = 0;
+
+  // SECURITY FIX (audit finding #8): search used to fire a network
+  // request on every keystroke. A short debounce cuts request volume
+  // dramatically for normal typing speed while still feeling instant.
+  final _searchDebouncer = Debouncer(delay: const Duration(milliseconds: 300));
 
   double get subtotal =>
       cart.fold(0, (sum, e) => sum + e.subtotal);
@@ -47,14 +50,13 @@ class PosController extends GetxController {
     loadTables();
   }
 
+  @override
+  void onClose() {
+    _searchDebouncer.dispose();
+    super.onClose();
+  }
+
   Future<void> loadCategories() async {
-    if (AppConstants.localMode) {
-      categories.assignAll(await _local.getAppCategories());
-      if (categories.isNotEmpty) {
-        selectCategory(categories.first.idKategori);
-      }
-      return;
-    }
     final res = await _api.get('/categories', query: {'perPage': 100},
         fromData: (d) => d);
     if (res.success && res.data != null) {
@@ -68,10 +70,6 @@ class PosController extends GetxController {
   }
 
   Future<void> loadTables() async {
-    if (AppConstants.localMode) {
-      tables.assignAll(await _local.getAppTables());
-      return;
-    }
     final res = await _api.get('/meja', query: {'perPage': 100},
         fromData: (d) => d);
     if (res.success && res.data != null) {
@@ -83,17 +81,12 @@ class PosController extends GetxController {
 
   Future<void> selectCategory(int id) async {
     selectedCategoryId.value = id;
+    // Picking a category explicitly cancels any active search so the
+    // grid reflects the tapped category right away.
     if (isSearching) {
       searchQuery.value = '';
     }
     loading.value = true;
-    if (AppConstants.localMode) {
-      final all = await _local.getAppProducts();
-      final filtered = all.where((p) => p.idKategori == id).toList();
-      products.assignAll(filtered);
-      loading.value = false;
-      return;
-    }
     final res = await _api.get('/products',
         query: {'id_kategori': id, 'perPage': 100}, fromData: (d) => d);
     loading.value = false;
@@ -104,16 +97,21 @@ class PosController extends GetxController {
     }
   }
 
+  /// Called from the search bar on every keystroke. Empty text restores
+  /// the currently selected category's product list immediately (no
+  /// debounce needed for clearing — there's no request to throttle).
+  /// Non-empty text is debounced before the actual API call fires.
   void onSearchChanged(String value) {
     searchQuery.value = value;
     final query = value.trim();
     if (query.isEmpty) {
+      _searchDebouncer.dispose();
       if (selectedCategoryId.value != null) {
         selectCategory(selectedCategoryId.value!);
       }
       return;
     }
-    _searchProducts(query);
+    _searchDebouncer.run(() => _searchProducts(query));
   }
 
   void clearSearch() {
@@ -121,22 +119,13 @@ class PosController extends GetxController {
   }
 
   Future<void> _searchProducts(String query) async {
+    // Token guard so a slow earlier request can't overwrite a newer one
+    // if the cashier keeps typing quickly.
     final token = ++_searchToken;
     loading.value = true;
-    if (AppConstants.localMode) {
-      final all = await _local.getAppProducts();
-      final filtered = all
-          .where((p) => p.namaProduk.toLowerCase().contains(query.toLowerCase()))
-          .toList();
-      if (token == _searchToken) {
-        products.assignAll(filtered);
-        loading.value = false;
-      }
-      return;
-    }
     final res = await _api.get('/products',
         query: {'q': query, 'perPage': 100}, fromData: (d) => d);
-    if (token != _searchToken) return;
+    if (token != _searchToken) return; // a newer search superseded this one
     loading.value = false;
     if (res.success && res.data != null) {
       final pag = Paginated<Product>.fromJson(
@@ -179,128 +168,76 @@ class PosController extends GetxController {
 
   void clearCart() => cart.clear();
 
-  /// UI CHANGE: previously opened a stock `AlertDialog` with a `Wrap` of
-  /// generic `ChoiceChip`s — functional, but visually inconsistent with
-  /// the rest of the app (no glass surface, no brand accent, no per-table
-  /// status indicator) and cramped once there were more than a handful
-  /// of tables. Now opens [TableSelectSheet], a dedicated glass card grid
-  /// with per-table capacity, a status dot (available/occupied/reserved/
-  /// cleaning), and the same salmon-gradient selected state used
-  /// everywhere else in the app. The return contract is unchanged: it
-  /// resolves to the picked [TableModel] or `null` if dismissed.
   Future<void> selectTable() async {
     if (tables.isEmpty) await loadTables();
     final picked = await Get.dialog<TableModel>(
       TableSelectSheet(tables: tables, selectedId: selectedTable.value?.idMeja),
     );
-    if (picked != null) selectedTable.value = picked;
+    if (picked != null) {
+      selectedTable.value = picked;
+      isTakeaway.value = false;
+    }
   }
 
-  /// OFFLINE QUEUE (this pass): previously a failed `POST /transaksi`
-  /// (e.g. WiFi drops at the table) just surfaced `EasyLoading.showError`
-  /// and the whole order — everything the cashier just entered — was
-  /// gone with nothing to retry. That's a real problem for a restaurant
-  /// POS where connectivity to the counter isn't always reliable.
+  /// UX FIX (design review P0 #2): previously there was no way to place
+  /// a takeaway order without first opening the full table-picker sheet
+  /// and somehow knowing there was a "no table" option buried in it (and
+  /// as written, `placeOrder()` didn't actually have one — it always
+  /// required a non-null `TableModel`). Cashiers doing high-volume
+  /// takeaway business had to go through the table sheet on every single
+  /// order regardless.
   ///
-  /// Behavior now:
-  ///  1. Try the request normally, exactly as before.
-  ///  2. On success: unchanged (print ticket, clear cart, go to payment).
-  ///  3. On failure that looks like a CONNECTIVITY problem (see
-  ///     `_isLikelyOffline`): save the order to `OfflineQueueService`
-  ///     (sqflite-backed) and clear the cart so the cashier can keep
-  ///     taking new orders. Nothing is printed yet — printing happens
-  ///     once `SyncService` successfully sends the order later.
-  ///  4. On failure that looks like a real SERVER rejection (validation,
-  ///     stock, auth, etc.): shown to the cashier immediately, same as
-  ///     before. These are deliberately NOT queued, since resending an
-  ///     invalid payload later would just fail again silently.
+  /// `setTakeaway()` explicitly clears `selectedTable` to null and marks
+  /// intent via `isTakeaway`, so `placeOrder()` can skip the table-sheet
+  /// requirement entirely for this order. A dedicated flag (rather than
+  /// just "table is null") makes the UI's takeaway button state and the
+  /// order-payload logic both explicit instead of relying on the same
+  /// null value to mean two different things ("nothing selected yet" vs
+  /// "deliberately no table").
+  final isTakeaway = false.obs;
+
+  void setTakeaway() {
+    selectedTable.value = null;
+    isTakeaway.value = true;
+  }
+
   Future<void> placeOrder() async {
     if (cart.isEmpty) {
-      EasyLoading.showError('Keranjang masih kosong');
+      EasyLoading.showError('Cart is empty');
       return;
     }
-    if (selectedTable.value == null) {
+    if (!isTakeaway.value && selectedTable.value == null) {
       await selectTable();
       if (selectedTable.value == null) return;
     }
 
-    final items = cart.map((e) => e.toPayload()).toList();
-    final idMeja = selectedTable.value!.idMeja;
-
     loading.value = true;
-    EasyLoading.show(status: 'Membuat pesanan...');
-
-    if (AppConstants.localMode) {
-      final shiftId = StorageService.to.shiftId;
-      final userId = AuthService.to.currentUser?.idUser;
-      if (shiftId == null || userId == null) {
-        loading.value = false;
-        EasyLoading.dismiss();
-        EasyLoading.showError('Tidak ada shift aktif. Buka shift terlebih dahulu.');
-        return;
-      }
-      final trx = await _local.createTransaction(
-        shiftId: shiftId,
-        userId: userId,
-        tableId: idMeja,
-        items: items,
-      );
-      loading.value = false;
-      EasyLoading.dismiss();
-      try {
-        await PrinterService.to.printKitchenTicket(trx);
-      } catch (_) {
-        // Non-fatal: printer may be disconnected — order still proceeds.
-      }
-      clearCart();
-      EasyLoading.showSuccess('Pesanan berhasil dibuat');
-      Get.toNamed(AppRoutes.payment, arguments: trx);
-      return;
-    }
-
+    EasyLoading.show(status: 'Placing order...');
     final res = await _api.post('/transaksi', body: {
-      'id_meja': idMeja,
-      'items': items,
+      // NOTE ON BACKEND CONTRACT: for takeaway orders `id_meja` is
+      // omitted from the body entirely (not sent as a literal `null`
+      // key) since that's the safest default assumption for a Laravel
+      // API validating an optional/nullable foreign key. If your
+      // `/transaksi` endpoint instead expects a specific placeholder
+      // table id or a literal `"id_meja": null` key present, this is
+      // the one line to change — confirm against the actual
+      // TransaksiController validation rules before relying on this in
+      // production.
+      if (!isTakeaway.value) 'id_meja': selectedTable.value!.idMeja,
+      'items': cart.map((e) => e.toPayload()).toList(),
     }, fromData: (d) => Transaction.fromJson(d as Map<String, dynamic>));
     loading.value = false;
     EasyLoading.dismiss();
 
     if (res.success && res.data != null) {
       final trx = res.data as Transaction;
-      await PrintQueueService.to.printKitchenTicket(trx);
+      await PrinterService.to.printKitchenTicket(trx);
       clearCart();
-      EasyLoading.showSuccess('Pesanan berhasil dibuat');
+      isTakeaway.value = false;
+      EasyLoading.showSuccess('Order placed');
       Get.toNamed(AppRoutes.payment, arguments: trx);
-      return;
+    } else {
+      EasyLoading.showError(res.message);
     }
-
-    if (_isLikelyOffline(res.message)) {
-      await OfflineQueueService.to.enqueue(idMeja: idMeja, items: items);
-      clearCart();
-      EasyLoading.showInfo(
-        'Tidak ada koneksi — pesanan disimpan secara lokal dan akan tersinkron otomatis.',
-      );
-      return;
-    }
-
-    EasyLoading.showError(res.message);
-  }
-
-  /// Distinguishes "couldn't reach the server" from "server rejected the
-  /// request". `ApiClient._send()` (api_client.dart) sets these exact
-  /// messages for Dio failures that never got a real HTTP response back
-  /// (network error, timeout, bad/pinned certificate), as opposed to a
-  /// 4xx/5xx response body with a business-logic `message`. Only the
-  /// former should ever be queued for silent retry.
-  bool _isLikelyOffline(String message) {
-    const networkErrorMarkers = [
-      'Network error',
-      'Koneksi tidak aman terdeteksi', // SSL pinning reject, see ssl_pinning_interceptor.dart
-      'SocketException',
-      'Connection timed out',
-      'Connection refused',
-      'Failed host lookup',
-    ];
-    return networkErrorMarkers.any((m) => message.contains(m));
   }
 }

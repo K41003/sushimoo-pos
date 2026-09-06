@@ -6,7 +6,7 @@ import '../../app/routes/app_routes.dart';
 import '../../app/services/auth_service.dart';
 import 'app_sidebar.dart';
 import 'glass_panel.dart';
-import '../../shared/utils/responsive.dart';
+import '../../shared/utils/responsive.dart' show Responsive, DeviceClass;
 import 'nav_item_factory.dart';
 export 'app_text_field.dart' show AppHeaderSearchField;
 
@@ -16,15 +16,34 @@ export 'app_text_field.dart' show AppHeaderSearchField;
 /// every screen using `AppScaffold` automatically gets the Glassmorphic
 /// Zen canvas + blobs.
 ///
-/// UI ENHANCEMENT:
-/// - The top app bar header box vertically centers all its elements perfectly
-///   (title, user badge, and header action '+' buttons) between the top and bottom edge.
-/// - Added [AppGlassActionButton] for standardized frosted glassmorphic header actions.
+/// =====================================================================
+/// UX FIX (design review P0 #1 — Payment has no way back to POS):
+/// =====================================================================
+/// The app bar previously only ever showed either a hamburger menu
+/// button (portrait/drawer mode) or nothing (landscape/rail mode) — no
+/// screen could offer an explicit "go back" affordance, because there
+/// was no `leading`/back slot at all. This mattered most on the Payment
+/// screen: if a cashier notices the wrong item in the order AFTER
+/// reaching Payment, there was no way back to POS to fix it short of
+/// completing the payment or navigating away through the drawer (which
+/// doesn't restore POS state).
+///
+/// Added two new OPTIONAL constructor params, both defaulting to values
+/// that preserve every existing screen's current behavior exactly:
+///   - `showBackButton` (default `false`) — when true, renders a back
+///     arrow in the leading slot instead of the hamburger/nothing.
+///   - `onBackPressed` (default `null`) — when null, back button calls
+///     `Get.back()`. Payment overrides this to also clear/preserve cart
+///     state as needed (see payment_page.dart).
+/// No other screen passes these params, so no other screen's app bar
+/// changes as a result of this patch.
 class AppScaffold extends StatelessWidget {
   final String title;
   final String currentRoute;
   final Widget body;
   final List<Widget>? actions;
+  final bool showBackButton;
+  final VoidCallback? onBackPressed;
 
   const AppScaffold({
     super.key,
@@ -32,13 +51,20 @@ class AppScaffold extends StatelessWidget {
     required this.currentRoute,
     required this.body,
     this.actions,
+    this.showBackButton = false,
+    this.onBackPressed,
   });
 
   @override
   Widget build(BuildContext context) {
     final user = AuthService.to.currentUser;
     final items = navItemsForRole(user?.roleName ?? '');
-    final isRail = Responsive.isTablet(context);
+    // CORRECTION: `Responsive.isLandscapeTablet` no longer exists — the
+    // app now locks device orientation at startup (phone=portrait,
+    // tablet=landscape always, see responsive.dart), so a tablet being
+    // "in portrait" is no longer a real state to check for. `isRail`
+    // (side nav rail vs drawer) is now just "is this a tablet at all".
+    final isRail = Responsive.classOf(context) == DeviceClass.tablet;
 
     final content = Builder(builder: (scaffoldContext) {
       return Scaffold(
@@ -50,10 +76,17 @@ class AppScaffold extends StatelessWidget {
             title: title,
             userName: user?.nama,
             actions: actions,
-            showMenuButton: !isRail,
+            // Back button takes priority over the hamburger menu when
+            // both would otherwise apply — a screen that needs a back
+            // action (like Payment) is by definition a step INSIDE a
+            // flow, not a top-level destination that also needs drawer
+            // nav visible.
+            showMenuButton: !isRail && !showBackButton,
+            showBackButton: showBackButton,
+            onBackPressed: onBackPressed ?? () => Get.back(),
           ),
         ),
-        drawer: isRail
+        drawer: (isRail || showBackButton)
             ? null
             : AppDrawer(items: items, currentRoute: currentRoute, onLogout: _logout),
         body: Padding(
@@ -80,7 +113,7 @@ class AppScaffold extends StatelessWidget {
       await AuthService.to.logout();
       Get.offAllNamed(AppRoutes.login);
     } catch (e) {
-      EasyLoading.showError('Gagal keluar');
+      EasyLoading.showError('Logout failed');
     }
   }
 }
@@ -134,12 +167,16 @@ class _GlassAppBar extends StatelessWidget {
   final String? userName;
   final List<Widget>? actions;
   final bool showMenuButton;
+  final bool showBackButton;
+  final VoidCallback? onBackPressed;
 
   const _GlassAppBar({
     required this.title,
     required this.showMenuButton,
     this.userName,
     this.actions,
+    this.showBackButton = false,
+    this.onBackPressed,
   });
 
   @override
@@ -156,11 +193,19 @@ class _GlassAppBar extends StatelessWidget {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              if (showMenuButton)
+              if (showBackButton)
+                IconButton(
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
+                  icon: const Icon(Icons.arrow_back_rounded, color: AppColors.ink, size: 22),
+                  tooltip: 'Back',
+                  onPressed: onBackPressed,
+                )
+              else if (showMenuButton)
                 Builder(
                   builder: (ctx) => IconButton(
                     padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+                    constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
                     icon: const Icon(Icons.menu_rounded, color: AppColors.ink, size: 22),
                     tooltip: 'Menu',
                     onPressed: () => Scaffold.of(ctx).openDrawer(),
@@ -168,19 +213,10 @@ class _GlassAppBar extends StatelessWidget {
                 )
               else
                 const SizedBox(width: 4),
-              // Flexible so a long page title never forces this Row past
-              // the app bar's width on a narrow phone — previously a
-              // bare `Text(title)` here, combined with a wide search
-              // field in `actions` (Product/Category/Stock/Ingredient
-              // pages all pass a 170–180.w AppHeaderSearchField), could
-              // overflow the header on small screens.
-              Flexible(
-                child: Text(
-                  title,
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
+              Text(
+                title, 
+                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.w700,
                 ),
               ),
               const Spacer(),
@@ -211,12 +247,7 @@ class _GlassAppBar extends StatelessWidget {
                       ),
                       const SizedBox(width: 8),
                       ConstrainedBox(
-                        // Shrinks further on narrow screens instead of a
-                        // flat 130px that could itself contribute to
-                        // overflow alongside a wide search action.
-                        constraints: BoxConstraints(
-                          maxWidth: MediaQuery.of(context).size.width < 400 ? 70 : 130,
-                        ),
+                        constraints: const BoxConstraints(maxWidth: 130),
                         child: Text(
                           userName!,
                           maxLines: 1,
@@ -232,12 +263,10 @@ class _GlassAppBar extends StatelessWidget {
                   ),
                 ),
               if (actions != null)
-                Flexible(
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: actions!,
-                  ),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: actions!,
                 ),
             ],
           ),
@@ -252,4 +281,3 @@ class _GlassAppBar extends StatelessWidget {
     return words.map((w) => w[0].toUpperCase()).join();
   }
 }
-

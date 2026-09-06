@@ -1,20 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:get/get.dart';
-import '../../../app/constants/app_constants.dart';
-import '../../../app/constants/strings.dart';
 import '../../../app/services/api_client.dart';
-import '../../../app/services/local_data_service.dart';
 import '../../../data/models/category.dart';
 import '../../../data/models/product.dart';
 import '../../../data/response/api_response.dart';
 import '../../../shared/widgets/app_dialog.dart';
+import '../../../shared/utils/debouncer.dart';
 import '../widgets/product_form.dart';
 
-String money(dynamic v) => 'Rp ${(v is num ? v : 0).toStringAsFixed(0)}';
+String money(dynamic v) =>
+    'Rp ${(v is num ? v : 0).toStringAsFixed(0)}';
 
 class ProductController extends GetxController {
-  final LocalDataService _local = LocalDataService.to;
   final items = <Product>[].obs;
   final categories = <Category>[].obs;
   final loading = false.obs;
@@ -31,6 +29,12 @@ class ProductController extends GetxController {
   final selectedCategory = Rx<int?>(null);
   final selectedStatus = true.obs;
 
+  // SECURITY FIX (audit finding #8): debounce free-text search only.
+  // Category chip taps (`selectCategory`) are a discrete, low-frequency
+  // user action (not a keystroke stream), so they intentionally stay
+  // undebounced for a responsive tap-to-filter feel.
+  final _searchDebouncer = Debouncer(delay: const Duration(milliseconds: 300));
+
   @override
   void onInit() {
     super.onInit();
@@ -42,13 +46,19 @@ class ProductController extends GetxController {
   void onClose() {
     nameController.dispose();
     priceController.dispose();
+    _searchDebouncer.dispose();
     super.onClose();
   }
 
   void onSearchChanged(String value) {
     search.value = value;
     page.value = 1;
-    load();
+    if (value.trim().isEmpty) {
+      _searchDebouncer.dispose();
+      load();
+      return;
+    }
+    _searchDebouncer.run(load);
   }
 
   void selectCategory(int? id) {
@@ -59,15 +69,11 @@ class ProductController extends GetxController {
 
   Future<void> loadCategories() async {
     try {
-      if (AppConstants.localMode) {
-        categories.assignAll(await _local.getAppCategories());
-        return;
-      }
-      final res = await Get.find<ApiClient>()
-          .get('/categories', query: {'perPage': 100}, fromData: (d) => d);
+      final res = await Get.find<ApiClient>().get('/categories',
+          query: {'perPage': 100}, fromData: (d) => d);
       if (res.success && res.data != null) {
-        final pag =
-            Paginated<Category>.fromJson({'data': res.data}, Category.fromJson);
+        final pag = Paginated<Category>.fromJson(
+            {'data': res.data}, Category.fromJson);
         categories.assignAll(pag.items);
       }
     } catch (_) {
@@ -78,35 +84,17 @@ class ProductController extends GetxController {
   Future<void> load() async {
     loading.value = true;
     try {
-      if (AppConstants.localMode) {
-        final all = await _local.getAppProducts();
-        final query = search.value.trim().toLowerCase();
-        final catId = selectedCategoryId.value;
-        var filtered = all;
-        if (catId != null) {
-          filtered = filtered.where((p) => p.idKategori == catId).toList();
-        }
-        if (query.isNotEmpty) {
-          filtered = filtered.where((p) => p.namaProduk.toLowerCase().contains(query)).toList();
-        }
-        items.assignAll(filtered);
-        total.value = filtered.length;
-        lastPage.value = 1;
-        page.value = 1;
-        loading.value = false;
-        return;
-      }
       final query = <String, dynamic>{
         'perPage': perPage.value,
         if (search.value.isNotEmpty) 'q': search.value,
         if (selectedCategoryId.value != null)
           'id_kategori': selectedCategoryId.value,
       };
-      final res = await Get.find<ApiClient>()
-          .get('/products', query: query, fromData: (d) => d);
+      final res = await Get.find<ApiClient>().get('/products',
+          query: query, fromData: (d) => d);
       if (res.success && res.data != null) {
-        final pag =
-            Paginated<Product>.fromJson({'data': res.data}, Product.fromJson);
+        final pag = Paginated<Product>.fromJson(
+            {'data': res.data}, Product.fromJson);
         items.assignAll(pag.items);
         total.value = pag.total;
         lastPage.value = pag.lastPage;
@@ -123,19 +111,20 @@ class ProductController extends GetxController {
 
   void openForm(Product? existing) {
     nameController.text = existing?.namaProduk ?? '';
-    priceController.text = existing != null ? existing.harga.toString() : '';
+    priceController.text =
+        existing != null ? existing.harga.toString() : '';
     selectedCategory.value =
         existing?.idKategori ?? categories.firstOrNull?.idKategori;
     selectedStatus.value = existing?.status ?? true;
 
     AppDialog.form(
-      title: existing == null ? 'Tambah Produk' : 'Ubah Produk',
+      title: existing == null ? 'Add Product' : 'Edit Product',
       icon: Icons.fastfood_rounded,
       maxWidth: 440,
       content: ProductForm(controller: this, existing: existing),
       onConfirm: () async {
         await createOrUpdate(existing);
-        return false;
+        return false; // createOrUpdate handles closing dialog on success
       },
     );
   }
@@ -144,50 +133,36 @@ class ProductController extends GetxController {
     final nama = nameController.text.trim();
     final hargaText = priceController.text.trim();
     if (nama.isEmpty) {
-      EasyLoading.showError('Nama produk ${AppStrings.required}');
+      EasyLoading.showError('Nama produk required');
       return;
     }
     if (selectedCategory.value == null) {
-      EasyLoading.showError('Silakan pilih kategori');
+      EasyLoading.showError('Please choose a category');
       return;
     }
     final harga = double.tryParse(hargaText);
     if (harga == null) {
-      EasyLoading.showError('Harga harus berupa angka');
+      EasyLoading.showError('Harga must be a number');
       return;
     }
 
-    EasyLoading.show(status: AppStrings.saving);
-    if (AppConstants.localMode) {
-      await _local.saveProduct(
-        id: existing?.idProduk,
-        categoryId: selectedCategory.value!,
-        name: nama,
-        price: harga,
-        imageUrl: existing?.gambar,
-        isAvailable: selectedStatus.value,
-      );
-      Get.back();
-      EasyLoading.dismiss();
-      EasyLoading.showSuccess(AppStrings.saved);
-      await load();
-      return;
-    }
     final body = {
       'id_kategori': selectedCategory.value,
       'nama_produk': nama,
       'harga': harga,
       'status': selectedStatus.value ? 1 : 0,
     };
+
+    EasyLoading.show(status: 'Saving...');
     final res = existing == null
         ? await Get.find<ApiClient>().post('/products', body: body)
-        : await Get.find<ApiClient>()
-            .put('/products/${existing.idProduk}', body: body);
+        : await Get.find<ApiClient>().put('/products/${existing.idProduk}',
+            body: body);
     EasyLoading.dismiss();
 
     if (res.success) {
       Get.back();
-      EasyLoading.showSuccess(res.message.isNotEmpty ? res.message : AppStrings.saved);
+      EasyLoading.showSuccess(res.message.isNotEmpty ? res.message : 'Saved');
       await load();
     } else {
       EasyLoading.showError(res.message);
@@ -196,26 +171,19 @@ class ProductController extends GetxController {
 
   Future<void> delete(int id) async {
     final confirmed = await AppDialog.confirm(
-      title: AppStrings.confirmDeleteTitle,
-      message: 'Apakah kamu yakin ingin menghapus produk ini?',
-      confirmText: AppStrings.delete,
+      title: 'Delete Product',
+      message: 'Are you sure you want to delete this product?',
+      confirmText: 'Delete',
       destructive: true,
     );
     if (confirmed != true) return;
 
-    EasyLoading.show(status: AppStrings.deleting);
-    if (AppConstants.localMode) {
-      await _local.deleteProduct(id);
-      EasyLoading.dismiss();
-      EasyLoading.showSuccess(AppStrings.deleted);
-      await load();
-      return;
-    }
+    EasyLoading.show(status: 'Deleting...');
     final res = await Get.find<ApiClient>().delete('/products/$id');
     EasyLoading.dismiss();
 
     if (res.success) {
-      EasyLoading.showSuccess(res.message.isNotEmpty ? res.message : AppStrings.deleted);
+      EasyLoading.showSuccess(res.message.isNotEmpty ? res.message : 'Deleted');
       await load();
     } else {
       EasyLoading.showError(res.message);

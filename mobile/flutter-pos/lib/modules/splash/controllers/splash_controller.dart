@@ -1,11 +1,8 @@
 import 'package:get/get.dart';
 import 'package:sushimoo_pos/app/routes/app_routes.dart';
 import 'package:sushimoo_pos/app/services/auth_service.dart';
-import 'package:sushimoo_pos/app/services/database_helper.dart';
 import 'package:sushimoo_pos/app/services/device_integrity_service.dart';
 import 'package:sushimoo_pos/app/services/secure_storage_service.dart';
-import 'package:sushimoo_pos/app/services/sync_service.dart';
-import 'package:sushimoo_pos/app/constants/app_constants.dart';
 
 class SplashController extends GetxController {
   @override
@@ -16,23 +13,24 @@ class SplashController extends GetxController {
     });
   }
 
+  /// SECURITY GATE (OWASP MASVS-RESILIENCE): dijalankan SEBELUM apapun
+  /// lain, termasuk sebelum mengecek sesi login. Jika device tidak
+  /// aman (root/jailbreak/emulator di production), user tidak pernah
+  /// sampai ke layar login sama sekali — token juga sudah di-wipe oleh
+  /// DeviceIntegrityService.
+  ///
+  /// SECURITY FIX (audit finding #4): previously checked
+  /// `!result.isSafe && DeviceIntegrityService.hardBlock` directly,
+  /// which conflated "confirmed rooted/jailbroken/emulator" with "the
+  /// check itself failed" (`unknown`) under a single flag. Now delegates
+  /// to `DeviceIntegrityService.shouldHardBlock(result)`, which applies
+  /// the correct policy for each case: confirmed-bad always blocks;
+  /// `unknown` (fail-closed, isSafe=false) blocks only if
+  /// `hardBlockOnUnknown` is set, but is never silently treated as safe.
   Future<void> _runSecurityGateThenCheckSession() async {
-    // Local mode reads straight from SQLite from the very first screen
-    // (login checks `users`, dashboard checks shifts/transactions, etc.),
-    // so the database must be created/seeded before routing anywhere.
-    if (AppConstants.localMode) {
-      try {
-        await DatabaseHelper.to.ready;
-      } catch (_) {
-        // Falls through — DatabaseHelper.database getter will retry the
-        // open on first real query, so a failed initial open here isn't
-        // fatal to the splash flow.
-      }
-    }
-
     final result = await DeviceIntegrityService.to.check();
 
-    if (!result.isSafe && DeviceIntegrityService.hardBlock) {
+    if (DeviceIntegrityService.to.shouldHardBlock(result)) {
       Get.offAllNamed(
         AppRoutes.securityBlocked,
         arguments: DeviceIntegrityService.to.messageFor(result.issue),
@@ -49,16 +47,10 @@ class SplashController extends GetxController {
       return;
     }
 
-    if (AppConstants.localMode) {
-      Get.offAllNamed(AppRoutes.dashboard);
-      return;
-    }
-
     try {
       final me = await AuthService.to.me().timeout(const Duration(seconds: 6));
       if (me.success) {
         Get.offAllNamed(AppRoutes.dashboard);
-        _autoSyncOfflineQueue();
         return;
       }
     } catch (_) {
@@ -69,9 +61,5 @@ class SplashController extends GetxController {
 
     await SecureStorageService.to.clearSession();
     Get.offAllNamed(AppRoutes.login);
-  }
-
-  void _autoSyncOfflineQueue() {
-    SyncService.to.syncNow(showToast: false);
   }
 }

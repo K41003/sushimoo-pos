@@ -50,10 +50,10 @@ class PrinterService extends GetxService {
 
   Future<void> printKitchenTicket(Transaction trx) async {
     final lines = <String>[
-      '=== DAPUR SUSHIMOO ===',
+      '=== SUSHIMOO KITCHEN ===',
       'Invoice: ${trx.invoiceNumber}',
-      'Meja: ${trx.table?.nomorMeja ?? "-"}',
-      'Waktu: ${trx.tanggal}',
+      'Table: ${trx.table?.nomorMeja ?? "-"}',
+      'Time: ${trx.tanggal}',
       '------------------------',
       ...trx.details
               ?.map((d) => '${d.qty}x ${d.product?.namaProduk ?? d.idProduk}')
@@ -66,7 +66,7 @@ class PrinterService extends GetxService {
 
   Future<void> printCustomerReceipt(Transaction trx) async {
     final lines = <String>[
-      '  STRUK SUSHIMOO POS',
+      '  SUSHIMOO POS RECEIPT',
       'Invoice: ${trx.invoiceNumber}',
       '------------------------',
       ...?trx.details?.map((d) =>
@@ -74,8 +74,8 @@ class PrinterService extends GetxService {
       '------------------------',
       'TOTAL: ${trx.total.toStringAsFixed(2)}',
       if (trx.payment != null) ...[
-        'BAYAR: ${trx.payment!.totalBayar.toStringAsFixed(2)}',
-        'KEMBALI: ${trx.payment!.kembalian.toStringAsFixed(2)}',
+        'PAID: ${trx.payment!.totalBayar.toStringAsFixed(2)}',
+        'CHANGE: ${trx.payment!.kembalian.toStringAsFixed(2)}',
       ],
       '   TERIMA KASIH',
       '========================',
@@ -84,31 +84,63 @@ class PrinterService extends GetxService {
   }
 
   /// Builds a PDF closing report and opens the system print dialog.
-  Future<void> printClosingReport(Closing closing, Shift shift) async {
-    final doc = pw.Document();
-    doc.addPage(pw.Page(
-      build: (context) => pw.Column(
-        crossAxisAlignment: pw.CrossAxisAlignment.start,
-        children: [
-          pw.Center(
-              child: pw.Text('SUSHIMOO POS - TUTUP KASIR',
-                  style: pw.TextStyle(
-                      fontSize: 18, fontWeight: pw.FontWeight.bold))),
-          pw.SizedBox(height: 12),
-          pw.Text('Shift: ${shift.idShift}'),
-          pw.Text('Waktu: ${closing.waktuClosing ?? "-"}'),
-          pw.Divider(),
-          _row('Total Penjualan', closing.totalPenjualan),
-          _row('Total Tunai', closing.totalCash),
-          _row('Total QRIS', closing.totalQris),
-          _row('Total Pengeluaran', closing.totalPengeluaran),
-          pw.Divider(),
-          _row('Saldo Akhir', closing.saldoAkhir),
-        ],
-      ),
-    ));
-    await Printing.layoutPdf(
-        onLayout: (format) async => doc.save());
+  ///
+  /// =====================================================================
+  /// UX FIX (design review P0 #4): previously returned `Future<void>` —
+  /// if `Printing.layoutPdf` failed or threw (no printer configured, PDF
+  /// generation error, OS print dialog dismissed/unavailable), the
+  /// exception propagated uncaught and the caller (`ClosingController
+  /// .doClosing()`) had no way to distinguish "report printed
+  /// successfully" from "printing silently failed" — the cashier would
+  /// see a generic "Closing recorded" success toast regardless, with no
+  /// indication the physical/PDF report never actually printed.
+  ///
+  /// Now returns `Future<bool>`: `true` if `layoutPdf` completed without
+  /// throwing, `false` if it threw (caught here, not propagated). The
+  /// caller can now show an accurate, distinct message for "closing
+  /// saved but report failed to print" vs "closing saved and printed".
+  ///
+  /// NOTE: `Printing.layoutPdf` opens the OS print/share sheet and
+  /// resolves once the user dismisses it — it generally does NOT throw
+  /// just because the user chose "Cancel" in that sheet (that's normal,
+  /// expected user behavior, not a failure). This return value only
+  /// distinguishes actual errors (PDF build failure, plugin exception)
+  /// from the normal completion path; it can't detect "user cancelled
+  /// the OS dialog" as a distinct case since the underlying plugin
+  /// doesn't expose that signal separately. If your Closing UX needs to
+  /// treat cancellation differently from success, that requires a
+  /// `printing` package version/API that exposes the sheet's outcome —
+  /// verify against your actual `printing` version if this distinction
+  /// becomes important later.
+  Future<bool> printClosingReport(Closing closing, Shift shift) async {
+    try {
+      final doc = pw.Document();
+      doc.addPage(pw.Page(
+        build: (context) => pw.Column(
+          crossAxisAlignment: pw.CrossAxisAlignment.start,
+          children: [
+            pw.Center(
+                child: pw.Text('SUSHIMOO POS - CLOSING',
+                    style: pw.TextStyle(
+                        fontSize: 18, fontWeight: pw.FontWeight.bold))),
+            pw.SizedBox(height: 12),
+            pw.Text('Shift: ${shift.idShift}'),
+            pw.Text('Waktu: ${closing.waktuClosing ?? "-"}'),
+            pw.Divider(),
+            _row('Total Penjualan', closing.totalPenjualan),
+            _row('Total Cash', closing.totalCash),
+            _row('Total QRIS', closing.totalQris),
+            _row('Total Pengeluaran', closing.totalPengeluaran),
+            pw.Divider(),
+            _row('Saldo Akhir', closing.saldoAkhir),
+          ],
+        ),
+      ));
+      await Printing.layoutPdf(onLayout: (format) async => doc.save());
+      return true;
+    } catch (e) {
+      return false;
+    }
   }
 
   pw.Widget _row(String label, double value) =>

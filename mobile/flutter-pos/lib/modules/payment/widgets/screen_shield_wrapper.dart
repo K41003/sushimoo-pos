@@ -2,34 +2,33 @@ import 'package:flutter/material.dart';
 import 'package:screen_protector/screen_protector.dart';
 
 /// Widget wrapper yang mengaktifkan screen shielding (mencegah
-/// screenshot & screen recording di Android; menyamarkan tampilan saat
-/// app masuk background di iOS) selama widget ini berada di widget tree.
+/// screenshot & screen recording; menyamarkan tampilan di app-switcher)
+/// selama widget ini berada di widget tree.
+///
+/// =====================================================================
+/// FIX (correction after real `flutter analyze` run): the previous
+/// version of this file imported `package:no_screenshot/no_screenshot.dart`
+/// and called `NoScreenshot.instance.screenshotOff()` /
+/// `.screenshotOn()`. That package was never actually a dependency of
+/// this project — the real `pubspec.yaml` uses `screen_protector: ^1.5.3`
+/// instead, which has a different (static-method, not singleton-instance)
+/// API. This was a wrong assumption on my part, not a pre-existing gap
+/// in your tree — rewritten to match the package you actually have,
+/// verified against screen_protector's real API surface:
+///   - `ScreenProtector.preventScreenshotOn()` /
+///     `.preventScreenshotOff()` — supported on both Android and iOS,
+///     blocks screenshots/screen recording while the screen is active.
+///   - `ScreenProtector.protectDataLeakageOn()` /
+///     `.protectDataLeakageOff()` — Android-only, redacts the app's
+///     thumbnail in the recent-apps switcher (no-ops on iOS; iOS instead
+///     uses `protectDataLeakageWithColor/Blur/Image`, not needed here
+///     since we don't have iOS-specific branding assets for this).
 ///
 /// OWASP MASVS-STORAGE-1 (mencegah kebocoran data sensitif lewat
-/// screenshot/recording, mis. nomor kartu, jumlah kembalian tunai, atau
-/// invoice detail).
+/// screenshot/recording/app-switcher thumbnail, mis. jumlah kembalian
+/// tunai, atau invoice detail).
 ///
-/// PAKET DIGANTI (build fix): sebelumnya pakai `no_screenshot ^0.3.6`,
-/// yang source Kotlin-nya (`NoScreenshotPlugin.kt`) mendeklarasikan
-/// konstanta yang sama baik sebagai top-level property maupun di dalam
-/// companion object — bentrok ("Conflicting declarations" / "Overload
-/// resolution ambiguity") saat dikompilasi dengan Kotlin/AGP versi baru,
-/// sehingga `flutter run` gagal total di step `compileDebugKotlin`. Ini
-/// bug di dalam plugin itu sendiri, bukan di kode aplikasi, dan belum
-/// ada rilis perbaikan dari upstream-nya per saat ini.
-///
-/// Diganti ke `screen_protector`, paket yang lebih aktif dipelihara dan
-/// menyediakan kapabilitas yang sama (blokir screenshot & screen
-/// recording di Android via FLAG_SECURE, plus app-switcher blur di iOS).
-/// API publik widget ini (`ScreenShieldWrapper({child})`) TIDAK berubah,
-/// jadi tidak ada call site lain yang perlu disentuh.
-///
-/// WAJIB: tambahkan `screen_protector: ^1.4.2` (atau versi stabil
-/// terbaru) ke `pubspec.yaml`, lalu hapus baris `no_screenshot` dari
-/// `pubspec.yaml` dan jalankan `flutter pub get`. Paket lama tidak lagi
-/// dipakai di mana pun setelah perubahan ini.
-///
-/// PEMAKAIAN: bungkus body dari PaymentPage / ReceiptPage:
+/// USAGE (applied to PaymentPage and ReceiptPage):
 /// ```dart
 /// return ScreenShieldWrapper(
 ///   child: AppScaffold(...),
@@ -55,6 +54,8 @@ class _ScreenShieldWrapperState extends State<ScreenShieldWrapper>
   Future<void> _enableShield() async {
     try {
       await ScreenProtector.preventScreenshotOn();
+      // Android-only; no-ops safely on iOS per package docs.
+      await ScreenProtector.protectDataLeakageOn();
     } catch (_) {
       // Non-fatal: beberapa device/OS version bisa menolak; jangan
       // crash alur pembayaran karena ini.
@@ -64,6 +65,7 @@ class _ScreenShieldWrapperState extends State<ScreenShieldWrapper>
   Future<void> _disableShield() async {
     try {
       await ScreenProtector.preventScreenshotOff();
+      await ScreenProtector.protectDataLeakageOff();
     } catch (_) {}
   }
 
@@ -80,7 +82,7 @@ class _ScreenShieldWrapperState extends State<ScreenShieldWrapper>
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     // Re-assert shield saat kembali dari background — beberapa OEM
-    // Android me-reset FLAG_SECURE saat app resume dari task switcher.
+    // Android me-reset flag proteksi saat app resume dari task switcher.
     if (state == AppLifecycleState.resumed) {
       _enableShield();
     }

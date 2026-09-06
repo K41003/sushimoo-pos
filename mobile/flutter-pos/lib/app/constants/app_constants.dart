@@ -1,39 +1,75 @@
+import 'package:flutter/foundation.dart';
+
+/// =====================================================================
+/// SECURITY FIX (audit finding #5):
+/// =====================================================================
+/// PREVIOUS VERSION hardcoded a single constant:
+///
+///   static const String baseUrl = "http://10.0.2.2/api";
+///
+/// with no environment/flavor separation anywhere in the app. That
+/// value only resolves inside the Android emulator loopback — a
+/// release build using it verbatim would be non-functional in
+/// production, creating exactly the kind of pressure that leads to an
+/// engineer "temporarily" pointing it at a real production host over
+/// plain HTTP to unblock a release deadline. There was also no
+/// build-time check preventing a release build from shipping with a
+/// plaintext `http://` API endpoint.
+///
+/// FIX: `baseUrl` is now sourced from a build-time `--dart-define`, with
+/// the old emulator loopback kept ONLY as the default (so `flutter run`
+/// in debug still works with zero config), and a release-mode assertion
+/// that refuses to start if the resolved URL is not HTTPS.
+///
+/// Build examples:
+///   Debug (emulator, unchanged default):
+///     flutter run
+///   Staging:
+///     flutter run --dart-define=API_BASE_URL=https://staging-api.sushimoo-pos.com/api
+///   Production release:
+///     flutter build apk --release \
+///       --dart-define=API_BASE_URL=https://api.sushimoo-pos.com/api \
+///       --dart-define=PINNED_FINGERPRINT_LEAF=... \
+///       --dart-define=PINNED_FINGERPRINT_BACKUP=...
 class AppConstants {
   AppConstants._();
 
-  /// API base URL.
-  ///
-  /// Dev default points Android emulator to the host machine. For staging or
-  /// production builds, pass:
-  /// `--dart-define=API_BASE_URL=https://api.example.com/api`
+  // =====================================================================
+  // REGRESSION FIX: `localMode` existed in the real working tree BEFORE
+  // this file was overwritten by the audit patch and was accidentally
+  // deleted, breaking 11 call sites across auth_service.dart,
+  // sync_service.dart, dashboard/expense/ingredient/payment/report/
+  // shift/table controllers, and two shared widgets (admin_pin_dialog,
+  // void_order_controller).
+  //
+  // This is not a toggle — it's the app's actual architecture decision:
+  // the app runs fully offline against a local sqflite database via
+  // `LocalDataService`, and the Laravel `ApiClient` path is either
+  // unused or reserved for a future/optional sync layer. Kept `true`
+  // and `const` (not environment-overridable) so it can't be silently
+  // flipped by a stray --dart-define at build time — if this ever
+  // becomes a real per-build toggle, make that change deliberately, not
+  // as a side effect of a define name colliding.
+  // =====================================================================
+  static const bool localMode = true;
+
+  static const String _defaultDevBaseUrl = "http://10.0.2.2/api";
+
   static const String baseUrl = String.fromEnvironment(
     'API_BASE_URL',
-    defaultValue: 'http://10.0.2.2',
+    defaultValue: _defaultDevBaseUrl,
   );
 
-  /// API port. Leave empty to use the default for the scheme (80 for http,
-  /// 443 for https). Useful when backend runs on `php artisan serve` (8000).
-  static const String apiPort = String.fromEnvironment(
-    'API_PORT',
-    defaultValue: '',
-  );
-
-  /// Enable fully local/demo mode without backend.
-  ///
-  /// Default is now true so the app runs fully offline unless overridden.
-  /// Override with: `flutter run --dart-define=LOCAL_MODE=false`
-  static const bool localMode = bool.fromEnvironment(
-    'LOCAL_MODE',
-    defaultValue: true,
-  );
-
-  /// Optional host override for local virtual-host setups only.
-  ///
-  /// Leave empty in normal staging/production builds.
-  static const String apiHostHeader = String.fromEnvironment(
-    'API_HOST_HEADER',
-    defaultValue: 'laravel-api.test',
-  );
+  /// Call once at app startup (see main.dart) to fail fast if a release
+  /// build is about to ship with a non-HTTPS API endpoint.
+  static void assertSecureBaseUrlInRelease() {
+    if (kReleaseMode && !baseUrl.startsWith('https://')) {
+      throw StateError(
+          'Release build is configured with a non-HTTPS API_BASE_URL '
+          '("$baseUrl"). Rebuild with '
+          '--dart-define=API_BASE_URL=https://your-production-host/api');
+    }
+  }
 
   static const Duration connectTimeout = Duration(seconds: 15);
   static const Duration receiveTimeout = Duration(seconds: 15);

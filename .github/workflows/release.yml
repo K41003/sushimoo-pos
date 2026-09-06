@@ -1,0 +1,64 @@
+name: Release Build (Android)
+
+# SECURITY FIX (audit follow-up): this workflow gates every release
+# build behind scripts/verify_release_secrets.sh. If the required
+# secrets (API_BASE_URL, PINNED_FINGERPRINT_LEAF,
+# PINNED_FINGERPRINT_BACKUP) are missing, still placeholders, or the
+# base URL isn't HTTPS, the pipeline fails BEFORE `flutter build` runs
+# — no artifact with unpinned or plaintext networking is ever produced,
+# signed, or uploaded.
+#
+# Configure these as encrypted repo/environment secrets in
+# Settings -> Secrets and variables -> Actions:
+#   API_BASE_URL
+#   PINNED_FINGERPRINT_LEAF
+#   PINNED_FINGERPRINT_BACKUP
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  verify-and-build:
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Verify release secrets are configured and not placeholders
+        run: |
+          chmod +x ./mobile/flutter-pos/scripts/verify_release_secrets.sh
+          ./mobile/flutter-pos/scripts/verify_release_secrets.sh \
+            --base-url "${{ secrets.API_BASE_URL }}" \
+            --leaf "${{ secrets.PINNED_FINGERPRINT_LEAF }}" \
+            --backup "${{ secrets.PINNED_FINGERPRINT_BACKUP }}"
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      - name: flutter pub get
+        working-directory: mobile/flutter-pos
+        run: flutter pub get
+
+      - name: flutter analyze
+        working-directory: mobile/flutter-pos
+        run: flutter analyze
+
+      # Gate reached only if verification above passed — no build step
+      # runs with unverified/placeholder release configuration.
+      - name: Build release APK
+        working-directory: mobile/flutter-pos
+        run: |
+          flutter build apk --release \
+            --dart-define=API_BASE_URL="${{ secrets.API_BASE_URL }}" \
+            --dart-define=PINNED_FINGERPRINT_LEAF="${{ secrets.PINNED_FINGERPRINT_LEAF }}" \
+            --dart-define=PINNED_FINGERPRINT_BACKUP="${{ secrets.PINNED_FINGERPRINT_BACKUP }}"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: sushimoo-pos-release
+          path: mobile/flutter-pos/build/app/outputs/flutter-apk/app-release.apk

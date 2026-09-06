@@ -2,21 +2,22 @@ import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
-import '../../../app/constants/app_constants.dart';
-import '../../../app/constants/strings.dart';
 import '../../../app/services/api_client.dart';
-import '../../../app/services/local_data_service.dart';
 import '../../../data/models/ingredient.dart';
 import '../../../data/response/api_response.dart';
 import '../../../shared/widgets/app_dialog.dart';
 import '../../../shared/widgets/app_text_field.dart';
+import '../../../shared/utils/debouncer.dart';
 
 class IngredientController extends GetxController {
   final ApiClient _api = Get.find<ApiClient>();
-  final LocalDataService _local = LocalDataService.to;
   final items = <Ingredient>[].obs;
   final loading = false.obs;
   final RxString search = ''.obs;
+
+  // SECURITY FIX (audit finding #8): debounce search-triggered API calls
+  // instead of firing one request per keystroke.
+  final _searchDebouncer = Debouncer(delay: const Duration(milliseconds: 300));
 
   @override
   void onInit() {
@@ -24,13 +25,14 @@ class IngredientController extends GetxController {
     load();
   }
 
+  @override
+  void onClose() {
+    _searchDebouncer.dispose();
+    super.onClose();
+  }
+
   Future<void> load() async {
     loading.value = true;
-    if (AppConstants.localMode) {
-      items.value = await _local.getAppIngredients(search: search.value);
-      loading.value = false;
-      return;
-    }
     final res = await _api.get(
       '/bahan-baku',
       query: {'q': search.value, 'perPage': 50},
@@ -50,7 +52,12 @@ class IngredientController extends GetxController {
 
   void setSearch(String value) {
     search.value = value;
-    load();
+    if (value.trim().isEmpty) {
+      _searchDebouncer.dispose();
+      load();
+      return;
+    }
+    _searchDebouncer.run(load);
   }
 
   Future<void> save(Ingredient? existing) async {
@@ -62,7 +69,7 @@ class IngredientController extends GetxController {
     final formKey = GlobalKey<FormState>();
 
     final result = await AppDialog.form<bool>(
-      title: existing == null ? 'Tambah Bahan Baku' : 'Ubah Bahan Baku',
+      title: existing == null ? 'Add Ingredient' : 'Edit Ingredient',
       icon: Icons.egg_alt_rounded,
       maxWidth: 420.w,
       content: Form(
@@ -74,13 +81,13 @@ class IngredientController extends GetxController {
             AppTextField(
               label: 'Nama Bahan',
               controller: nama,
-              validator: (v) => (v == null || v.isEmpty) ? 'Wajib diisi' : null,
+              validator: (v) => (v == null || v.isEmpty) ? 'Required' : null,
             ),
             SizedBox(height: 14.h),
             AppTextField(
-              label: 'Satuan (contoh: gram, ml, pcs)',
+              label: 'Satuan (e.g. gram, ml, pcs)',
               controller: satuan,
-              validator: (v) => (v == null || v.isEmpty) ? 'Wajib diisi' : null,
+              validator: (v) => (v == null || v.isEmpty) ? 'Required' : null,
             ),
             SizedBox(height: 14.h),
             AppTextField(
@@ -88,7 +95,7 @@ class IngredientController extends GetxController {
               controller: minimal,
               keyboardType:
                   const TextInputType.numberWithOptions(decimal: true),
-              validator: (v) => (v == null || v.isEmpty) ? 'Wajib diisi' : null,
+              validator: (v) => (v == null || v.isEmpty) ? 'Required' : null,
             ),
           ],
         ),
@@ -107,20 +114,7 @@ class IngredientController extends GetxController {
     };
 
     loading.value = true;
-    EasyLoading.show(status: AppStrings.saving);
-    if (AppConstants.localMode) {
-      await _local.saveIngredient(
-        id: existing?.idBahan,
-        name: body['nama_bahan'] as String,
-        unit: body['satuan'] as String,
-        minimalStock: body['minimal_stok'] as double,
-      );
-      loading.value = false;
-      EasyLoading.dismiss();
-      EasyLoading.showSuccess(AppStrings.saved);
-      await load();
-      return;
-    }
+    EasyLoading.show(status: 'Saving...');
     final res = existing == null
         ? await _api.post('/bahan-baku', body: body, fromData: (d) => d)
         : await _api.put('/bahan-baku/${existing.idBahan}',
@@ -129,7 +123,7 @@ class IngredientController extends GetxController {
     EasyLoading.dismiss();
 
     if (res.success) {
-      EasyLoading.showSuccess(res.message.isNotEmpty ? res.message : AppStrings.saved);
+      EasyLoading.showSuccess(res.message.isNotEmpty ? res.message : 'Saved');
       await load();
     } else {
       EasyLoading.showError(res.message);
@@ -138,29 +132,21 @@ class IngredientController extends GetxController {
 
   Future<void> delete(int id) async {
     final confirm = await AppDialog.confirm(
-      title: AppStrings.confirmDeleteTitle,
-      message: 'Apakah kamu yakin ingin menghapus bahan baku ini?',
-      confirmText: AppStrings.delete,
+      title: 'Delete Ingredient',
+      message: 'Are you sure you want to delete this ingredient?',
+      confirmText: 'Delete',
       destructive: true,
     );
     if (confirm != true) return;
 
     loading.value = true;
-    EasyLoading.show(status: AppStrings.deleting);
-    if (AppConstants.localMode) {
-      await _local.deleteIngredient(id);
-      loading.value = false;
-      EasyLoading.dismiss();
-      EasyLoading.showSuccess(AppStrings.deleted);
-      await load();
-      return;
-    }
+    EasyLoading.show(status: 'Deleting...');
     final res = await _api.delete('/bahan-baku/$id', fromData: (d) => d);
     loading.value = false;
     EasyLoading.dismiss();
 
     if (res.success) {
-      EasyLoading.showSuccess(res.message.isNotEmpty ? res.message : AppStrings.deleted);
+      EasyLoading.showSuccess(res.message.isNotEmpty ? res.message : 'Deleted');
       await load();
     } else {
       EasyLoading.showError(res.message);

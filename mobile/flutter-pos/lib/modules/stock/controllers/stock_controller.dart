@@ -2,26 +2,27 @@ import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
-import '../../../app/constants/app_constants.dart';
-import '../../../app/constants/strings.dart';
 import '../../../app/constants/colors.dart';
 import '../../../app/constants/decorations.dart';
 import '../../../app/constants/dimensions.dart';
 import '../../../app/services/api_client.dart';
-import '../../../app/services/local_data_service.dart';
 import '../../../data/models/ingredient.dart';
 import '../../../data/models/stock.dart';
 import '../../../data/response/api_response.dart';
 import '../../../shared/widgets/app_dialog.dart';
 import '../../../shared/widgets/app_text_field.dart';
+import '../../../shared/utils/debouncer.dart';
 
 class StockController extends GetxController {
   final ApiClient _api = Get.find<ApiClient>();
-  final LocalDataService _local = LocalDataService.to;
   final items = <Stock>[].obs;
   final ingredients = <Ingredient>[].obs;
   final loading = false.obs;
   final RxString search = ''.obs;
+
+  // SECURITY FIX (audit finding #8): debounce search-triggered API calls
+  // instead of firing one request per keystroke.
+  final _searchDebouncer = Debouncer(delay: const Duration(milliseconds: 300));
 
   @override
   void onInit() {
@@ -30,11 +31,13 @@ class StockController extends GetxController {
     load();
   }
 
+  @override
+  void onClose() {
+    _searchDebouncer.dispose();
+    super.onClose();
+  }
+
   Future<void> loadIngredients() async {
-    if (AppConstants.localMode) {
-      ingredients.value = await _local.getAppIngredients();
-      return;
-    }
     final res = await _api.get(
       '/bahan-baku',
       query: {'perPage': 100},
@@ -51,11 +54,6 @@ class StockController extends GetxController {
 
   Future<void> load() async {
     loading.value = true;
-    if (AppConstants.localMode) {
-      items.value = await _local.getAppStock(search: search.value);
-      loading.value = false;
-      return;
-    }
     final res = await _api.get(
       '/stok-bahan',
       query: {'q': search.value, 'perPage': 50},
@@ -75,7 +73,12 @@ class StockController extends GetxController {
 
   void setSearch(String value) {
     search.value = value;
-    load();
+    if (value.trim().isEmpty) {
+      _searchDebouncer.dispose();
+      load();
+      return;
+    }
+    _searchDebouncer.run(load);
   }
 
   Future<void> addAdjustment() async {
@@ -85,7 +88,7 @@ class StockController extends GetxController {
     final formKey = GlobalKey<FormState>();
 
     final result = await AppDialog.form<bool>(
-      title: 'Tambah Penyesuaian Stok',
+      title: 'Add Stock Adjustment',
       icon: Icons.inventory_2_rounded,
       maxWidth: 440.w,
       content: Form(
@@ -95,35 +98,30 @@ class StockController extends GetxController {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text(
-              'Bahan Baku',
+              'Ingredient',
               style: TextStyle(
-                fontSize: 14.sp,
+                fontSize: 13.sp,
                 fontWeight: FontWeight.w600,
                 color: AppColors.inkMuted,
               ),
             ),
             SizedBox(height: 6.h),
             Obx(() => Container(
-                  padding:
-                      EdgeInsets.symmetric(horizontal: 14.w, vertical: 4.h),
-                  decoration:
-                      AppDecorations.control(radius: AppDimensions.radiusMd),
+                  padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 4.h),
+                  decoration: AppDecorations.control(radius: AppDimensions.radiusMd),
                   child: DropdownButtonHideUnderline(
                     child: DropdownButton<Ingredient>(
                       isExpanded: true,
                       value: selected.value,
-                      hint: Text('Pilih bahan baku',
-                          style: TextStyle(
-                              color: AppColors.inkFaint, fontSize: 14.5.sp)),
-                      icon: const Icon(Icons.keyboard_arrow_down_rounded,
-                          color: AppColors.inkMuted),
+                      hint: Text('Select ingredient',
+                          style: TextStyle(color: AppColors.inkFaint, fontSize: 13.5.sp)),
+                      icon: const Icon(Icons.keyboard_arrow_down_rounded, color: AppColors.inkMuted),
                       items: ingredients
                           .map((e) => DropdownMenuItem(
                                 value: e,
                                 child: Text(
                                   '${e.namaBahan} (${e.satuan})',
-                                  style: TextStyle(
-                                      fontSize: 14.5.sp, color: AppColors.ink),
+                                  style: TextStyle(fontSize: 13.5.sp, color: AppColors.ink),
                                 ),
                               ))
                           .toList(),
@@ -137,14 +135,15 @@ class StockController extends GetxController {
               controller: jumlah,
               keyboardType:
                   const TextInputType.numberWithOptions(decimal: true),
-              validator: (v) => (v == null || v.isEmpty) ? 'Wajib diisi' : null,
+              validator: (v) =>
+                  (v == null || v.isEmpty) ? 'Required' : null,
             ),
           ],
         ),
       ),
       onConfirm: () async {
         if (selected.value == null) {
-          EasyLoading.showError('Silakan pilih bahan baku');
+          EasyLoading.showError('Please select an ingredient');
           return false;
         }
         if (!formKey.currentState!.validate()) return false;
@@ -154,18 +153,7 @@ class StockController extends GetxController {
     if (result != true || selected.value == null) return;
 
     loading.value = true;
-    EasyLoading.show(status: AppStrings.saving);
-    if (AppConstants.localMode) {
-      await _local.addStockAdjustment(
-        ingredientId: selected.value!.idBahan,
-        jumlah: double.tryParse(jumlah.text) ?? 0,
-      );
-      loading.value = false;
-      EasyLoading.dismiss();
-      EasyLoading.showSuccess(AppStrings.saved);
-      await load();
-      return;
-    }
+    EasyLoading.show(status: 'Saving...');
     final res = await _api.post(
       '/stok-bahan',
       body: {
@@ -178,7 +166,8 @@ class StockController extends GetxController {
     EasyLoading.dismiss();
 
     if (res.success) {
-      EasyLoading.showSuccess(res.message.isNotEmpty ? res.message : AppStrings.saved);
+      EasyLoading.showSuccess(
+          res.message.isNotEmpty ? res.message : 'Saved');
       await load();
     } else {
       EasyLoading.showError(res.message);
@@ -186,21 +175,23 @@ class StockController extends GetxController {
   }
 
   Future<void> adjust(Stock stock) async {
-    final jumlah = TextEditingController(text: stock.jumlah.toString());
+    final jumlah =
+        TextEditingController(text: stock.jumlah.toString());
     final formKey = GlobalKey<FormState>();
 
     final result = await AppDialog.form<bool>(
-      title: 'Perbarui Stok (${stock.ingredient?.namaBahan ?? 'Item'})',
+      title: 'Update Stock (${stock.ingredient?.namaBahan ?? 'Item'})',
       icon: Icons.edit_note_rounded,
       maxWidth: 400.w,
-      confirmText: AppStrings.save,
+      confirmText: 'Update',
       content: Form(
         key: formKey,
         child: AppTextField(
           label: 'Jumlah (${stock.ingredient?.satuan ?? ''})',
           controller: jumlah,
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
-          validator: (v) => (v == null || v.isEmpty) ? 'Wajib diisi' : null,
+          validator: (v) =>
+              (v == null || v.isEmpty) ? 'Required' : null,
         ),
       ),
       onConfirm: () async {
@@ -215,15 +206,7 @@ class StockController extends GetxController {
 
   Future<void> updateStock(int id, double jumlah) async {
     loading.value = true;
-    EasyLoading.show(status: 'Memperbarui...');
-    if (AppConstants.localMode) {
-      await _local.updateStock(id, jumlah);
-      loading.value = false;
-      EasyLoading.dismiss();
-      EasyLoading.showSuccess(AppStrings.updated);
-      await load();
-      return;
-    }
+    EasyLoading.show(status: 'Updating...');
     final res = await _api.put(
       '/stok-bahan/$id',
       body: {'jumlah': jumlah},
@@ -233,7 +216,8 @@ class StockController extends GetxController {
     EasyLoading.dismiss();
 
     if (res.success) {
-      EasyLoading.showSuccess(res.message.isNotEmpty ? res.message : AppStrings.updated);
+      EasyLoading.showSuccess(
+          res.message.isNotEmpty ? res.message : 'Updated');
       await load();
     } else {
       EasyLoading.showError(res.message);
@@ -242,29 +226,22 @@ class StockController extends GetxController {
 
   Future<void> delete(int id) async {
     final confirm = await AppDialog.confirm(
-      title: AppStrings.confirmDeleteTitle,
-      message: 'Apakah kamu yakin ingin menghapus data stok ini?',
-      confirmText: AppStrings.delete,
+      title: 'Delete Stock',
+      message: 'Are you sure you want to delete this stock entry?',
+      confirmText: 'Delete',
       destructive: true,
     );
     if (confirm != true) return;
 
     loading.value = true;
-    EasyLoading.show(status: AppStrings.deleting);
-    if (AppConstants.localMode) {
-      await _local.deleteStock(id);
-      loading.value = false;
-      EasyLoading.dismiss();
-      EasyLoading.showSuccess(AppStrings.deleted);
-      await load();
-      return;
-    }
+    EasyLoading.show(status: 'Deleting...');
     final res = await _api.delete('/stok-bahan/$id', fromData: (d) => d);
     loading.value = false;
     EasyLoading.dismiss();
 
     if (res.success) {
-      EasyLoading.showSuccess(res.message.isNotEmpty ? res.message : AppStrings.deleted);
+      EasyLoading.showSuccess(
+          res.message.isNotEmpty ? res.message : 'Deleted');
       await load();
     } else {
       EasyLoading.showError(res.message);

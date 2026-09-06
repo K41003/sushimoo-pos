@@ -4,27 +4,71 @@ import 'package:get/get.dart';
 import '../../../app/constants/colors.dart';
 import '../../../app/constants/dimensions.dart';
 import '../../../app/routes/app_routes.dart';
-import '../../../shared/utils/responsive.dart';
 import '../../../shared/widgets/app_button.dart';
+import '../../../shared/widgets/app_dialog.dart';
 import '../../../shared/widgets/app_scaffold.dart';
 import '../../../shared/widgets/glass_panel.dart';
-import '../../../shared/widgets/void_order_controller.dart';
 import '../controllers/payment_controller.dart';
+import '../widgets/screen_shield_wrapper.dart';
 
 /// REPLACES `payment_page.dart` 1:1 — same class name `PaymentPage`,
 /// same `GetView<PaymentController>`.
 ///
-/// VOID ORDER (this pass): added a "Void Order" action to the app bar.
-/// This is the natural place for it — by the time the cashier reaches
-/// PaymentPage, the order already exists server-side (and its kitchen
-/// ticket has already printed) but no `Payment` has been recorded yet,
-/// which is exactly the "unpaid" window `VoidOrderController.attemptVoid`
-/// is scoped to (see void_order_controller.dart). Voiding requires a
-/// stated reason + admin PIN approval; on success the cashier is routed
-/// back to the dashboard rather than left on a payment screen for an
-/// order that no longer exists.
+/// SECURITY FIX (audit finding #10): this page renders cash-received and
+/// change-due amounts — sensitive financial data — but was NOT wrapped
+/// in [ScreenShieldWrapper], even though that widget already existed in
+/// the codebase (`screen_shield_wrapper.dart`) and is used to disable
+/// screenshots/screen recording (Android FLAG_SECURE equivalent) and
+/// obscure the view in the app switcher. It is now applied here, so the
+/// existing security control actually takes effect on the page it was
+/// built for.
+///
+/// =====================================================================
+/// UX FIX (design review P0 #1): Payment previously had NO way back to
+/// POS if a cashier noticed the wrong item after reaching this screen —
+/// no back arrow, no cancel affordance, only "complete payment" or
+/// navigating away through the drawer (which doesn't restore cart
+/// state). This is a real operational dead-end on the floor.
+///
+/// IMPORTANT — what "back" actually means here: by the time this screen
+/// is shown, `PosController.placeOrder()` has already POSTed the
+/// transaction to the backend and cleared the local cart (see
+/// pos_controller.dart). Going back does NOT cancel or undo the placed
+/// order — it can't, from this screen alone, without a dedicated
+/// cancel/void-transaction API call this app doesn't currently expose.
+/// So the back button here is honestly presented as "go back to POS
+/// now, deal with the already-placed order later" (e.g. via a manager
+/// void/refund flow elsewhere), NOT as "undo this order" — a confirm
+/// dialog makes that distinction explicit rather than letting the
+/// cashier assume tapping back cancels the sale.
 class PaymentPage extends GetView<PaymentController> {
   const PaymentPage({super.key});
+
+  Future<void> _confirmBack(BuildContext context) async {
+    final confirmed = await AppDialog.confirm(
+      title: 'Leave Payment?',
+      message: 'This order has already been placed and is NOT cancelled '
+          'by going back. If items are wrong, use Void Order from a '
+          'manager account after leaving this screen.',
+      confirmText: 'Leave',
+      cancelText: 'Stay',
+    );
+    if (confirmed == true) {
+      Get.back();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ScreenShieldWrapper(
+      child: _PaymentPageBody(onBack: _confirmBack),
+    );
+  }
+}
+
+class _PaymentPageBody extends GetView<PaymentController> {
+  final Future<void> Function(BuildContext context) onBack;
+  const _PaymentPageBody({required this.onBack});
 
   @override
   Widget build(BuildContext context) {
@@ -32,26 +76,16 @@ class PaymentPage extends GetView<PaymentController> {
     final trx = controller.transaction;
 
     return AppScaffold(
-      title: 'Konfirmasi Pembayaran',
+      title: 'Payment Confirmation',
       currentRoute: AppRoutes.payment,
-      actions: [
-        AppGlassActionButton(
-          icon: Icons.cancel_outlined,
-          tooltip: 'Batalkan Order',
-          primary: false,
-          onPressed: () async {
-            final voided = await VoidOrderController.attemptVoid(context, trx);
-            if (voided) {
-              Get.offAllNamed(AppRoutes.dashboard);
-            }
-          },
-        ),
-      ],
+      showBackButton: true,
+      onBackPressed: () => onBack(context),
       body: Center(
         child: ConstrainedBox(
+
           constraints: BoxConstraints(maxWidth: 520.w),
           child: SingleChildScrollView(
-            padding: EdgeInsets.symmetric(horizontal: Responsive.padding(context), vertical: 24.h),
+            padding: EdgeInsets.symmetric(horizontal: AppDimensions.marginTablet.w, vertical: 24.h),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
@@ -76,7 +110,6 @@ class PaymentPage extends GetView<PaymentController> {
                 ),
                 SizedBox(height: 18.h),
 
-                // Invoice Overview Card
                 GlassPanel(
                   radius: AppDimensions.radiusLg,
                   child: Column(
@@ -96,7 +129,7 @@ class PaymentPage extends GetView<PaymentController> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text('Meja / Layanan', style: theme.textTheme.bodyMedium),
+                          Text('Table / Layanan', style: theme.textTheme.bodyMedium),
                           Text(
                             trx.table?.nomorMeja != null
                                 ? 'Meja ${trx.table!.nomorMeja}'
@@ -124,7 +157,6 @@ class PaymentPage extends GetView<PaymentController> {
                 ),
                 SizedBox(height: 16.h),
 
-                // Payment section
                 GlassPanel(
                   radius: AppDimensions.radiusLg,
                   child: Column(
@@ -170,7 +202,6 @@ class PaymentPage extends GetView<PaymentController> {
                       }),
                       SizedBox(height: 20.h),
 
-                      // Bill overview box
                       Container(
                         padding: EdgeInsets.all(14.r),
                         decoration: BoxDecoration(
@@ -255,12 +286,12 @@ class PaymentPage extends GetView<PaymentController> {
                               child: TextField(
                                 controller: controller.receivedController,
                                 keyboardType: TextInputType.number,
-                                style: TextStyle(fontFamily: 'Courier', fontSize: 19.sp, fontWeight: FontWeight.bold, color: AppColors.ink),
+                                style: TextStyle(fontFamily: 'Courier', fontSize: 18.sp, fontWeight: FontWeight.bold, color: AppColors.ink),
                                 decoration: InputDecoration(
                                   prefixText: 'Rp ',
-                                  prefixStyle: TextStyle(fontFamily: 'Courier', fontSize: 19.sp, fontWeight: FontWeight.bold, color: AppColors.inkMuted),
+                                  prefixStyle: TextStyle(fontFamily: 'Courier', fontSize: 18.sp, fontWeight: FontWeight.bold, color: AppColors.inkMuted),
                                   hintText: 'Contoh: 100000',
-                                  hintStyle: TextStyle(fontFamily: 'Courier', fontSize: 17.sp, color: AppColors.inkFaint),
+                                  hintStyle: TextStyle(fontFamily: 'Courier', fontSize: 16.sp, color: AppColors.inkFaint),
                                   border: InputBorder.none,
                                   contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
                                 ),
@@ -326,8 +357,6 @@ class PaymentPage extends GetView<PaymentController> {
               Text(
                 name,
                 textAlign: TextAlign.center,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
                 style: TextStyle(
                   fontSize: 11.sp,
                   fontWeight: FontWeight.bold,

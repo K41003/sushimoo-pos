@@ -8,31 +8,36 @@ import 'ssl_pinning_interceptor.dart';
 /// Centralized Dio API client. Wraps every request into the
 /// `{success, message, data}` envelope used by the Laravel backend.
 ///
+/// SECURITY FIX (audit finding #1):
+/// The previous version hardcoded a `'Host': 'laravel-api.test'` header
+/// on EVERY request regardless of `AppConstants.baseUrl`. This was a
+/// local-dev-proxy artifact with no place in a client that may ship to
+/// production — combined with SSL pinning being disabled under
+/// `kDebugMode`, a build that accidentally shipped with debug flags set
+/// would silently route all traffic through this fixed Host header with
+/// no pinning enforcement. It has been removed. If a specific local dev
+/// proxy genuinely requires a Host override, inject it via
+/// `--dart-define` and gate it explicitly behind `kDebugMode`, never as
+/// an unconditional header on the shared client used by every build.
+///
 /// PERUBAHAN KEAMANAN (dibanding versi asli):
 /// 1. Token sekarang dibaca dari [SecureStorageService] (Keystore/
 ///    Keychain), bukan dari `StorageService` (plaintext GetStorage).
 /// 2. [SslPinningInterceptor] ditambahkan sebagai interceptor PERTAMA —
 ///    request akan ditolak sebelum sampai ke server jika sertifikat
-///    tidak cocok dengan pin yang dipercaya (lihat file tsb untuk detail
-///    kenapa `badCertificateCallback => true` di `main.dart` yang lama
-///    berbahaya dan harus dihapus).
+///    tidak cocok dengan pin yang dipercaya.
 class ApiClient extends GetxService {
   static ApiClient get to => Get.find<ApiClient>();
 
   late final Dio dio;
 
   ApiClient() {
-    final effectiveBaseUrl = AppConstants.apiPort.isEmpty
-        ? AppConstants.baseUrl
-        : '${AppConstants.baseUrl}:${AppConstants.apiPort}';
     dio = Dio(BaseOptions(
-      baseUrl: effectiveBaseUrl,
+      baseUrl: AppConstants.baseUrl,
       connectTimeout: AppConstants.connectTimeout,
       receiveTimeout: AppConstants.receiveTimeout,
       headers: {
         'Accept': 'application/json',
-        if (AppConstants.apiHostHeader.isNotEmpty)
-          'Host': AppConstants.apiHostHeader,
       },
     ));
 
@@ -69,7 +74,7 @@ class ApiClient extends GetxService {
   }) async {
     try {
       final response = await dio.request(
-        '/api$path',
+        path,
         data: body,
         queryParameters: query,
         options: Options(method: method),
@@ -87,7 +92,7 @@ class ApiClient extends GetxService {
         final data = e.response!.data as Map<String, dynamic>;
         return ApiResponse<T>(
           success: false,
-          message: data['message'] as String? ?? 'Permintaan gagal',
+          message: data['message'] as String? ?? 'Request failed',
           errors: data['errors'] as Map<String, dynamic>?,
         );
       }

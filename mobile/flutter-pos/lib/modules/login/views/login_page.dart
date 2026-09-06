@@ -10,8 +10,24 @@ import '../controllers/login_controller.dart';
 
 /// REPLACES `login_page.dart` 1:1 — same class name `LoginPage`, same
 /// `GetView<LoginController>`, so `LoginBinding` + `app_pages.dart` need
-/// zero changes. Visual layer rebuilt as Glassmorphic Zen: gradient
-/// canvas + floating color blobs behind a frosted login card.
+/// zero changes.
+///
+/// =====================================================================
+/// UX/SECURITY FIX (design review P0 #3): the previous version rendered
+/// a literal hint below the login card:
+///
+///   Text('Gunakan username "admin" password "password" untuk uji coba.')
+///
+/// hardcoded credentials shown directly in the shipped UI. This is a
+/// security/professionalism issue independent of UX polish — if this
+/// ever reached a release build, it's advertising a default account and
+/// password to anyone who opens the app, on a POS that handles real
+/// cash transactions. Removed entirely rather than gated behind
+/// kDebugMode, since a demo/test account's credentials should live in a
+/// README or onboarding doc for developers, not in shipped app UI under
+/// any build mode — a `kDebugMode` gate would still show it to every
+/// developer running `flutter run` against a shared staging backend with
+/// real data, which isn't meaningfully safer.
 class LoginPage extends GetView<LoginController> {
   const LoginPage({super.key});
 
@@ -35,13 +51,6 @@ class LoginPage extends GetView<LoginController> {
                         _brandStamp(context),
                         SizedBox(height: 32.h),
                         _loginCard(context),
-                        SizedBox(height: 20.h),
-                        Text(
-                          'Gunakan username "admin" password "admin" (atau "kasir"/"kasir") untuk uji coba.',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                              fontSize: 11.5.sp, color: AppColors.inkFaint),
-                        ),
                       ],
                     ),
                   ),
@@ -70,7 +79,7 @@ class LoginPage extends GetView<LoginController> {
         SizedBox(height: 16.h),
         Text('SUSHIMOO', style: Theme.of(context).textTheme.displayLarge),
         SizedBox(height: 4.h),
-        Text('Kasir Restoran', style: Theme.of(context).textTheme.titleMedium),
+        Text('Point of Sale', style: Theme.of(context).textTheme.titleMedium),
       ],
     );
   }
@@ -87,7 +96,7 @@ class LoginPage extends GetView<LoginController> {
             children: [
               const Spacer(),
               Text(
-                'Masuk',
+                'Login',
                 style: Theme.of(context).textTheme.headlineSmall,
               ),
               const Spacer(),
@@ -101,8 +110,8 @@ class LoginPage extends GetView<LoginController> {
           ),
           SizedBox(height: 16.h),
           AppTextField(
-            label: 'Kata Sandi',
-            hint: 'Masukkan kata sandi',
+            label: 'Password',
+            hint: 'Masukkan password',
             controller: controller.passwordController,
             obscure: true,
           ),

@@ -4,14 +4,12 @@ import 'package:get/get.dart';
 import '../../../app/constants/colors.dart';
 import '../../../app/constants/dimensions.dart';
 import '../../../app/themes/theme.dart';
-import '../../../shared/utils/responsive.dart';
+import '../../../shared/utils/responsive.dart' show Responsive, DeviceClass;
 import '../../../shared/widgets/app_button.dart';
 import '../../../shared/widgets/app_chip.dart';
 import '../../../shared/widgets/app_loading.dart';
 import '../../../shared/widgets/app_scaffold.dart';
 import '../../../shared/widgets/glass_panel.dart';
-import '../../../shared/widgets/print_queue_button.dart';
-import '../../../shared/widgets/sync_status_button.dart';
 import '../widgets/pos_product_tile.dart';
 import '../controllers/pos_controller.dart';
 import '../widgets/cart_tile.dart';
@@ -20,70 +18,50 @@ import '../widgets/cart_tile.dart';
 /// `GetView<PosController>`. Layout logic (landscape split / portrait
 /// bottom-sheet cart) is unchanged; only the visual layer is glass now.
 ///
-/// STRUCTURAL FIX (this pass): category chips and the "MENU" title were
-/// not updating when a different category was tapped, even though
-/// `PosController.selectCategory` was confirmed to update
-/// `selectedCategoryId.value` correctly — the products grid (reading a
-/// different `Rx` on the same controller) updated fine every time.
+/// =====================================================================
+/// UX FIX (design review P0 #2): previously the ONLY way to place a
+/// takeaway order was to open the full table-picker sheet (`selectTable`)
+/// and hope there was a "no table" option in it — there wasn't one in
+/// the controller logic at all. Every single order, including
+/// high-volume takeaway business, forced the sheet open.
 ///
-/// Several rounds of simplifying the `Obx` wrapping around the header and
-/// chip strip (collapsing nested `Obx`, adding explicit `Key`s) made no
-/// difference, which means the problem wasn't the shape of the reactive
-/// scope — something about those specific `Obx` widgets in this
-/// particular tree was not receiving updates.
-///
-/// Rather than keep patching individual `Obx` blocks, the entire page
-/// body is now driven by ONE top-level `GetX<PosController>` builder.
-/// `GetX` rebuilds its whole builder function on ANY change to an
-/// observed `Rx`/`Rxn` on the bound controller — there's no per-widget
-/// subscription bookkeeping left that could go stale or fail to attach.
-/// Every value read below (`c.selectedCategoryId`, `c.categories`,
-/// `c.products`, `c.cart`, etc.) now comes from the single `c` instance
-/// handed to this one builder, so there is no more room for a reactive
-/// widget to end up reading from a different scope than the one that
-/// was updated.
-///
-/// OFFLINE QUEUE (this pass): added [SyncStatusButton] to the app bar
-/// `actions`. It renders nothing when there's no pending queue, and a
-/// small "Sync Now (n)" pill when `PosController.placeOrder()` has
-/// queued one or more orders locally (see `OfflineQueueService` /
-/// `SyncService`) — lets the cashier trigger a retry manually instead
-/// of only waiting for the next app launch's auto-sync.
+/// `_cart()`'s table-select row is now a two-part control: the existing
+/// "TABLE" selector (unchanged tap target/behavior, opens the sheet) sits
+/// next to a new explicit "TAKEAWAY" quick-select button that calls
+/// `PosController.setTakeaway()` directly — one tap, no sheet, no
+/// scrolling to find an implicit option that never existed. Selecting an
+/// actual table afterwards still works exactly as before and clears the
+/// takeaway flag (mutual exclusivity handled in the controller).
 class PosPage extends GetView<PosController> {
   const PosPage({super.key});
 
   @override
   Widget build(BuildContext context) {
     return AppScaffold(
-      title: 'Kasir',
+      title: 'POS',
       currentRoute: '/pos',
-      actions: const [SyncStatusButton(), PrintQueueButton()],
       body: GetX<PosController>(
         builder: (c) {
-          // Orientation is locked per device at startup (phones =
-          // portrait-only, tablets = landscape-only — see main.dart),
-          // so `Responsive.isTablet` alone is now enough to pick the
-          // layout; there's no live-rotation state to react to anymore.
-          return Responsive.isTablet(context)
-              ? _tabletLayout(context, c)
-              : _phoneLayout(context, c);
+          // CORRECTION: `Responsive.isLandscapeTablet` no longer exists
+          // — orientation is now locked per device at startup, so
+          // "tablet" and "tablet in landscape" are the same state.
+          // `_landscape`/`_portrait` here are kept as method names for
+          // minimal diff, but now correctly mean "tablet layout" /
+          // "phone layout" rather than literal orientation.
+          return Responsive.classOf(context) == DeviceClass.tablet
+              ? _landscape(context, c)
+              : _portrait(context, c);
         },
       ),
     );
   }
 
-  /// This app's primary/reference layout: side rail + menu grid + a
-  /// permanent cart panel. Only ever shown on a tablet (always
-  /// landscape).
-  Widget _tabletLayout(BuildContext context, PosController c) {
+  Widget _landscape(BuildContext context, PosController c) {
     return Row(
       children: [
         Expanded(
           flex: 3,
-          // Still adapts between 3–5 columns depending on actual rail
-          // width instead of a flat "always 4" (a 7" tablet and a 12"
-          // tablet don't have the same room).
-          child: _menuPanel(context, c, crossAxisCount: Responsive.gridColumns(context, max: 5)),
+          child: _menuPanel(context, c, crossAxisCount: 4),
         ),
         SizedBox(
           width: 400.w,
@@ -101,12 +79,7 @@ class PosPage extends GetView<PosController> {
     );
   }
 
-  /// Phone layout: menu grid + a floating "Keranjang" button that opens
-  /// the cart as a bottom sheet. Only ever shown on a phone (always
-  /// portrait), so this always gets a simple 2-column grid — there's no
-  /// "phone but somehow has tablet-sized width" case to plan for once
-  /// orientation is locked per device.
-  Widget _phoneLayout(BuildContext context, PosController c) {
+  Widget _portrait(BuildContext context, PosController c) {
     return Stack(
       children: [
         Column(
@@ -139,7 +112,7 @@ class PosPage extends GetView<PosController> {
                       const Icon(Icons.shopping_bag_outlined, color: Colors.white, size: 20),
                       SizedBox(width: 8.w),
                       Text(
-                        'Keranjang (${c.cart.length})',
+                        'Cart (${c.cart.length})',
                         style: TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.bold,
@@ -205,9 +178,9 @@ class PosPage extends GetView<PosController> {
         ),
         child: TextField(
           onChanged: c.onSearchChanged,
-          style: TextStyle(fontSize: 16.5.sp, fontWeight: FontWeight.w500, color: AppColors.ink),
+          style: TextStyle(fontSize: 15.sp, fontWeight: FontWeight.w500, color: AppColors.ink),
           decoration: InputDecoration(
-            hintText: 'Cari menu...',
+            hintText: 'Search menu...',
             prefixIcon: Icon(Icons.search, size: 22.sp, color: AppColors.inkMuted),
             suffixIcon: c.isSearching
                 ? IconButton(
@@ -233,10 +206,10 @@ class PosPage extends GetView<PosController> {
           children: [
             Icon(Icons.search_off, size: 40.sp, color: AppColors.inkFaint),
             SizedBox(height: 14.h),
-            Text('Tidak ditemukan', style: Theme.of(context).textTheme.headlineMedium),
+            Text('No results', style: Theme.of(context).textTheme.headlineMedium),
             SizedBox(height: 6.h),
             Text(
-              'Coba nama produk lain.',
+              'Try a different product name.',
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodyMedium,
             ),
@@ -265,7 +238,7 @@ class PosPage extends GetView<PosController> {
                 Text('MENU', style: Theme.of(context).textTheme.labelLarge?.copyWith(letterSpacing: 1.4)),
                 SizedBox(height: 4.h),
                 Text(
-                  category ?? 'Semua Menu',
+                  category ?? 'All Items',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: Theme.of(context).textTheme.headlineLarge,
@@ -314,7 +287,7 @@ class PosPage extends GetView<PosController> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text('Sushimoo', style: Theme.of(context).textTheme.labelLarge?.copyWith(letterSpacing: 1.2)),
-                Text('Kasir', style: Theme.of(context).textTheme.headlineMedium),
+                Text('Point of Sale', style: Theme.of(context).textTheme.headlineMedium),
               ],
             ),
           ),
@@ -332,10 +305,10 @@ class PosPage extends GetView<PosController> {
           children: [
             Icon(Icons.ramen_dining_outlined, size: 40.sp, color: AppColors.inkFaint),
             SizedBox(height: 14.h),
-            Text('Belum ada menu', style: Theme.of(context).textTheme.headlineMedium),
+            Text('No menu items', style: Theme.of(context).textTheme.headlineMedium),
             SizedBox(height: 6.h),
             Text(
-              'Pilih kategori lain atau muat ulang menu.',
+              'Select another category or refresh the menu.',
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodyMedium,
             ),
@@ -358,10 +331,10 @@ class PosPage extends GetView<PosController> {
               Row(
                 children: [
                   Expanded(
-                    child: Text('Pesanan Saat Ini', style: Theme.of(context).textTheme.headlineMedium),
+                    child: Text('Current Order', style: Theme.of(context).textTheme.headlineMedium),
                   ),
                   IconButton(
-                    tooltip: 'Kosongkan keranjang',
+                    tooltip: 'Clear cart',
                     onPressed: c.cart.isEmpty ? null : c.clearCart,
                     icon: Icon(Icons.delete_outline,
                         size: 20.sp,
@@ -370,37 +343,108 @@ class PosPage extends GetView<PosController> {
                 ],
               ),
               SizedBox(height: AppDimensions.sm.h),
-              InkWell(
-                onTap: c.selectTable,
-                borderRadius: BorderRadius.circular(AppDimensions.radiusMd.r),
-                child: Container(
-                  constraints: BoxConstraints(minHeight: AppDimensions.buttonHeight.h),
-                  padding: EdgeInsets.symmetric(horizontal: AppDimensions.md.w, vertical: AppDimensions.sm.h),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.5),
-                    borderRadius: BorderRadius.circular(AppDimensions.radiusMd.r),
-                    border: Border.all(color: AppColors.glassBorder(opacity: 0.7)),
+              // UX FIX (P0 #2): table selector + new one-tap takeaway
+              // button side by side. Table button keeps its original tap
+              // target/behavior; Takeaway is new and calls
+              // `c.setTakeaway()` directly with zero intermediate sheet.
+              // Wrapped in IntrinsicHeight so both cards visually align
+              // to the same height (whichever is taller) WITHOUT the
+              // infinite-height bug `CrossAxisAlignment.stretch` caused
+              // above — IntrinsicHeight computes a bounded height from
+              // the children first, then sizes the Row to that, instead
+              // of asking children to stretch into an as-yet-undetermined
+              // parent height.
+              IntrinsicHeight(
+                child: Row(
+                children: [
+                  Expanded(
+                    flex: 3,
+                    child: InkWell(
+                      onTap: c.selectTable,
+                      borderRadius: BorderRadius.circular(AppDimensions.radiusMd.r),
+                      child: Container(
+                        constraints: BoxConstraints(minHeight: AppDimensions.buttonHeight.h),
+                        padding: EdgeInsets.symmetric(horizontal: AppDimensions.md.w, vertical: AppDimensions.sm.h),
+                        decoration: BoxDecoration(
+                          color: (!c.isTakeaway.value)
+                              ? Colors.white.withValues(alpha: 0.5)
+                              : Colors.white.withValues(alpha: 0.25),
+                          borderRadius: BorderRadius.circular(AppDimensions.radiusMd.r),
+                          border: Border.all(color: AppColors.glassBorder(opacity: 0.7)),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(Icons.table_restaurant_outlined, size: 20.sp, color: AppColors.ink),
+                            SizedBox(width: AppDimensions.sm.w),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text('TABLE', style: Theme.of(context).textTheme.labelSmall),
+                                  Text(
+                                    (!c.isTakeaway.value)
+                                        ? (c.selectedTable.value?.nomorMeja ?? 'Select table')
+                                        : '—',
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(fontSize: 15.sp, fontWeight: FontWeight.w600, color: AppColors.ink),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Icon(Icons.chevron_right, size: 20.sp, color: AppColors.inkFaint),
+                          ],
+                        ),
+                      ),
+                    ),
                   ),
-                  child: Row(
-                    children: [
-                      Icon(Icons.table_restaurant_outlined, size: 20.sp, color: AppColors.ink),
-                      SizedBox(width: AppDimensions.sm.w),
-                      Expanded(
+                  SizedBox(width: AppDimensions.sm.w),
+                  Expanded(
+                    flex: 2,
+                    child: InkWell(
+                      onTap: c.setTakeaway,
+                      borderRadius: BorderRadius.circular(AppDimensions.radiusMd.r),
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 160),
+                        constraints: BoxConstraints(minHeight: AppDimensions.buttonHeight.h),
+                        padding: EdgeInsets.symmetric(horizontal: AppDimensions.sm.w, vertical: AppDimensions.sm.h),
+                        decoration: BoxDecoration(
+                          gradient: c.isTakeaway.value ? AppColors.salmonGradient : null,
+                          color: c.isTakeaway.value ? null : Colors.white.withValues(alpha: 0.5),
+                          borderRadius: BorderRadius.circular(AppDimensions.radiusMd.r),
+                          border: Border.all(
+                            color: c.isTakeaway.value
+                                ? Colors.transparent
+                                : AppColors.glassBorder(opacity: 0.7),
+                            width: 1.2,
+                          ),
+                          boxShadow: c.isTakeaway.value ? AppColors.shadowSalmon : null,
+                        ),
                         child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text('MEJA', style: Theme.of(context).textTheme.labelSmall),
+                            Icon(
+                              Icons.shopping_bag_outlined,
+                              size: 20.sp,
+                              color: c.isTakeaway.value ? Colors.white : AppColors.ink,
+                            ),
+                            SizedBox(height: 4.h),
                             Text(
-                              c.selectedTable.value?.nomorMeja ?? 'Pilih meja',
-                              style: TextStyle(fontSize: 15.sp, fontWeight: FontWeight.w600, color: AppColors.ink),
+                              'TAKEAWAY',
+                              style: TextStyle(
+                                fontSize: 11.5.sp,
+                                fontWeight: FontWeight.w700,
+                                color: c.isTakeaway.value ? Colors.white : AppColors.ink,
+                              ),
                             ),
                           ],
                         ),
                       ),
-                      Icon(Icons.chevron_right, size: 20.sp, color: AppColors.inkFaint),
-                    ],
+                    ),
                   ),
-                ),
+                ],
+              ),
               ),
             ],
           ),
@@ -428,10 +472,10 @@ class PosPage extends GetView<PosController> {
           children: [
             Icon(Icons.shopping_bag_outlined, size: 42.sp, color: AppColors.inkFaint),
             SizedBox(height: 14.h),
-            Text('Keranjang masih kosong', style: Theme.of(context).textTheme.headlineMedium),
+            Text('Cart is empty', style: Theme.of(context).textTheme.headlineMedium),
             SizedBox(height: 6.h),
             Text(
-              'Ketuk menu untuk mulai memesan.',
+              'Tap menu items to start an order.',
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodyMedium,
             ),
@@ -443,6 +487,7 @@ class PosPage extends GetView<PosController> {
 
   Widget _summary(BuildContext context, PosController c) {
     final hasTax = c.tax > 0;
+    final canCheckout = c.cart.isNotEmpty;
     return Padding(
       padding: EdgeInsets.all(AppDimensions.md.w),
       child: GlassPanel(
@@ -454,7 +499,7 @@ class PosPage extends GetView<PosController> {
             _summaryRow(context, 'Subtotal', c.subtotal),
             if (hasTax) ...[
               SizedBox(height: AppDimensions.xs.h),
-              _summaryRow(context, 'Pajak', c.tax),
+              _summaryRow(context, 'Tax', c.tax),
             ],
             Padding(
               padding: EdgeInsets.symmetric(vertical: AppDimensions.sm.h + 2.h),
@@ -463,16 +508,16 @@ class PosPage extends GetView<PosController> {
             Row(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                Expanded(child: Text('Total Bayar', style: Theme.of(context).textTheme.bodyLarge)),
+                Expanded(child: Text('Grand Total', style: Theme.of(context).textTheme.bodyLarge)),
                 Text(_money(c.grandTotal), style: AppTypography.price),
               ],
             ),
             SizedBox(height: AppDimensions.md.h),
             AppButton(
-              label: 'Bayar',
+              label: 'Bayar / Checkout',
               icon: Icons.arrow_forward_rounded,
               loading: c.loading.value,
-              onPressed: c.cart.isEmpty ? null : c.placeOrder,
+              onPressed: canCheckout ? c.placeOrder : null,
             ),
           ],
         ),
