@@ -62,7 +62,24 @@ class AppConstants {
 
   /// Call once at app startup (see main.dart) to fail fast if a release
   /// build is about to ship with a non-HTTPS API endpoint.
+  ///
+  /// BLACK-SCREEN FIX: this used to run unconditionally, including when
+  /// `localMode` is true. Since `localMode` means the app never talks to
+  /// `baseUrl` at all (everything goes through the local sqflite DB via
+  /// `LocalDataService`), a plain `flutter build apk --release` /
+  /// `flutter run --release` on a real device — with no
+  /// `--dart-define=API_BASE_URL=...` supplied, which is the normal case
+  /// while `localMode` is the app's actual architecture — hit
+  /// `kReleaseMode == true` and `baseUrl == _defaultDevBaseUrl`
+  /// ("http://10.0.2.2/api", not https), so this threw a `StateError`
+  /// BEFORE `runApp` was ever called in main.dart. No widget tree is ever
+  /// built in that case, which is exactly what a permanent black screen
+  /// on a real device (but never in `flutter run` debug, where
+  /// `kReleaseMode` is false) looks like. Guard it behind `!localMode` so
+  /// the check only fires when the app is actually configured to talk to
+  /// a real backend over HTTP.
   static void assertSecureBaseUrlInRelease() {
+    if (localMode) return;
     if (kReleaseMode && !baseUrl.startsWith('https://')) {
       throw StateError(
           'Release build is configured with a non-HTTPS API_BASE_URL '

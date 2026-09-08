@@ -1,7 +1,10 @@
+import 'dart:async';
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'app/bindings/initial_binding.dart';
@@ -83,29 +86,69 @@ Future<void> _lockOrientationForDeviceClass() async {
 const _phoneDesignSize = Size(400, 850);
 const _tabletDesignSize = Size(1280, 800);
 
-void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
+// BLACK-SCREEN FIX (defensive): previously there was no global error
+// handler at all. Any uncaught exception during startup or a widget
+// build — including future ones, not just the two fixed in this pass
+// (see AppConstants.assertSecureBaseUrlInRelease and
+// SslPinningInterceptor) — had no consistent visible failure mode: in
+// some cases Flutter's default red/grey error screen shows, but errors
+// thrown before the first frame (like both bugs fixed this pass) or
+// inside a zone Flutter isn't watching can simply leave the native
+// splash/black surface on screen forever with nothing in the visible UI
+// to tell you why, especially in a release build on a real device where
+// there's no attached debugger. `runZonedGuarded` + `FlutterError.onError`
+// + `PlatformDispatcher.instance.onError` make sure every uncaught error
+// is at minimum logged, and `FlutterError.onError` additionally routes
+// framework build/layout/paint errors through `ErrorWidget.builder` so a
+// visible (if minimal) error screen renders instead of nothing.
+void main() {
+  runZonedGuarded(() async {
+    WidgetsFlutterBinding.ensureInitialized();
 
-  // Must run before anything else touches `designSize`/`ScreenUtilInit`
-  // (see `MyApp.build()` below) — otherwise there's a window where the
-  // device could still be in its natural (unlocked) orientation when
-  // the design-size decision is made.
-  await _lockOrientationForDeviceClass();
+    FlutterError.onError = (details) {
+      FlutterError.presentError(details);
+      debugPrint('FlutterError: ${details.exceptionAsString()}');
+    };
+    PlatformDispatcher.instance.onError = (error, stack) {
+      debugPrint('Uncaught async error: $error\n$stack');
+      return true;
+    };
 
-  // Fail fast: refuse to launch a release build pointed at a non-HTTPS
-  // API endpoint. No-op in debug/profile.
-  AppConstants.assertSecureBaseUrlInRelease();
+    // The app is fully offline (`AppConstants.localMode`) — text must
+    // never depend on a network font fetch. `google_fonts` fetches from
+    // fonts.gstatic.com on first use if a font isn't already cached
+    // on-device; on a real device's very first launch (no cache yet)
+    // with no/flaky internet this can delay or blank text rendering.
+    // Disabling runtime fetching makes every `GoogleFonts.*()` call fall
+    // back to the platform default font immediately instead, which is
+    // the correct behavior for an app that must work with zero network
+    // access.
+    GoogleFonts.config.allowRuntimeFetching = false;
 
-  await GetStorage.init(AppConstants.boxName);
+    // Must run before anything else touches `designSize`/`ScreenUtilInit`
+    // (see `MyApp.build()` below) — otherwise there's a window where the
+    // device could still be in its natural (unlocked) orientation when
+    // the design-size decision is made.
+    await _lockOrientationForDeviceClass();
 
-  // SecureStorageService menggantikan StorageService sebagai sumber
-  // token/session. Didaftarkan permanent SEBELUM runApp supaya splash
-  // bisa langsung membaca token yang sudah terenkripsi.
-  Get.put(SecureStorageService(), permanent: true);
-  Get.put(DeviceIntegrityService(), permanent: true);
+    // Fail fast: refuse to launch a release build pointed at a non-HTTPS
+    // API endpoint. No-op in debug/profile, and no-op in `localMode`
+    // (see AppConstants.assertSecureBaseUrlInRelease for why).
+    AppConstants.assertSecureBaseUrlInRelease();
 
-  runApp(const MyApp());
-  _configureLoading();
+    await GetStorage.init(AppConstants.boxName);
+
+    // SecureStorageService menggantikan StorageService sebagai sumber
+    // token/session. Didaftarkan permanent SEBELUM runApp supaya splash
+    // bisa langsung membaca token yang sudah terenkripsi.
+    Get.put(SecureStorageService(), permanent: true);
+    Get.put(DeviceIntegrityService(), permanent: true);
+
+    runApp(const MyApp());
+    _configureLoading();
+  }, (error, stack) {
+    debugPrint('Uncaught zone error: $error\n$stack');
+  });
 }
 
 void _configureLoading() {

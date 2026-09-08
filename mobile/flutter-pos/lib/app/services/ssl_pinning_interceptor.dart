@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart' show PlatformException;
 import 'package:http_certificate_pinning/http_certificate_pinning.dart';
+import '../constants/app_constants.dart';
 
 /// OWASP MASVS-NETWORK-1: verifikasi channel komunikasi aman.
 ///
@@ -80,7 +81,24 @@ class SslPinningInterceptor extends Interceptor {
     // network request. A release build that somehow has no fingerprints
     // configured must refuse to run at all rather than silently allow
     // unpinned traffic or throw mid-request.
-    if (kReleaseMode && _pinnedFingerprints.length < 2) {
+    //
+    // BLACK-SCREEN FIX: this guard used to fire whenever `ApiClient` was
+    // constructed, with no regard for `AppConstants.localMode`. Because
+    // `ApiClient` is registered eagerly (`Get.put` in `InitialBinding`)
+    // AND every controller/service that will ever need it (AuthService,
+    // PosController, PaymentController, ShiftController, ...) grabs it
+    // via an eager `final ApiClient _api = ApiClient.to;` field — even
+    // though `localMode` means it's never actually called — a plain
+    // release build with no `--dart-define` fingerprints crashed the
+    // instant `InitialBinding` ran (i.e. immediately on app boot, before
+    // the splash screen ever painted a frame) and, had it somehow
+    // survived boot, would crash again the moment the cashier opened the
+    // POS or Payment screen — which would have silently broken the
+    // takeaway order flow at exactly its two most important steps.
+    // `localMode` apps never construct a real request through this
+    // client, so the fail-fast guard is scoped to when the app is
+    // actually going to talk to a network backend.
+    if (kReleaseMode && !AppConstants.localMode && _pinnedFingerprints.length < 2) {
       throw StateError(
           'Release build started without SSL pinning fingerprints. '
           'Build with --dart-define=PINNED_FINGERPRINT_LEAF=... and '

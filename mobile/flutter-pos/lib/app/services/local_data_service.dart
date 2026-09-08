@@ -478,9 +478,26 @@ class LocalDataService extends GetxService {
     await _db.update('transaksi', {'status': 'paid'}, where: 'id_transaksi = ?', whereArgs: [transactionId]);
 
     // Free the table back up now that the order is settled.
+    //
+    // TAKEAWAY FIX: `id_meja` is nullable (schema v2, to support
+    // takeaway orders with no physical table — see DatabaseHelper's
+    // v1->v2 migration). This used to do `txRows.first['id_meja'] as
+    // int`, an unconditional cast that throws `type 'Null' is not a
+    // subtype of type 'int'` for every takeaway order, since a takeaway
+    // transaction's `id_meja` column is genuinely NULL. That exception
+    // was never caught anywhere between here and `PaymentController
+    // .pay()`, so paying for a takeaway order crashed after the payment
+    // row was already inserted: the cashier's "Memproses pembayaran..."
+    // spinner never dismissed, `EasyLoading.showSuccess` and the
+    // navigation to the receipt page never ran, and the transaction was
+    // left stuck in a paid-but-stranded state with no visible feedback.
+    // Only touch table status when there actually is a table.
     final txRows = await _db.query('transaksi', where: 'id_transaksi = ?', whereArgs: [transactionId]);
     if (txRows.isNotEmpty) {
-      await setTableStatus(txRows.first['id_meja'] as int, 'available');
+      final idMeja = txRows.first['id_meja'] as int?;
+      if (idMeja != null) {
+        await setTableStatus(idMeja, 'available');
+      }
     }
 
     final rows = await _db.query('pembayaran', where: 'id_pembayaran = ?', whereArgs: [id]);
