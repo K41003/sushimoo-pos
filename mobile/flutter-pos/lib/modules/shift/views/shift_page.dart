@@ -10,6 +10,7 @@ import '../../../shared/widgets/app_loading.dart';
 import '../../../shared/widgets/app_scaffold.dart';
 import '../../../shared/widgets/app_text_field.dart';
 import '../../../shared/widgets/glass_panel.dart';
+import '../../../shared/utils/money.dart';
 import '../controllers/shift_controller.dart';
 
 /// REPLACES `shift_page.dart` 1:1 — same class name `ShiftPage`.
@@ -78,7 +79,7 @@ class ShiftPage extends GetView<ShiftController> {
                     style: Theme.of(context).textTheme.headlineMedium),
                 SizedBox(height: 8.h),
                 Text('Dibuka: ${shift.openTime ?? '-'}'),
-                Text('Kas Kecil: Rp ${shift.pettyCash.toStringAsFixed(0)}'),
+                Text('Kas Kecil: ${formatRupiah(shift.pettyCash)}'),
                 Text('Status: ${statusLabel(shift.status)}'),
               ],
             ),

@@ -1,6 +1,9 @@
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:get/get.dart';
+import '../../../app/constants/app_constants.dart';
 import '../../../app/services/api_client.dart';
+import '../../../app/services/auth_service.dart';
+import '../../../app/services/local_data_service.dart';
 import '../../../app/services/printer_service.dart';
 import '../../../data/models/closing.dart';
 import '../../../data/models/shift.dart';
@@ -30,8 +33,16 @@ import '../../../shared/widgets/app_dialog.dart';
 /// messaging when the record/action succeeded but the physical/PDF
 /// report failed to print, instead of a blanket success toast regardless
 /// of print outcome.
+/// OFFLINE FIX: this controller previously called `ApiClient`
+/// unconditionally, ignoring `AppConstants.localMode`, unlike
+/// `ShiftController` (which already branches correctly and is the
+/// source of `activeShift` for this module too). Wired `load()` and
+/// `doClosing()` to `LocalDataService`/`AuthService`; the printing step
+/// via `PrinterService` is unaffected since it's independent of where
+/// the closing record itself came from.
 class ClosingController extends GetxController {
   final ApiClient _api = ApiClient.to;
+  final LocalDataService _local = LocalDataService.to;
   final activeShift = Rx<Shift?>(null);
   final history = <Closing>[].obs;
   final lastClosing = Rx<Closing?>(null);
@@ -52,6 +63,13 @@ class ClosingController extends GetxController {
 
   Future<void> load() async {
     loading.value = true;
+    if (AppConstants.localMode) {
+      final userId = AuthService.to.currentUser?.idUser;
+      activeShift.value = userId == null ? null : await _local.getActiveShift(userId);
+      history.assignAll(await _local.getClosingHistory());
+      loading.value = false;
+      return;
+    }
     final active = await _api.get('/shifts/active', fromData: (d) {
       return d == null ? null : Shift.fromJson(d as Map<String, dynamic>);
     });
@@ -78,6 +96,24 @@ class ClosingController extends GetxController {
     if (confirmed != true) return;
 
     EasyLoading.show(status: 'Closing...');
+    if (AppConstants.localMode) {
+      final closing = await _local.generateClosing(activeShift.value!.idShift);
+      lastClosing.value = closing;
+      EasyLoading.dismiss();
+
+      final printed = await PrinterService.to
+          .printClosingReport(closing, activeShift.value!);
+      if (printed) {
+        EasyLoading.showSuccess('Closing recorded and report printed');
+      } else {
+        EasyLoading.showInfo(
+          'Closing recorded, but the report failed to print. '
+          'Use the print icon below to try again.',
+        );
+      }
+      await load();
+      return;
+    }
     final res = await _api.post('/shifts/${activeShift.value!.idShift}/closing');
     EasyLoading.dismiss();
     if (res.success && res.data != null) {

@@ -2,15 +2,24 @@ import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import '../../../app/constants/app_constants.dart';
 import '../../../app/services/api_client.dart';
+import '../../../app/services/local_data_service.dart';
 import '../../../data/models/ingredient.dart';
 import '../../../data/response/api_response.dart';
 import '../../../shared/widgets/app_dialog.dart';
 import '../../../shared/widgets/app_text_field.dart';
 import '../../../shared/utils/debouncer.dart';
 
+/// OFFLINE FIX: previously called `ApiClient` unconditionally, ignoring
+/// `AppConstants.localMode`. Wired to `LocalDataService` for the local
+/// branch, same pattern as `table_controller.dart`/`stock_controller.dart`.
+/// `LocalDataService.getAppIngredients(search: ...)` already supports the
+/// same search behavior the API path used, so no client-side emulation
+/// is needed here (unlike Category/Product's pagination).
 class IngredientController extends GetxController {
   final ApiClient _api = Get.find<ApiClient>();
+  final LocalDataService _local = LocalDataService.to;
   final items = <Ingredient>[].obs;
   final loading = false.obs;
   final RxString search = ''.obs;
@@ -33,6 +42,11 @@ class IngredientController extends GetxController {
 
   Future<void> load() async {
     loading.value = true;
+    if (AppConstants.localMode) {
+      items.value = await _local.getAppIngredients(search: search.value);
+      loading.value = false;
+      return;
+    }
     final res = await _api.get(
       '/bahan-baku',
       query: {'q': search.value, 'perPage': 50},
@@ -107,14 +121,28 @@ class IngredientController extends GetxController {
     );
     if (result != true) return;
 
+    loading.value = true;
+    EasyLoading.show(status: 'Saving...');
+    if (AppConstants.localMode) {
+      await _local.saveIngredient(
+        id: existing?.idBahan,
+        name: nama.text.trim(),
+        unit: satuan.text.trim(),
+        minimalStock: double.tryParse(minimal.text) ?? 0,
+      );
+      loading.value = false;
+      EasyLoading.dismiss();
+      EasyLoading.showSuccess('Saved');
+      await load();
+      return;
+    }
+
     final body = {
       'nama_bahan': nama.text.trim(),
       'satuan': satuan.text.trim(),
       'minimal_stok': double.tryParse(minimal.text) ?? 0,
     };
 
-    loading.value = true;
-    EasyLoading.show(status: 'Saving...');
     final res = existing == null
         ? await _api.post('/bahan-baku', body: body, fromData: (d) => d)
         : await _api.put('/bahan-baku/${existing.idBahan}',
@@ -141,6 +169,14 @@ class IngredientController extends GetxController {
 
     loading.value = true;
     EasyLoading.show(status: 'Deleting...');
+    if (AppConstants.localMode) {
+      await _local.deleteIngredient(id);
+      loading.value = false;
+      EasyLoading.dismiss();
+      EasyLoading.showSuccess('Deleted');
+      await load();
+      return;
+    }
     final res = await _api.delete('/bahan-baku/$id', fromData: (d) => d);
     loading.value = false;
     EasyLoading.dismiss();

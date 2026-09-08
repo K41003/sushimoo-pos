@@ -3,7 +3,10 @@ import 'package:get/get.dart';
 import '../../../app/constants/app_constants.dart';
 import '../../../app/routes/app_routes.dart';
 import '../../../app/services/api_client.dart';
+import '../../../app/services/auth_service.dart';
+import '../../../app/services/local_data_service.dart';
 import '../../../app/services/printer_service.dart';
+import '../../../app/services/storage_service.dart';
 import '../../../data/models/category.dart';
 import '../../../data/models/product.dart';
 import '../../../data/models/table.dart';
@@ -13,8 +16,25 @@ import '../../../shared/utils/debouncer.dart';
 import '../controllers/cart_item.dart';
 import '../widgets/table_select_sheet.dart';
 
+/// OFFLINE FIX: this controller previously called `ApiClient`
+/// unconditionally for categories/tables/products/checkout, ignoring
+/// `AppConstants.localMode` — the one gap that mattered most, since POS
+/// checkout is the app's core flow. Wired to `LocalDataService`, same
+/// pattern used by every other controller in this pass.
+///
+/// KNOWN LIMITATION (documented, not silently broken): `LocalDataService
+/// .createTransaction()` requires a non-null `tableId` and
+/// `Transaction.idMeja` is a non-nullable `int` in the shared model used
+/// by payment/receipt/printing across the whole app. Changing that
+/// nullability ripples into `payment_controller.dart`,
+/// `print_queue_service.dart`, and the table module, which is out of
+/// scope for this pass. Takeaway orders (`setTakeaway()` / `isTakeaway`)
+/// therefore still require the online API path for now; local-mode
+/// checkout always requires picking a real table via `selectTable()`,
+/// same as the app's behavior before takeaway support was added.
 class PosController extends GetxController {
   final ApiClient _api = ApiClient.to;
+  final LocalDataService _local = LocalDataService.to;
 
   final categories = <Category>[].obs;
   final products = <Product>[].obs;
@@ -57,6 +77,14 @@ class PosController extends GetxController {
   }
 
   Future<void> loadCategories() async {
+    if (AppConstants.localMode) {
+      final all = await _local.getAppCategories();
+      categories.assignAll(all);
+      if (categories.isNotEmpty) {
+        selectCategory(categories.first.idKategori);
+      }
+      return;
+    }
     final res = await _api.get('/categories', query: {'perPage': 100},
         fromData: (d) => d);
     if (res.success && res.data != null) {
@@ -70,6 +98,10 @@ class PosController extends GetxController {
   }
 
   Future<void> loadTables() async {
+    if (AppConstants.localMode) {
+      tables.assignAll(await _local.getAppTables());
+      return;
+    }
     final res = await _api.get('/meja', query: {'perPage': 100},
         fromData: (d) => d);
     if (res.success && res.data != null) {
@@ -87,6 +119,12 @@ class PosController extends GetxController {
       searchQuery.value = '';
     }
     loading.value = true;
+    if (AppConstants.localMode) {
+      final all = await _local.getAppProducts();
+      products.assignAll(all.where((p) => p.idKategori == id).toList());
+      loading.value = false;
+      return;
+    }
     final res = await _api.get('/products',
         query: {'id_kategori': id, 'perPage': 100}, fromData: (d) => d);
     loading.value = false;
@@ -123,6 +161,15 @@ class PosController extends GetxController {
     // if the cashier keeps typing quickly.
     final token = ++_searchToken;
     loading.value = true;
+    if (AppConstants.localMode) {
+      final all = await _local.getAppProducts();
+      if (token != _searchToken) return;
+      final q = query.trim().toLowerCase();
+      products.assignAll(
+          all.where((p) => p.namaProduk.toLowerCase().contains(q)).toList());
+      loading.value = false;
+      return;
+    }
     final res = await _api.get('/products',
         query: {'q': query, 'perPage': 100}, fromData: (d) => d);
     if (token != _searchToken) return; // a newer search superseded this one
@@ -206,6 +253,17 @@ class PosController extends GetxController {
       EasyLoading.showError('Cart is empty');
       return;
     }
+    if (AppConstants.localMode && isTakeaway.value) {
+      // KNOWN LIMITATION (see class doc comment): local-mode checkout
+      // requires a real table because `LocalDataService.createTransaction`
+      // and the shared `Transaction.idMeja` model are both non-nullable.
+      // Rather than silently drop the takeaway flag and assign a table
+      // the cashier didn't pick (which would corrupt that table's
+      // status via `setTableStatus`), block with a clear message.
+      EasyLoading.showError(
+          'Takeaway belum didukung dalam mode offline. Pilih meja untuk melanjutkan.');
+      return;
+    }
     if (!isTakeaway.value && selectedTable.value == null) {
       await selectTable();
       if (selectedTable.value == null) return;
@@ -213,6 +271,30 @@ class PosController extends GetxController {
 
     loading.value = true;
     EasyLoading.show(status: 'Placing order...');
+    if (AppConstants.localMode) {
+      final userId = AuthService.to.currentUser?.idUser;
+      final shiftId = StorageService.to.shiftId;
+      if (userId == null || shiftId == null) {
+        loading.value = false;
+        EasyLoading.dismiss();
+        EasyLoading.showError('Tidak ada shift aktif. Buka shift terlebih dahulu.');
+        return;
+      }
+      final trx = await _local.createTransaction(
+        shiftId: shiftId,
+        userId: userId,
+        tableId: selectedTable.value!.idMeja,
+        items: cart.map((e) => e.toPayload()).toList(),
+      );
+      loading.value = false;
+      EasyLoading.dismiss();
+      await PrinterService.to.printKitchenTicket(trx);
+      clearCart();
+      isTakeaway.value = false;
+      EasyLoading.showSuccess('Order placed');
+      Get.toNamed(AppRoutes.payment, arguments: trx);
+      return;
+    }
     final res = await _api.post('/transaksi', body: {
       // NOTE ON BACKEND CONTRACT: for takeaway orders `id_meja` is
       // omitted from the body entirely (not sent as a literal `null`

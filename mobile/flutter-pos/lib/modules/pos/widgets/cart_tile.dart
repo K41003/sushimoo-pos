@@ -5,6 +5,7 @@ import '../../../app/constants/dimensions.dart';
 import '../../../shared/widgets/glass_panel.dart';
 import '../controllers/cart_item.dart';
 import '../controllers/pos_controller.dart';
+import '../../../shared/utils/money.dart';
 
 /// REPLACES `cart_tile.dart` 1:1 — same class name `CartTile`, same
 /// constructor (`index`, `item`, `controller`).
@@ -45,7 +46,7 @@ class CartTile extends StatelessWidget {
                       ),
                       SizedBox(height: 3.h),
                       Text(
-                        'Rp ${item.product.harga.toStringAsFixed(0)} each',
+                        '${formatRupiah(item.product.harga)} each',
                         style: TextStyle(fontSize: 12.sp, color: AppColors.inkMuted),
                       ),
                     ],
@@ -76,7 +77,7 @@ class CartTile extends StatelessWidget {
                 _StepperButton(icon: Icons.add, onTap: () => controller.incQty(index)),
                 const Spacer(),
                 Text(
-                  'Rp ${item.subtotal.toStringAsFixed(0)}',
+                  formatRupiah(item.subtotal),
                   style: TextStyle(fontSize: 15.sp, fontWeight: FontWeight.w800, color: AppColors.salmonDark),
                 ),
               ],

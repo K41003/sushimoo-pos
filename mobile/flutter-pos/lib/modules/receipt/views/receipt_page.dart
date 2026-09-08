@@ -7,6 +7,7 @@ import '../../../app/routes/app_routes.dart';
 import '../../../shared/widgets/app_button.dart';
 import '../../../shared/widgets/glass_panel.dart';
 import '../../payment/widgets/screen_shield_wrapper.dart';
+import '../../../shared/utils/money.dart';
 import '../controllers/receipt_controller.dart';
 
 /// REPLACES `receipt_page.dart` 1:1 — same class name `ReceiptPage`,
@@ -26,7 +27,7 @@ import '../controllers/receipt_controller.dart';
 class ReceiptPage extends GetView<ReceiptController> {
   const ReceiptPage({super.key});
 
-  String _money(num v) => 'Rp ${v.toStringAsFixed(0)}';
+  String _money(num v) => formatRupiah(v);
 
   @override
   Widget build(BuildContext context) {

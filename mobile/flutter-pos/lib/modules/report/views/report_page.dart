@@ -10,6 +10,7 @@ import '../../../shared/widgets/app_loading.dart';
 import '../../../shared/widgets/app_scaffold.dart';
 import '../../../shared/widgets/glass_panel.dart';
 import '../controllers/report_controller.dart';
+import '../../../shared/utils/money.dart';
 
 /// REPLACES `report_page.dart` 1:1 — same class name `ReportPage`.
 class ReportPage extends GetView<ReportController> {
@@ -58,7 +59,7 @@ class ReportPage extends GetView<ReportController> {
   Widget _card(String label, dynamic value, {bool isCurrency = true}) {
     final numVal = value is num ? value : (num.tryParse(value?.toString() ?? '') ?? 0);
     final textValue = isCurrency
-        ? 'Rp ${numVal.toStringAsFixed(0)}'
+        ? formatRupiah(numVal)
         : numVal.toStringAsFixed(0);
     return GlassPanel(
       radius: AppDimensions.radiusLg,

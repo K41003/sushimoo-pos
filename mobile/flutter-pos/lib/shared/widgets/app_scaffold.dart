@@ -17,26 +17,29 @@ export 'app_text_field.dart' show AppHeaderSearchField;
 /// Zen canvas + blobs.
 ///
 /// =====================================================================
-/// UX FIX (design review P0 #1 — Payment has no way back to POS):
+/// REVERTED: search field no longer lives in/below the app bar.
 /// =====================================================================
-/// The app bar previously only ever showed either a hamburger menu
-/// button (portrait/drawer mode) or nothing (landscape/rail mode) — no
-/// screen could offer an explicit "go back" affordance, because there
-/// was no `leading`/back slot at all. This mattered most on the Payment
-/// screen: if a cashier notices the wrong item in the order AFTER
-/// reaching Payment, there was no way back to POS to fix it short of
-/// completing the payment or navigating away through the drawer (which
-/// doesn't restore POS state).
+/// An earlier pass tried moving a page's search field into the app bar
+/// area (`actions`, then a dedicated `searchField` param rendering a row
+/// below the bar). That required `Scaffold.appBar`'s `PreferredSize` to
+/// know the bar's exact pixel height ahead of layout — several
+/// hand-calculated numbers were tried (66, 68, a forced 44, a forced 48
+/// with headroom, finally an unconstrained `OverflowBox`) and every one
+/// either still overflowed by a few px on a real device or, in the
+/// `OverflowBox` case, produced an actual `Infinity` height and made the
+/// app bar disappear entirely — `PreferredSize`'s contract fundamentally
+/// needs a real finite number, which conflicts with letting content
+/// size itself dynamically.
 ///
-/// Added two new OPTIONAL constructor params, both defaulting to values
-/// that preserve every existing screen's current behavior exactly:
-///   - `showBackButton` (default `false`) — when true, renders a back
-///     arrow in the leading slot instead of the hamburger/nothing.
-///   - `onBackPressed` (default `null`) — when null, back button calls
-///     `Get.back()`. Payment overrides this to also clear/preserve cart
-///     state as needed (see payment_page.dart).
-/// No other screen passes these params, so no other screen's app bar
-/// changes as a result of this patch.
+/// Per explicit product direction: search belongs in the page BODY, not
+/// the app bar. `AppScaffold` no longer has any search-related param or
+/// logic at all — it's back to exactly what it was before that attempt
+/// (`title`/`currentRoute`/`body`/`actions`/`showBackButton`/
+/// `onBackPressed`). Category/Ingredient/Product/Stock pages now render
+/// their own `AppHeaderSearchField` as an ordinary widget at the top of
+/// their own `body`, which has no special height contract to guess at —
+/// it's just however tall the widget naturally is, like everything else
+/// in a scrollable body.
 class AppScaffold extends StatelessWidget {
   final String title;
   final String currentRoute;
@@ -71,16 +74,16 @@ class AppScaffold extends StatelessWidget {
         backgroundColor: Colors.transparent,
         extendBodyBehindAppBar: true,
         appBar: PreferredSize(
-          preferredSize: const Size.fromHeight(66),
+          preferredSize: const Size.fromHeight(_GlassAppBar.totalHeight),
           child: _GlassAppBar(
             title: title,
             userName: user?.nama,
             actions: actions,
-            // Back button takes priority over the hamburger menu when
-            // both would otherwise apply — a screen that needs a back
-            // action (like Payment) is by definition a step INSIDE a
-            // flow, not a top-level destination that also needs drawer
-            // nav visible.
+            // Back button takes priority over the hamburger menu
+            // when both would otherwise apply — a screen that needs
+            // a back action (like Payment) is by definition a step
+            // INSIDE a flow, not a top-level destination that also
+            // needs drawer nav visible.
             showMenuButton: !isRail && !showBackButton,
             showBackButton: showBackButton,
             onBackPressed: onBackPressed ?? () => Get.back(),
@@ -90,7 +93,7 @@ class AppScaffold extends StatelessWidget {
             ? null
             : AppDrawer(items: items, currentRoute: currentRoute, onLogout: _logout),
         body: Padding(
-          padding: const EdgeInsets.only(top: 66),
+          padding: const EdgeInsets.only(top: _GlassAppBar.totalHeight),
           child: body,
         ),
       );
@@ -98,6 +101,7 @@ class AppScaffold extends StatelessWidget {
 
     return GlassBackground(
       child: isRail
+
           ? Row(
               children: [
                 AppSidebar(items: items, currentRoute: currentRoute, onLogout: _logout),
@@ -179,6 +183,17 @@ class _GlassAppBar extends StatelessWidget {
     this.onBackPressed,
   });
 
+  // Budgeted content height for `PreferredSize` (used by
+  // `AppScaffold.build()` to reserve space for this bar before it's
+  // actually laid out — `Scaffold.appBar` requires a size decided ahead
+  // of time). Does not force the bar's actual rendered height — the Row
+  // below is left completely unconstrained (see `build()`), so this
+  // number only affects how much space `Scaffold` reserves in its
+  // layout, not what the bar is allowed to render at.
+  static const double contentHeight = 48.0;
+  static const double verticalPadding = 24.0; // Padding 6+6 + GlassPanel 6+6
+  static const double totalHeight = contentHeight + verticalPadding;
+
   @override
   Widget build(BuildContext context) {
     return SafeArea(
@@ -190,89 +205,145 @@ class _GlassAppBar extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
           blurSigma: AppColors.blurSigmaLight,
           shadow: AppColors.shadowSm,
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              if (showBackButton)
-                IconButton(
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
-                  icon: const Icon(Icons.arrow_back_rounded, color: AppColors.ink, size: 22),
-                  tooltip: 'Back',
-                  onPressed: onBackPressed,
-                )
-              else if (showMenuButton)
-                Builder(
-                  builder: (ctx) => IconButton(
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
-                    icon: const Icon(Icons.menu_rounded, color: AppColors.ink, size: 22),
-                    tooltip: 'Menu',
-                    onPressed: () => Scaffold.of(ctx).openDrawer(),
+          // No SizedBox/OverflowBox forcing a height here — a prior
+          // attempt to guess-and-force this (66 -> 68 -> exact-44 ->
+          // 48-with-headroom -> unconstrained-OverflowBox) ended with
+          // OverflowBox(maxHeight: infinity) making `PreferredSize`
+          // receive an actual Infinity height, which made the whole app
+          // bar disappear. The Row below is left to size itself
+          // naturally with no ceiling or floor imposed on it at all —
+          // exactly what it did before any of those attempts, which
+          // never itself caused an overflow (the search field that used
+          // to live in `actions` did; it's been moved to page bodies
+          // instead, see category_page.dart etc).
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              // FIX (header overflow on phones, e.g. Category page with
+              // a search field + add button in `actions`): the row used
+              // to always reserve space for the full username text next
+              // to the avatar, with no upper bound on how much room
+              // title + actions could also claim. On a ~360-400px-wide
+              // phone screen, hamburger/back (44) + title + avatar+name
+              // (up to ~130) + a fixed-width search field (commonly
+              // 170-180) + an add button (36) routinely add up to more
+              // than the available width, so the row overflowed and
+              // Flutter rendered the yellow/black "overflowed" stripes
+              // instead of clipping gracefully.
+              //
+              // Below this threshold the username text is dropped
+              // (avatar alone still shows who's logged in at a glance)
+              // and the title gets a `Flexible` + ellipsis so it can
+              // never single-handedly force an overflow either. Above
+              // the threshold (tablets, wide phones) behavior is
+              // unchanged from before.
+              final showUserName = constraints.maxWidth >= 480;
+
+              return SizedBox(
+                width: double.infinity,
+                child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  if (showBackButton)
+                    IconButton(
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
+                      icon: const Icon(Icons.arrow_back_rounded, color: AppColors.ink, size: 22),
+                      tooltip: 'Back',
+                      onPressed: onBackPressed,
+                    )
+                  else if (showMenuButton)
+                    Builder(
+                      builder: (ctx) => IconButton(
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
+                        icon: const Icon(Icons.menu_rounded, color: AppColors.ink, size: 22),
+                        tooltip: 'Menu',
+                        onPressed: () => Scaffold.of(ctx).openDrawer(),
+                      ),
+                    )
+                  else
+                    const SizedBox(width: 4),
+                  Flexible(
+                    child: Text(
+                      title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
                   ),
-                )
-              else
-                const SizedBox(width: 4),
-              Text(
-                title, 
-                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              const Spacer(),
-              if (userName != null && userName!.isNotEmpty)
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
-                  child: Row(
+                  const Spacer(),
+                  // Avatar + actions render as ONE right-aligned,
+                  // natural-width group (not `Expanded`) so there is no
+                  // extra flex space for a gap to hide in between the
+                  // last action button and the trailing edge — `Spacer()`
+                  // alone pushes this whole group flush against the end
+                  // of the bar.
+                  Row(
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      Container(
-                        width: 30,
-                        height: 30,
-                        alignment: Alignment.center,
-                        decoration: BoxDecoration(
-                          gradient: AppColors.salmonGradient,
-                          shape: BoxShape.circle,
-                          boxShadow: AppColors.shadowSalmon,
-                        ),
-                        child: Text(
-                          _initials(userName!),
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
+                      if (userName != null && userName!.isNotEmpty)
+                        Padding(
+                          padding: const EdgeInsets.only(left: 8),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              Container(
+                                width: 30,
+                                height: 30,
+                                alignment: Alignment.center,
+                                decoration: BoxDecoration(
+                                  gradient: AppColors.salmonGradient,
+                                  shape: BoxShape.circle,
+                                  boxShadow: AppColors.shadowSalmon,
+                                ),
+                                child: Text(
+                                  _initials(userName!),
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ),
+                              if (showUserName) ...[
+                                const SizedBox(width: 8),
+                                ConstrainedBox(
+                                  constraints: const BoxConstraints(maxWidth: 130),
+                                  child: Text(
+                                    userName!,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.w600,
+                                      color: AppColors.inkMuted,
+                                      fontSize: 13,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ],
                           ),
                         ),
-                      ),
-                      const SizedBox(width: 8),
-                      ConstrainedBox(
-                        constraints: const BoxConstraints(maxWidth: 130),
-                        child: Text(
-                          userName!,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.inkMuted,
-                            fontSize: 13,
-                          ),
+                      if (actions != null)
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: actions!,
                         ),
-                      ),
                     ],
                   ),
+                ],
                 ),
-              if (actions != null)
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: actions!,
-                ),
-            ],
+              );
+              },
+            ),
           ),
         ),
-      ),
-    );
+      );
   }
 
   String _initials(String name) {

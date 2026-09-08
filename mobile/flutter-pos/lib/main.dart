@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
@@ -12,6 +13,7 @@ import 'app/services/device_integrity_service.dart';
 import 'app/services/secure_storage_service.dart';
 import 'app/themes/theme.dart';
 import 'app/config/scroll_behavior.dart';
+import 'shared/utils/responsive.dart';
 
 // PERUBAHAN KEAMANAN PENTING (existing, unchanged):
 // `import 'dart:io'` dan class `MyHttpOverrides` DIHAPUS SELURUHNYA —
@@ -23,9 +25,72 @@ import 'app/config/scroll_behavior.dart';
 // release build configured (accidentally or otherwise) with a
 // non-HTTPS `API_BASE_URL` refuses to start instead of silently
 // sending POS/payment traffic in plaintext.
+//
+// RESPONSIVE FIX (this pass): `ScreenUtilInit.designSize` used to be
+// hardcoded to `Size(1280, 800)` — a tablet-landscape reference size —
+// applied unconditionally to every device, including phones. Every
+// `.r`/`.h`/`.w`/`.sp` value in the app (icon sizes, spacing, font
+// sizes) is computed as a ratio against `designSize`, so on a ~360-430
+// logical-pixel-wide phone screen every one of those values came out
+// far smaller than intended: content rendered tiny and clumped near the
+// top of the screen instead of filling/centering properly, which is
+// exactly the "big empty space at the bottom" seen on the login page
+// (and, since every screen uses the same scaling, everywhere else too).
+//
+// `shared/utils/responsive.dart`'s own doc comment claims the app locks
+// orientation per device at startup ("phones are portrait-only, tablets
+// are landscape-only... see main.dart"). A previous pass here noted
+// that claim was never actually implemented and left it that way,
+// treating the mismatch as out of scope — but that gap turned out to
+// cause a real, severe bug: a tablet launching in its natural portrait
+// orientation combined with `designSize` unconditionally assuming
+// landscape (`_tabletDesignSize` below) made every scaled dimension in
+// the app come out far too large (giant title text, oversized login
+// form, content clipped below the fold). The orientation lock is
+// implemented now — see `_lockOrientationForDeviceClass()` below — so
+// `shared/utils/responsive.dart`'s doc comment is accurate again.
+
+// ORIENTATION LOCK (this pass): implements what `shared/utils/
+// responsive.dart`'s doc comment already claimed happens here — "phones
+// are portrait-only, tablets are landscape-only... see main.dart" — but
+// never actually did until now. Its absence was silently tolerated for
+// a while because most testing happened on phones (which default to
+// portrait anyway), but it produces a severe, visible bug on tablets:
+// `designSize` below picks `_tabletDesignSize` (1280x800, a LANDSCAPE
+// reference) for any device with shortestSide >= 600, assuming that
+// device will actually be rendered in landscape. Without a real lock, a
+// tablet can launch in portrait — its actual rendered width is much
+// smaller than the 1280 the scale ratio assumes, so every `.sp`/`.h`/
+// `.w` value in the app comes out far too large (giant "SUSHIMOO" text,
+// oversized login form, content clipped below the fold — exactly what
+// was reported). Locking orientation makes the two assumptions
+// (designSize's aspect ratio, and the device's actual aspect ratio)
+// impossible to disagree.
+Future<void> _lockOrientationForDeviceClass() async {
+  final view = WidgetsBinding.instance.platformDispatcher.views.first;
+  final logicalSize = view.physicalSize / view.devicePixelRatio;
+  final isTablet = logicalSize.shortestSide >= Responsive.tabletBreakpoint;
+  await SystemChrome.setPreferredOrientations(
+    isTablet
+        ? [DeviceOrientation.landscapeLeft, DeviceOrientation.landscapeRight]
+        : [DeviceOrientation.portraitUp],
+  );
+}
+
+/// Portrait phone reference size. Matches a common baseline device
+/// width/height ratio; `flutter_screenutil` only needs this to compute
+/// scale ratios, not to pin an exact device.
+const _phoneDesignSize = Size(400, 850);
+const _tabletDesignSize = Size(1280, 800);
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Must run before anything else touches `designSize`/`ScreenUtilInit`
+  // (see `MyApp.build()` below) — otherwise there's a window where the
+  // device could still be in its natural (unlocked) orientation when
+  // the design-size decision is made.
+  await _lockOrientationForDeviceClass();
 
   // Fail fast: refuse to launch a release build pointed at a non-HTTPS
   // API endpoint. No-op in debug/profile.
@@ -61,8 +126,24 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Read the physical screen size directly from `PlatformDispatcher`
+    // rather than `MediaQuery.of(context)`: at this point `MyApp` is the
+    // widget passed straight to `runApp`, so there is no guaranteed
+    // `MediaQuery` ancestor yet (that's normally provided further down
+    // by `WidgetsApp`/`MaterialApp`, which hasn't been built). Reading
+    // the platform view directly avoids depending on widget-tree
+    // plumbing that may not exist yet at the root.
+    final view = WidgetsBinding.instance.platformDispatcher.views.first;
+    final logicalSize = view.physicalSize / view.devicePixelRatio;
+    // Same threshold as `Responsive.tabletBreakpoint` (600 logical px
+    // shortest side), so `designSize` and every later `Responsive`
+    // decision agree on what counts as "tablet".
+    final shortestSide = logicalSize.shortestSide;
+    final isTablet = shortestSide >= Responsive.tabletBreakpoint;
+    final designSize = isTablet ? _tabletDesignSize : _phoneDesignSize;
+
     return ScreenUtilInit(
-      designSize: const Size(1280, 800),
+      designSize: designSize,
       minTextAdapt: true,
       splitScreenMode: true,
       builder: (_, __) => GetMaterialApp(

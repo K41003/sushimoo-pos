@@ -20,11 +20,6 @@ class ProductPage extends GetView<ProductController> {
       title: 'Produk',
       currentRoute: AppRoutes.product,
       actions: [
-        AppHeaderSearchField(
-          hint: 'Cari produk...',
-          width: 180.w,
-          onChanged: controller.onSearchChanged,
-        ),
         AppGlassActionButton(
           icon: Icons.add,
           tooltip: 'Tambah Produk',
@@ -35,6 +30,11 @@ class ProductPage extends GetView<ProductController> {
         padding: EdgeInsets.all(Responsive.padding(context)),
         child: Column(
           children: [
+            AppHeaderSearchField(
+              hint: 'Cari produk...',
+              onChanged: controller.onSearchChanged,
+            ),
+            SizedBox(height: 12.h),
             Obx(() => SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
                   child: Row(

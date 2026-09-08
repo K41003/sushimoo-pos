@@ -135,6 +135,12 @@ class AppHeaderSearchField extends StatefulWidget {
   final double? width;
   final TextEditingController? controller;
 
+  /// `width`: optional explicit cap. When null, the field fills
+  /// whatever width its parent gives it, up to a sensible built-in
+  /// ceiling (`_defaultMaxWidth`) so it doesn't stretch edge-to-edge on
+  /// wide tablet layouts — the caller can still override with an
+  /// explicit `width` for a tighter cap (e.g. inline in a header row).
+  static const double _defaultMaxWidth = 480;
   const AppHeaderSearchField({
     super.key,
     this.hint = 'Cari...',
@@ -191,20 +197,28 @@ class _AppHeaderSearchFieldState extends State<AppHeaderSearchField> {
   @override
   Widget build(BuildContext context) {
     return ConstrainedBox(
-      // Same reasoning as the constraints change above: allow this
-      // field to shrink down to a usable minimum instead of forcing a
-      // flat width and pushing a sibling '+' action button off-screen
-      // on narrow phones.
+      // Genuinely elastic on phones (never reaches the ceiling below at
+      // typical phone body widths) and capped at a sensible width on
+      // tablets so the field doesn't stretch edge-to-edge across a wide
+      // landscape body. `minWidth: 100` here previously still forced
+      // this field to claim at least 100px from its `Flexible` parent
+      // in `_GlassAppBar` regardless of how much space was actually
+      // left after hamburger/back + title + avatar + add-button — on a
+      // narrow phone header that floor could exceed the remaining
+      // width outright, which is exactly what an unsatisfiable
+      // constraint renders as: the yellow/black "RenderFlex overflowed"
+      // stripes. `Flexible` can only let a child be smaller than it
+      // asked for — it can't override a hard `minWidth` the child
+      // itself demands.
       constraints: BoxConstraints(
-        minWidth: 100,
-        maxWidth: widget.width ?? 180.w,
+        maxWidth: widget.width ?? _defaultMaxWidth,
       ),
       child: Container(
-        height: 36,
+        height: 48,
         alignment: Alignment.center,
         decoration: BoxDecoration(
           color: Colors.white.withValues(alpha: 0.55),
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(14),
           border: Border.all(
             color: _focused ? AppColors.salmon : AppColors.glassBorder(opacity: 0.7),
             width: _focused ? 1.4 : 1.0,
@@ -216,7 +230,7 @@ class _AppHeaderSearchFieldState extends State<AppHeaderSearchField> {
           focusNode: _focusNode,
           onChanged: widget.onChanged,
           style: TextStyle(
-            fontSize: 14.sp,
+            fontSize: 16.sp,
             fontWeight: FontWeight.w500,
             color: AppColors.ink,
           ),
@@ -225,29 +239,29 @@ class _AppHeaderSearchFieldState extends State<AppHeaderSearchField> {
             isDense: true,
             hintText: widget.hint,
             hintStyle: TextStyle(
-              fontSize: 14.sp,
+              fontSize: 16.sp,
               color: AppColors.inkFaint,
               fontWeight: FontWeight.w400,
             ),
             prefixIcon: Icon(
               Icons.search_rounded,
-              size: 18.sp,
+              size: 20.sp,
               color: _focused ? AppColors.salmon : AppColors.inkMuted,
             ),
-            prefixIconConstraints: const BoxConstraints(minWidth: 32, minHeight: 36),
+            prefixIconConstraints: const BoxConstraints(minWidth: 40, minHeight: 48),
             suffixIcon: _hasText
                 ? IconButton(
                     padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(minWidth: 28, minHeight: 36),
-                    icon: Icon(Icons.close_rounded, size: 16.sp, color: AppColors.inkMuted),
+                    constraints: const BoxConstraints(minWidth: 32, minHeight: 48),
+                    icon: Icon(Icons.close_rounded, size: 18.sp, color: AppColors.inkMuted),
                     onPressed: _handleClear,
                   )
                 : null,
-            suffixIconConstraints: const BoxConstraints(minWidth: 28, minHeight: 36),
+            suffixIconConstraints: const BoxConstraints(minWidth: 32, minHeight: 48),
             border: InputBorder.none,
             enabledBorder: InputBorder.none,
             focusedBorder: InputBorder.none,
-            contentPadding: const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 6, vertical: 0),
           ),
         ),
       ),

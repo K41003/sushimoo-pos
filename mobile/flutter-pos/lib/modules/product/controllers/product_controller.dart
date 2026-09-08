@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:get/get.dart';
+import '../../../app/constants/app_constants.dart';
 import '../../../app/services/api_client.dart';
+import '../../../app/services/local_data_service.dart';
 import '../../../data/models/category.dart';
 import '../../../data/models/product.dart';
 import '../../../data/response/api_response.dart';
@@ -9,10 +11,26 @@ import '../../../shared/widgets/app_dialog.dart';
 import '../../../shared/utils/debouncer.dart';
 import '../widgets/product_form.dart';
 
-String money(dynamic v) =>
-    'Rp ${(v is num ? v : 0).toStringAsFixed(0)}';
+import '../../../shared/utils/money.dart';
 
+/// REFACTOR: delegates to the shared `formatRupiah` (see
+/// shared/utils/money.dart). Kept as a deprecated wrapper so existing
+/// call sites (`money(product.harga)`) elsewhere keep compiling
+/// unchanged; behavior is identical to before.
+@Deprecated('Use formatRupiah from shared/utils/money.dart instead')
+String money(dynamic v) => formatRupiah(v);
+
+/// OFFLINE FIX: previously called `ApiClient`/`Get.find<ApiClient>()`
+/// unconditionally, ignoring `AppConstants.localMode`. Wired to
+/// `LocalDataService`, same pattern as Category/Ingredient/Stock above.
+///
+/// `LocalDataService.getAppProducts()` returns every product with no
+/// server-side `q`/`id_kategori`/pagination support, so search, category
+/// filtering, and pagination fields are all emulated client-side here to
+/// keep the existing UI (search box, category chips, pagination) working
+/// identically to the online path.
 class ProductController extends GetxController {
+  final LocalDataService _local = LocalDataService.to;
   final items = <Product>[].obs;
   final categories = <Category>[].obs;
   final loading = false.obs;
@@ -68,6 +86,14 @@ class ProductController extends GetxController {
   }
 
   Future<void> loadCategories() async {
+    if (AppConstants.localMode) {
+      try {
+        categories.assignAll(await _local.getAppCategories());
+      } catch (_) {
+        // non-fatal: dropdown simply stays empty
+      }
+      return;
+    }
     try {
       final res = await Get.find<ApiClient>().get('/categories',
           query: {'perPage': 100}, fromData: (d) => d);
@@ -83,6 +109,27 @@ class ProductController extends GetxController {
 
   Future<void> load() async {
     loading.value = true;
+    if (AppConstants.localMode) {
+      try {
+        var all = await _local.getAppProducts();
+        if (selectedCategoryId.value != null) {
+          all = all.where((p) => p.idKategori == selectedCategoryId.value).toList();
+        }
+        final q = search.value.trim().toLowerCase();
+        if (q.isNotEmpty) {
+          all = all.where((p) => p.namaProduk.toLowerCase().contains(q)).toList();
+        }
+        items.assignAll(all);
+        total.value = all.length;
+        lastPage.value = 1;
+        page.value = 1;
+      } catch (e) {
+        EasyLoading.showError(e.toString());
+      } finally {
+        loading.value = false;
+      }
+      return;
+    }
     try {
       final query = <String, dynamic>{
         'perPage': perPage.value,
@@ -146,6 +193,22 @@ class ProductController extends GetxController {
       return;
     }
 
+    EasyLoading.show(status: 'Saving...');
+    if (AppConstants.localMode) {
+      await _local.saveProduct(
+        id: existing?.idProduk,
+        categoryId: selectedCategory.value!,
+        name: nama,
+        price: harga,
+        isAvailable: selectedStatus.value,
+      );
+      EasyLoading.dismiss();
+      Get.back();
+      EasyLoading.showSuccess('Saved');
+      await load();
+      return;
+    }
+
     final body = {
       'id_kategori': selectedCategory.value,
       'nama_produk': nama,
@@ -153,7 +216,6 @@ class ProductController extends GetxController {
       'status': selectedStatus.value ? 1 : 0,
     };
 
-    EasyLoading.show(status: 'Saving...');
     final res = existing == null
         ? await Get.find<ApiClient>().post('/products', body: body)
         : await Get.find<ApiClient>().put('/products/${existing.idProduk}',
@@ -179,6 +241,13 @@ class ProductController extends GetxController {
     if (confirmed != true) return;
 
     EasyLoading.show(status: 'Deleting...');
+    if (AppConstants.localMode) {
+      await _local.deleteProduct(id);
+      EasyLoading.dismiss();
+      EasyLoading.showSuccess('Deleted');
+      await load();
+      return;
+    }
     final res = await Get.find<ApiClient>().delete('/products/$id');
     EasyLoading.dismiss();
 

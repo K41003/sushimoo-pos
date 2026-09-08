@@ -9,8 +9,6 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  flutter_localizations:
-    sdk: flutter
 
   # State management / DI / routing
   get: ^4.6.6
@@ -44,8 +42,6 @@ dependencies:
   # Security / device integrity
   safe_device: ^1.1.6
   screen_protector: ^1.5.3
-
-  cupertino_icons: ^1.0.8
 
 dev_dependencies:
   flutter_test:

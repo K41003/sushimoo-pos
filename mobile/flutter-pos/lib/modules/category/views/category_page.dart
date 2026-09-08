@@ -21,11 +21,6 @@ class CategoryPage extends GetView<CategoryController> {
       title: 'Kategori',
       currentRoute: AppRoutes.category,
       actions: [
-        AppHeaderSearchField(
-          hint: 'Cari kategori...',
-          width: 180.w,
-          onChanged: controller.onSearchChanged,
-        ),
         AppGlassActionButton(
           icon: Icons.add,
           tooltip: 'Tambah Kategori',
@@ -36,6 +31,11 @@ class CategoryPage extends GetView<CategoryController> {
         padding: EdgeInsets.all(Responsive.padding(context)),
         child: Column(
           children: [
+            AppHeaderSearchField(
+              hint: 'Cari kategori...',
+              onChanged: controller.onSearchChanged,
+            ),
+            SizedBox(height: 12.h),
             Expanded(
               child: Obx(() {
                 if (controller.loading.value) {

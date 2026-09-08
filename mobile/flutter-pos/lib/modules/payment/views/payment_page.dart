@@ -10,6 +10,7 @@ import '../../../shared/widgets/app_scaffold.dart';
 import '../../../shared/widgets/glass_panel.dart';
 import '../controllers/payment_controller.dart';
 import '../widgets/screen_shield_wrapper.dart';
+import '../../../shared/utils/money.dart';
 
 /// REPLACES `payment_page.dart` 1:1 — same class name `PaymentPage`,
 /// same `GetView<PaymentController>`.
@@ -217,7 +218,7 @@ class _PaymentPageBody extends GetView<PaymentController> {
                                 Text('Total Tagihan:',
                                     style: TextStyle(fontFamily: 'Courier', fontSize: 14.sp, color: AppColors.inkMuted)),
                                 Text(
-                                  'Rp ${trx.total.toStringAsFixed(0)}',
+                                  formatRupiah(trx.total),
                                   style: TextStyle(
                                       fontFamily: 'Courier', fontSize: 15.sp, fontWeight: FontWeight.bold, color: AppColors.ink),
                                 ),
@@ -250,8 +251,8 @@ class _PaymentPageBody extends GetView<PaymentController> {
                                         ),
                                         Text(
                                           hasShortfall
-                                              ? 'Rp ${(trx.total - receivedAmt).toStringAsFixed(0)}'
-                                              : 'Rp ${changeAmt.toStringAsFixed(0)}',
+                                              ? formatRupiah(trx.total - receivedAmt)
+                                              : formatRupiah(changeAmt),
                                           style: TextStyle(
                                             fontFamily: 'Courier',
                                             fontSize: 15.sp,

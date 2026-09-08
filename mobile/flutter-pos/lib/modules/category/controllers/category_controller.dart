@@ -1,14 +1,31 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:get/get.dart';
+import '../../../app/constants/app_constants.dart';
 import '../../../app/services/api_client.dart';
+import '../../../app/services/local_data_service.dart';
 import '../../../data/models/category.dart';
 import '../../../data/response/api_response.dart';
 import '../../../shared/widgets/app_dialog.dart';
 import '../../../shared/utils/debouncer.dart';
 import '../widgets/category_form.dart';
 
+/// OFFLINE FIX: this controller previously called `ApiClient` /
+/// `Get.find<ApiClient>()` unconditionally, ignoring
+/// `AppConstants.localMode` entirely — unlike every other list+form
+/// controller in the app (Table, Expense, Shift, Report, Payment,
+/// Dashboard), which already branch on `localMode` and fall back to
+/// `LocalDataService`. That meant Category management would hang/fail
+/// with no Laravel backend reachable, even though the rest of the app
+/// runs fully offline. Wired to the same pattern used everywhere else;
+/// the online (`ApiClient`) path below each guard is untouched.
+///
+/// `LocalDataService.getAppCategories()` has no server-side pagination
+/// or `q` search param, so `search`/`page`/`perPage`/`total`/`lastPage`
+/// are emulated client-side here to keep the existing search box and
+/// pagination fields working identically from the UI's point of view.
 class CategoryController extends GetxController {
+  final LocalDataService _local = LocalDataService.to;
   final items = <Category>[].obs;
   final loading = false.obs;
   final search = ''.obs;
@@ -51,6 +68,24 @@ class CategoryController extends GetxController {
 
   Future<void> load() async {
     loading.value = true;
+    if (AppConstants.localMode) {
+      try {
+        final all = await _local.getAppCategories();
+        final q = search.value.trim().toLowerCase();
+        final filtered = q.isEmpty
+            ? all
+            : all.where((c) => c.namaKategori.toLowerCase().contains(q)).toList();
+        items.assignAll(filtered);
+        total.value = filtered.length;
+        lastPage.value = 1;
+        page.value = 1;
+      } catch (e) {
+        EasyLoading.showError(e.toString());
+      } finally {
+        loading.value = false;
+      }
+      return;
+    }
     try {
       final query = <String, dynamic>{
         'perPage': perPage.value,
@@ -99,13 +134,27 @@ class CategoryController extends GetxController {
       return;
     }
 
+    EasyLoading.show(status: 'Saving...');
+    if (AppConstants.localMode) {
+      await _local.saveCategory(
+        id: existing?.idKategori,
+        name: nama,
+        description: descController.text.trim(),
+        status: selectedStatus.value,
+      );
+      EasyLoading.dismiss();
+      Get.back();
+      EasyLoading.showSuccess('Saved');
+      await load();
+      return;
+    }
+
     final body = {
       'nama_kategori': nama,
       'deskripsi': descController.text.trim(),
       'status': selectedStatus.value ? 1 : 0,
     };
 
-    EasyLoading.show(status: 'Saving...');
     final res = existing == null
         ? await Get.find<ApiClient>().post('/categories', body: body)
         : await Get.find<ApiClient>().put('/categories/${existing.idKategori}',
@@ -131,6 +180,13 @@ class CategoryController extends GetxController {
     if (confirmed != true) return;
 
     EasyLoading.show(status: 'Deleting...');
+    if (AppConstants.localMode) {
+      await _local.deleteCategory(id);
+      EasyLoading.dismiss();
+      EasyLoading.showSuccess('Deleted');
+      await load();
+      return;
+    }
     final res = await Get.find<ApiClient>().delete('/categories/$id');
     EasyLoading.dismiss();
 

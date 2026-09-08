@@ -10,6 +10,7 @@ import '../../../shared/widgets/app_loading.dart';
 import '../../../shared/widgets/app_scaffold.dart';
 import '../../../shared/widgets/app_text_field.dart';
 import '../../../shared/widgets/glass_panel.dart';
+import '../../../shared/utils/money.dart';
 import '../controllers/expense_controller.dart';
 
 /// REPLACES `expense_page.dart` 1:1 — same class name `ExpensePage`.
@@ -52,7 +53,7 @@ class ExpensePage extends GetView<ExpenseController> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      'Rp ${e.nominal.toStringAsFixed(0)}',
+                      formatRupiah(e.nominal),
                       style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                           fontWeight: FontWeight.w800,
                           color: AppColors.salmonDark),

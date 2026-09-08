@@ -9,6 +9,7 @@ import '../../../app/routes/app_routes.dart';
 import '../../../shared/widgets/app_button.dart';
 import '../../../shared/widgets/app_scaffold.dart';
 import '../../../shared/widgets/glass_panel.dart';
+import '../../../shared/utils/money.dart';
 import '../controllers/dashboard_controller.dart';
 import '../widgets/stat_card.dart';
 
@@ -87,13 +88,19 @@ class DashboardPage extends GetView<DashboardController> {
                     : w >= 420
                         ? 2
                         : 1;
+            // Fewer columns -> each card is relatively taller for its
+            // width (same icon/value/label stack, less horizontal room
+            // per card at 1-2 columns than at 3-4), so a single static
+            // ratio overflowed at low column counts. Lower ratio = taller
+            // card for the same width.
+            final aspectRatio = cols >= 3 ? 1.5 : (cols == 2 ? 1.25 : 2.2);
             return GridView.count(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
               crossAxisCount: cols,
               crossAxisSpacing: AppDimensions.md.w,
               mainAxisSpacing: AppDimensions.md.h,
-              childAspectRatio: 1.5,
+              childAspectRatio: aspectRatio,
               children: [
                 StatCard(
                   label: 'Total Penjualan',
@@ -192,13 +199,17 @@ class DashboardPage extends GetView<DashboardController> {
           LayoutBuilder(builder: (context, constraints) {
             final w = constraints.maxWidth;
             final cols = w >= 700 ? 3 : (w >= 420 ? 2 : 1);
+            // See admin grid above for why this can't be a single static
+            // ratio: fewer columns means each StatCard is relatively
+            // taller-content for its width.
+            final aspectRatio = cols >= 3 ? 1.6 : (cols == 2 ? 1.25 : 2.2);
             return GridView.count(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
               crossAxisCount: cols,
               crossAxisSpacing: AppDimensions.md.w,
               mainAxisSpacing: AppDimensions.md.h,
-              childAspectRatio: 1.6,
+              childAspectRatio: aspectRatio,
               children: [
                 StatCard(
                   label: 'Shift Aktif',
@@ -298,7 +309,7 @@ class DashboardPage extends GetView<DashboardController> {
     ));
   }
 
-  String _money(dynamic v) => 'Rp ${(v is num ? v : 0).toStringAsFixed(0)}';
+  String _money(dynamic v) => formatRupiah(v);
 
   /// Computes a "+X%" / "-X%" label by comparing the last two points of
   /// the real sales trend series. Returns null (no badge shown) when

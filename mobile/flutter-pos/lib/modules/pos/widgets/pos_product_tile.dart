@@ -5,8 +5,10 @@ import '../../../app/constants/dimensions.dart';
 import '../../../app/themes/theme.dart';
 import '../../../data/models/product.dart';
 import '../../../shared/widgets/glass_panel.dart';
+import '../../../shared/utils/money.dart';
 
-String moneyShort(dynamic v) => 'Rp ${(v is num ? v : 0).toStringAsFixed(0)}';
+@Deprecated('Use formatRupiah from shared/utils/money.dart instead')
+String moneyShort(dynamic v) => formatRupiah(v);
 
 /// REPLACES `pos_product_tile.dart` 1:1 — same class name
 /// `PosProductTile`, same constructor (`product`, `onTap`).

@@ -20,61 +20,69 @@ class IngredientPage extends GetView<IngredientController> {
       title: 'Bahan Baku',
       currentRoute: AppRoutes.ingredient,
       actions: [
-        AppHeaderSearchField(
-          hint: 'Cari bahan baku...',
-          width: 170.w,
-          onChanged: controller.setSearch,
-        ),
         AppGlassActionButton(
           icon: Icons.add,
           tooltip: 'Tambah Bahan Baku',
           onPressed: () => controller.save(null),
         ),
       ],
-      body: Obx(() {
-        if (controller.loading.value) return const AppLoading();
-        if (controller.items.isEmpty) {
-          return const AppEmptyState(message: 'Belum ada bahan baku');
-        }
-        return ListView.separated(
-          padding: EdgeInsets.all(Responsive.padding(context)),
-          itemCount: controller.items.length,
-          separatorBuilder: (_, __) => SizedBox(height: 10.h),
-          itemBuilder: (_, i) {
-            final it = controller.items[i];
-            return GlassPanel(
-              radius: AppDimensions.radiusLg,
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(it.namaBahan,
-                            style: Theme.of(context).textTheme.headlineSmall),
-                        SizedBox(height: 4.h),
-                        Text(
-                          '${it.satuan} • Min ${it.minimalStok}',
-                          style: Theme.of(context).textTheme.bodySmall,
-                        ),
-                      ],
-                    ),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.edit_outlined),
-                    onPressed: () => controller.save(it),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.delete_outline),
-                    color: AppColors.danger,
-                    onPressed: () => controller.delete(it.idBahan),
-                  ),
-                ],
-              ),
-            );
-          },
-        );
-      }),
+      body: Padding(
+        padding: EdgeInsets.all(Responsive.padding(context)),
+        child: Column(
+          children: [
+            AppHeaderSearchField(
+              hint: 'Cari bahan baku...',
+              onChanged: controller.setSearch,
+            ),
+            SizedBox(height: 10.h),
+            Expanded(
+              child: Obx(() {
+                if (controller.loading.value) return const AppLoading();
+                if (controller.items.isEmpty) {
+                  return const AppEmptyState(message: 'Belum ada bahan baku');
+                }
+                return ListView.separated(
+                  itemCount: controller.items.length,
+                  separatorBuilder: (_, __) => SizedBox(height: 10.h),
+                  itemBuilder: (_, i) {
+                    final it = controller.items[i];
+                    return GlassPanel(
+                      radius: AppDimensions.radiusLg,
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(it.namaBahan,
+                                    style: Theme.of(context).textTheme.headlineSmall),
+                                SizedBox(height: 4.h),
+                                Text(
+                                  '${it.satuan} • Min ${it.minimalStok}',
+                                  style: Theme.of(context).textTheme.bodySmall,
+                                ),
+                              ],
+                            ),
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.edit_outlined),
+                            onPressed: () => controller.save(it),
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.delete_outline),
+                            color: AppColors.danger,
+                            onPressed: () => controller.delete(it.idBahan),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                );
+              }),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

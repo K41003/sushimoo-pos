@@ -10,6 +10,7 @@ import '../../../shared/widgets/app_button.dart';
 import '../../../shared/widgets/app_loading.dart';
 import '../../../shared/widgets/app_scaffold.dart';
 import '../../../shared/widgets/glass_panel.dart';
+import '../../../shared/utils/money.dart';
 import '../controllers/closing_controller.dart';
 
 /// REPLACES `closing_page.dart` 1:1 — same class name `ClosingPage`.
@@ -127,12 +128,12 @@ class ClosingPage extends GetView<ClosingController> {
             ],
           ),
           SizedBox(height: 6.h),
-          Text('Total Penjualan: Rp ${c.totalPenjualan.toStringAsFixed(0)}'),
-          Text('Total Tunai: Rp ${c.totalCash.toStringAsFixed(0)}'),
-          Text('Total QRIS: Rp ${c.totalQris.toStringAsFixed(0)}'),
+          Text('Total Penjualan: ${formatRupiah(c.totalPenjualan)}'),
+          Text('Total Tunai: ${formatRupiah(c.totalCash)}'),
+          Text('Total QRIS: ${formatRupiah(c.totalQris)}'),
           Text(
-              'Total Pengeluaran: Rp ${c.totalPengeluaran.toStringAsFixed(0)}'),
-          Text('Saldo Akhir: Rp ${c.saldoAkhir.toStringAsFixed(0)}'),
+              'Total Pengeluaran: ${formatRupiah(c.totalPengeluaran)}'),
+          Text('Saldo Akhir: ${formatRupiah(c.saldoAkhir)}'),
         ],
       ),
     );

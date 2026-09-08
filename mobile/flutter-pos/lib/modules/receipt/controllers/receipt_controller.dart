@@ -10,7 +10,10 @@ import '../../../data/models/payment.dart';
 /// connected) is identical; the difference only shows up when the
 /// printer is unreachable — instead of the receipt silently not
 /// printing, it auto-retries a few times and then queues for later/
-/// manual retry (see print_queue_service.dart, shared/widgets/print_queue_button.dart).
+/// manual retry (see print_queue_service.dart). Note: the UI surface
+/// for that manual retry (`PrintQueueButton`) was dead/orphaned code —
+/// never wired into any AppScaffold — and was removed in this pass; the
+/// queue itself still works, it's just not currently surfaced in the UI.
 class ReceiptController extends GetxController {
   final Transaction transaction;
   final Payment payment;

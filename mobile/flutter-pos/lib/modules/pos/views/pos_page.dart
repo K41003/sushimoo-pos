@@ -13,6 +13,7 @@ import '../../../shared/widgets/glass_panel.dart';
 import '../widgets/pos_product_tile.dart';
 import '../controllers/pos_controller.dart';
 import '../widgets/cart_tile.dart';
+import '../../../shared/utils/money.dart';
 
 /// REPLACES `pos_page.dart` 1:1 — same class name `PosPage`, same
 /// `GetView<PosController>`. Layout logic (landscape split / portrait
@@ -562,4 +563,4 @@ class PosPage extends GetView<PosController> {
   }
 }
 
-String _money(double value) => 'Rp ${value.toStringAsFixed(0)}';
+String _money(double value) => formatRupiah(value);

@@ -4,10 +4,14 @@ import '../../../app/constants/colors.dart';
 import '../../../app/constants/dimensions.dart';
 import '../../../data/models/product.dart';
 import '../../../shared/widgets/glass_panel.dart';
+import '../../../shared/utils/money.dart';
 
-/// Kept as a free function so existing call sites (`money(product.harga)`)
-/// elsewhere in the codebase keep compiling.
-String money(dynamic v) => 'Rp ${(v is num ? v : 0).toStringAsFixed(0)}';
+/// REFACTOR: delegates to the shared `formatRupiah` (see
+/// shared/utils/money.dart) instead of duplicating the formatting
+/// logic. Kept as a deprecated wrapper so existing call sites
+/// (`money(product.harga)`) elsewhere keep compiling unchanged.
+@Deprecated('Use formatRupiah from shared/utils/money.dart instead')
+String money(dynamic v) => formatRupiah(v);
 
 /// REPLACES `product_card_widget.dart` 1:1 — same class name
 /// `ProductCardWidget`, same constructor (`product`, `onTap`, `onDelete`).
