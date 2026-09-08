@@ -241,53 +241,58 @@ class _GlassAppBar extends StatelessWidget {
               return SizedBox(
                 width: double.infinity,
                 child: Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  if (showBackButton)
-                    IconButton(
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
-                      icon: const Icon(Icons.arrow_back_rounded, color: AppColors.ink, size: 22),
-                      tooltip: 'Back',
-                      onPressed: onBackPressed,
-                    )
-                  else if (showMenuButton)
-                    Builder(
-                      builder: (ctx) => IconButton(
-                        padding: EdgeInsets.zero,
-                        constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
-                        icon: const Icon(Icons.menu_rounded, color: AppColors.ink, size: 22),
-                        tooltip: 'Menu',
-                        onPressed: () => Scaffold.of(ctx).openDrawer(),
-                      ),
-                    )
-                  else
-                    const SizedBox(width: 4),
-                  Flexible(
-                    child: Text(
-                      title,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                        fontWeight: FontWeight.w700,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    // Left section: leading nav button + title
+                    Expanded(
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          if (showBackButton)
+                            IconButton(
+                              padding: EdgeInsets.zero,
+                              constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
+                              icon: const Icon(Icons.arrow_back_rounded, color: AppColors.ink, size: 22),
+                              tooltip: 'Back',
+                              onPressed: onBackPressed,
+                            )
+                          else if (showMenuButton)
+                            Builder(
+                              builder: (ctx) => IconButton(
+                                padding: EdgeInsets.zero,
+                                constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
+                                icon: const Icon(Icons.menu_rounded, color: AppColors.ink, size: 22),
+                                tooltip: 'Menu',
+                                onPressed: () => Scaffold.of(ctx).openDrawer(),
+                              ),
+                            )
+                          else
+                            const SizedBox(width: 4),
+                          Flexible(
+                            child: Text(
+                              title,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                  ),
-                  const Spacer(),
-                  // Avatar + actions render as ONE right-aligned,
-                  // natural-width group (not `Expanded`) so there is no
-                  // extra flex space for a gap to hide in between the
-                  // last action button and the trailing edge — `Spacer()`
-                  // alone pushes this whole group flush against the end
-                  // of the bar.
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      if (userName != null && userName!.isNotEmpty)
-                        Padding(
-                          padding: const EdgeInsets.only(left: 8),
-                          child: Row(
+                    const SizedBox(width: 8),
+                    // Trailing section: Avatar + Username (if tablet) + Action Buttons
+                    // Rendered as an un-flexed group, while the left section is
+                    // Expanded, ensuring this trailing group is pushed flush to the
+                    // right edge on both tablet and phone.
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        if (userName != null && userName!.isNotEmpty)
+                          Row(
                             mainAxisSize: MainAxisSize.min,
                             crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
@@ -312,7 +317,7 @@ class _GlassAppBar extends StatelessWidget {
                               if (showUserName) ...[
                                 const SizedBox(width: 8),
                                 ConstrainedBox(
-                                  constraints: const BoxConstraints(maxWidth: 130),
+                                  constraints: const BoxConstraints(maxWidth: 140),
                                   child: Text(
                                     userName!,
                                     maxLines: 1,
@@ -327,16 +332,15 @@ class _GlassAppBar extends StatelessWidget {
                               ],
                             ],
                           ),
-                        ),
-                      if (actions != null)
-                        Row(
-                          mainAxisSize: MainAxisSize.min,
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: actions!,
-                        ),
-                    ],
-                  ),
-                ],
+                        if (actions != null && actions!.isNotEmpty)
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: actions!,
+                          ),
+                      ],
+                    ),
+                  ],
                 ),
               );
               },

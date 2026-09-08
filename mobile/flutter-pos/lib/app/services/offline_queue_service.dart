@@ -13,7 +13,7 @@ enum QueuedOrderStatus { pending, syncing, failed }
 /// fields needed to show it in a "pending sync" list and retry it later.
 class QueuedOrder {
   final int? id; // sqflite rowid, null until inserted
-  final int idMeja;
+  final int? idMeja;
   final String itemsJson; // encoded `cart.map((e) => e.toPayload())`
   final String createdAt; // ISO8601, for display/ordering
   final QueuedOrderStatus status;
@@ -22,7 +22,7 @@ class QueuedOrder {
 
   const QueuedOrder({
     this.id,
-    required this.idMeja,
+    this.idMeja,
     required this.itemsJson,
     required this.createdAt,
     this.status = QueuedOrderStatus.pending,
@@ -31,7 +31,7 @@ class QueuedOrder {
   });
 
   Map<String, dynamic> get body => {
-        'id_meja': idMeja,
+        if (idMeja != null) 'id_meja': idMeja,
         'items': jsonDecode(itemsJson),
       };
 
@@ -47,7 +47,7 @@ class QueuedOrder {
 
   factory QueuedOrder.fromRow(Map<String, dynamic> row) => QueuedOrder(
         id: row['id'] as int,
-        idMeja: row['id_meja'] as int,
+        idMeja: row['id_meja'] as int?,
         itemsJson: row['items_json'] as String,
         createdAt: row['created_at'] as String,
         status: QueuedOrderStatus.values.firstWhere(
@@ -71,7 +71,7 @@ class QueuedOrder {
         createdAt: createdAt,
         status: status ?? this.status,
         retryCount: retryCount ?? this.retryCount,
-        lastError: lastError,
+        lastError: lastError ?? this.lastError,
       );
 }
 
@@ -109,7 +109,7 @@ class OfflineQueueService extends GetxService {
         await db.execute('''
           CREATE TABLE $_table (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            id_meja INTEGER NOT NULL,
+            id_meja INTEGER,
             items_json TEXT NOT NULL,
             created_at TEXT NOT NULL,
             status TEXT NOT NULL DEFAULT 'pending',
@@ -129,7 +129,7 @@ class OfflineQueueService extends GetxService {
   /// Persists a failed/offline order. Called from `PosController.placeOrder()`
   /// when the `/transaksi` POST couldn't reach the server.
   Future<QueuedOrder> enqueue({
-    required int idMeja,
+    int? idMeja,
     required List<Map<String, dynamic>> items,
   }) async {
     final db = await _database;

@@ -22,7 +22,7 @@ class DatabaseHelper extends GetxService {
   static DatabaseHelper get to => Get.find<DatabaseHelper>();
 
   static const _dbName = 'sushimoo_pos.db';
-  static const _dbVersion = 1;
+  static const _dbVersion = 2;
 
   Database? _db;
   final Completer<void> _ready = Completer<void>();
@@ -48,7 +48,19 @@ class DatabaseHelper extends GetxService {
       await database;
       if (!_ready.isCompleted) _ready.complete();
     } catch (e) {
-      if (!_ready.isCompleted) _ready.completeError(e);
+      // DB open/upgrade threw (e.g. a previous failed migration left the
+      // schema in a partial state). Delete the corrupt file and recreate
+      // from scratch so the app can always start cleanly.
+      try {
+        final dbPath = await getDatabasesPath();
+        final path = p.join(dbPath, _dbName);
+        await deleteDatabase(path);
+        _db = null;
+        await database; // re-open → triggers onCreate + seed
+        if (!_ready.isCompleted) _ready.complete();
+      } catch (e2) {
+        if (!_ready.isCompleted) _ready.completeError(e2);
+      }
     }
   }
 
@@ -62,7 +74,78 @@ class DatabaseHelper extends GetxService {
         await db.execute('PRAGMA foreign_keys = ON');
       },
       onCreate: _onCreate,
+      onUpgrade: _onUpgrade,
     );
+  }
+
+  /// Migration from v1 → v2: make `id_meja` nullable in `transaksi` so
+  /// takeaway orders (no physical table) can be placed in offline mode.
+  ///
+  /// IMPORTANT: sqflite wraps `onUpgrade` in a transaction, and SQLite
+  /// ignores `PRAGMA foreign_keys = OFF` inside a transaction. To drop
+  /// `transaksi` without violating the FK from `transaksi_detail`, we
+  /// must drop the child table first, then the parent, then recreate
+  /// both (preserving existing rows via temp tables).
+  Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
+    if (oldVersion < 2) {
+      // 1. Back up child rows (transaksi_detail → transaksi_detail_bak)
+      await db.execute('''
+        CREATE TABLE transaksi_detail_bak AS
+          SELECT * FROM transaksi_detail
+      ''');
+
+      // 2. Back up parent rows with new nullable schema
+      await db.execute('''
+        CREATE TABLE transaksi_new (
+          id_transaksi INTEGER PRIMARY KEY AUTOINCREMENT,
+          invoice_number TEXT NOT NULL,
+          id_shift INTEGER NOT NULL,
+          id_user INTEGER NOT NULL,
+          id_meja INTEGER,
+          tanggal TEXT NOT NULL,
+          total REAL NOT NULL DEFAULT 0,
+          status TEXT NOT NULL DEFAULT 'pending',
+          void_reason TEXT,
+          FOREIGN KEY (id_shift) REFERENCES shift (id_shift),
+          FOREIGN KEY (id_user) REFERENCES users (id_user),
+          FOREIGN KEY (id_meja) REFERENCES meja (id_meja)
+        )
+      ''');
+      await db.execute('''
+        INSERT INTO transaksi_new
+          SELECT id_transaksi, invoice_number, id_shift, id_user,
+                 id_meja, tanggal, total, status, void_reason
+          FROM transaksi
+      ''');
+
+      // 3. Drop child FIRST (removes FK dependency on transaksi)
+      await db.execute('DROP TABLE transaksi_detail');
+      // 4. Now safe to drop parent
+      await db.execute('DROP TABLE transaksi');
+
+      // 5. Promote the new tables
+      await db.execute('ALTER TABLE transaksi_new RENAME TO transaksi');
+      await db.execute('''
+        CREATE TABLE transaksi_detail (
+          id_detail INTEGER PRIMARY KEY AUTOINCREMENT,
+          id_transaksi INTEGER NOT NULL,
+          id_produk INTEGER NOT NULL,
+          qty INTEGER NOT NULL DEFAULT 1,
+          harga REAL NOT NULL DEFAULT 0,
+          subtotal REAL NOT NULL DEFAULT 0,
+          catatan TEXT,
+          FOREIGN KEY (id_transaksi) REFERENCES transaksi (id_transaksi),
+          FOREIGN KEY (id_produk) REFERENCES produk (id_produk)
+        )
+      ''');
+      await db.execute('''
+        INSERT INTO transaksi_detail
+          SELECT id_detail, id_transaksi, id_produk,
+                 qty, harga, subtotal, catatan
+          FROM transaksi_detail_bak
+      ''');
+      await db.execute('DROP TABLE transaksi_detail_bak');
+    }
   }
 
   Future<void> _onCreate(Database db, int version) async {
@@ -173,7 +256,7 @@ class DatabaseHelper extends GetxService {
         invoice_number TEXT NOT NULL,
         id_shift INTEGER NOT NULL,
         id_user INTEGER NOT NULL,
-        id_meja INTEGER NOT NULL,
+        id_meja INTEGER,
         tanggal TEXT NOT NULL,
         total REAL NOT NULL DEFAULT 0,
         status TEXT NOT NULL DEFAULT 'pending',

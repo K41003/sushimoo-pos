@@ -137,10 +137,10 @@ class AppHeaderSearchField extends StatefulWidget {
 
   /// `width`: optional explicit cap. When null, the field fills
   /// whatever width its parent gives it, up to a sensible built-in
-  /// ceiling (`_defaultMaxWidth`) so it doesn't stretch edge-to-edge on
+  /// ceiling (`defaultMaxWidth`) so it doesn't stretch edge-to-edge on
   /// wide tablet layouts — the caller can still override with an
   /// explicit `width` for a tighter cap (e.g. inline in a header row).
-  static const double _defaultMaxWidth = 480;
+  static const double defaultMaxWidth = 480;
   const AppHeaderSearchField({
     super.key,
     this.hint = 'Cari...',
@@ -211,7 +211,7 @@ class _AppHeaderSearchFieldState extends State<AppHeaderSearchField> {
       // asked for — it can't override a hard `minWidth` the child
       // itself demands.
       constraints: BoxConstraints(
-        maxWidth: widget.width ?? _defaultMaxWidth,
+        maxWidth: widget.width ?? AppHeaderSearchField.defaultMaxWidth,
       ),
       child: Container(
         height: 48,

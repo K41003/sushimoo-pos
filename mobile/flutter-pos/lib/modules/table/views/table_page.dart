@@ -40,16 +40,31 @@ class TablePage extends GetView<TableController> {
                 Expanded(
                   child: controller.items.isEmpty
                       ? const AppEmptyState(message: 'Belum ada meja')
-                      : GridView.builder(
-                          padding: EdgeInsets.all(Responsive.padding(context)),
-                          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: Responsive.gridColumns(context, max: 5),
-                            crossAxisSpacing: 12.w,
-                            mainAxisSpacing: 12.h,
-                            childAspectRatio: 1.2,
-                          ),
-                          itemCount: controller.items.length,
-                          itemBuilder: (_, i) => _tableCard(context, controller.items[i]),
+                      : LayoutBuilder(
+                          builder: (context, constraints) {
+                            final availableWidth = constraints.maxWidth - (Responsive.padding(context) * 2);
+                            final cols = Responsive.columnsForWidth(
+                              availableWidth,
+                              itemMinWidth: 160.0,
+                              min: 2,
+                              max: 5,
+                            );
+                            final tileWidth = (availableWidth - (cols - 1) * 12.w) / cols;
+                             final tileHeight = (tileWidth * 1.05).clamp(135.0, 160.0);
+                            final childAspectRatio = tileWidth / tileHeight;
+
+                            return GridView.builder(
+                              padding: EdgeInsets.all(Responsive.padding(context)),
+                              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: cols,
+                                crossAxisSpacing: 12.w,
+                                mainAxisSpacing: 12.h,
+                                childAspectRatio: childAspectRatio,
+                              ),
+                              itemCount: controller.items.length,
+                              itemBuilder: (_, i) => _tableCard(context, controller.items[i]),
+                            );
+                          },
                         ),
                 ),
               ],
@@ -87,29 +102,40 @@ class TablePage extends GetView<TableController> {
   Widget _tableCard(BuildContext context, tm.TableModel t) {
     return GlassPanel(
       radius: AppDimensions.radiusLg,
+      padding: EdgeInsets.fromLTRB(10.w, 4.h, 6.w, 8.h),
       onTap: () => controller.save(t),
-      child: Stack(
+      child: Column(
         children: [
-          Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                'Meja ${t.nomorMeja}',
-                style: Theme.of(context).textTheme.headlineMedium,
-                textAlign: TextAlign.center,
+          Align(
+            alignment: Alignment.topRight,
+            child: InkWell(
+              borderRadius: BorderRadius.circular(999),
+              onTap: () => controller.delete(t.idMeja),
+              child: Padding(
+                padding: EdgeInsets.all(4.r),
+                child: Icon(Icons.delete_outline, size: 16.sp, color: AppColors.danger),
               ),
-              SizedBox(height: 8.h),
-              Text('${t.kapasitas} kursi', style: Theme.of(context).textTheme.bodyMedium),
-              SizedBox(height: 10.h),
-              StatusChip(status: t.status),
-            ],
+            ),
           ),
-          Positioned(
-            top: 0,
-            right: 0,
-            child: IconButton(
-              icon: Icon(Icons.delete, size: 18.sp, color: AppColors.danger),
-              onPressed: () => controller.delete(t.idMeja),
+          Expanded(
+            child: Center(
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'Meja ${t.nomorMeja}',
+                      style: Theme.of(context).textTheme.headlineMedium,
+                      textAlign: TextAlign.center,
+                    ),
+                    SizedBox(height: 4.h),
+                    Text('${t.kapasitas} kursi', style: Theme.of(context).textTheme.bodyMedium),
+                    SizedBox(height: 6.h),
+                    StatusChip(status: t.status),
+                  ],
+                ),
+              ),
             ),
           ),
         ],

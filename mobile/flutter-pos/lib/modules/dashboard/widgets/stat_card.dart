@@ -35,70 +35,71 @@ class StatCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GlassPanel(
-      padding: EdgeInsets.all(AppDimensions.md.r),
+      padding: EdgeInsets.symmetric(
+        horizontal: AppDimensions.md.w,
+        vertical: AppDimensions.xs.h + 2.h,
+      ),
       child: LayoutBuilder(
         builder: (context, constraints) {
-          // Defensive: even after sizing `value` with `priceCompact`
-          // (18.sp) instead of the oversized `price` (30.sp) it used
-          // before, and after giving narrow-column grids a taller
-          // aspect ratio (see dashboard_page.dart), a `GridView.count`
-          // cell is still a hard-capped height. Rather than risk a
-          // repeat of the "BOTTOM OVERFLOWED BY N PIXELS" bug on some
-          // device/font-scale combination this session can't test
-          // against a real emulator, the inner gaps scale down slightly
-          // when the available height is tight, so the card compresses
-          // gracefully instead of overflowing.
-          final tight = constraints.maxHeight < 110;
-          final gapTop = tight ? 6.h : (AppDimensions.sm.h + 2.h);
-          final gapLabel = tight ? 2.h : 4.h;
+          final tight = constraints.maxHeight < 85;
+          final gapTop = tight ? 2.h : 6.h;
+          final gapLabel = tight ? 1.h : 3.h;
 
-          return Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
+          return FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: SizedBox(
+              width: constraints.maxWidth,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Container(
-                    padding: EdgeInsets.all(10.r),
-                    decoration: BoxDecoration(
-                      color: accent.withValues(alpha: 0.16),
-                      borderRadius: BorderRadius.circular(12.r),
-                    ),
-                    child: Icon(icon, color: accent, size: 20.sp),
-                  ),
-                  const Spacer(),
-                  if (trend != null)
-                    Row(
-                      children: [
-                        Icon(Icons.trending_up, size: 14.sp, color: AppColors.emerald),
-                        SizedBox(width: 2.w),
-                        Text(
-                          trend!,
-                          style: TextStyle(
-                            fontSize: 11.sp,
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.emerald,
-                          ),
+                  Row(
+                    children: [
+                      Container(
+                        padding: EdgeInsets.all(7.r),
+                        decoration: BoxDecoration(
+                          color: accent.withValues(alpha: 0.16),
+                          borderRadius: BorderRadius.circular(10.r),
                         ),
-                      ],
-                    ),
+                        child: Icon(icon, color: accent, size: 18.sp),
+                      ),
+                      const Spacer(),
+                      if (trend != null)
+                        Row(
+                          children: [
+                            Icon(Icons.trending_up, size: 13.sp, color: AppColors.emerald),
+                            SizedBox(width: 2.w),
+                            Text(
+                              trend!,
+                              style: TextStyle(
+                                fontSize: 10.5.sp,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.emerald,
+                              ),
+                            ),
+                          ],
+                        ),
+                    ],
+                  ),
+                  SizedBox(height: gapTop),
+                  Text(
+                    value,
+                    style: AppTypography.priceCompact,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  SizedBox(height: gapLabel),
+                  Text(
+                    label,
+                    style: Theme.of(context).textTheme.labelLarge,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ],
               ),
-              SizedBox(height: gapTop),
-              Text(
-                value,
-                style: AppTypography.priceCompact,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-              SizedBox(height: gapLabel),
-              Text(
-                label,
-                style: Theme.of(context).textTheme.labelLarge,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ],
+            ),
           );
         },
       ),

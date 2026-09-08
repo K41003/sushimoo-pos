@@ -22,16 +22,13 @@ import '../widgets/table_select_sheet.dart';
 /// checkout is the app's core flow. Wired to `LocalDataService`, same
 /// pattern used by every other controller in this pass.
 ///
-/// KNOWN LIMITATION (documented, not silently broken): `LocalDataService
-/// .createTransaction()` requires a non-null `tableId` and
-/// `Transaction.idMeja` is a non-nullable `int` in the shared model used
-/// by payment/receipt/printing across the whole app. Changing that
-/// nullability ripples into `payment_controller.dart`,
-/// `print_queue_service.dart`, and the table module, which is out of
-/// scope for this pass. Takeaway orders (`setTakeaway()` / `isTakeaway`)
-/// therefore still require the online API path for now; local-mode
-/// checkout always requires picking a real table via `selectTable()`,
-/// same as the app's behavior before takeaway support was added.
+/// TAKEAWAY OFFLINE: `LocalDataService.createTransaction()` accepts a
+/// nullable `int? tableId`, and `Transaction.idMeja` is `int?`, so
+/// takeaway orders work correctly in offline/local mode — `placeOrder()`
+/// passes `null` as `tableId` when `isTakeaway` is true and the DB row
+/// records no table. No table-status update is performed for takeaway
+/// orders (the `setTableStatus` guard in `LocalDataService` is already
+/// null-safe).
 class PosController extends GetxController {
   final ApiClient _api = ApiClient.to;
   final LocalDataService _local = LocalDataService.to;
@@ -253,17 +250,6 @@ class PosController extends GetxController {
       EasyLoading.showError('Cart is empty');
       return;
     }
-    if (AppConstants.localMode && isTakeaway.value) {
-      // KNOWN LIMITATION (see class doc comment): local-mode checkout
-      // requires a real table because `LocalDataService.createTransaction`
-      // and the shared `Transaction.idMeja` model are both non-nullable.
-      // Rather than silently drop the takeaway flag and assign a table
-      // the cashier didn't pick (which would corrupt that table's
-      // status via `setTableStatus`), block with a clear message.
-      EasyLoading.showError(
-          'Takeaway belum didukung dalam mode offline. Pilih meja untuk melanjutkan.');
-      return;
-    }
     if (!isTakeaway.value && selectedTable.value == null) {
       await selectTable();
       if (selectedTable.value == null) return;
@@ -283,7 +269,7 @@ class PosController extends GetxController {
       final trx = await _local.createTransaction(
         shiftId: shiftId,
         userId: userId,
-        tableId: selectedTable.value!.idMeja,
+        tableId: isTakeaway.value ? null : selectedTable.value?.idMeja,
         items: cart.map((e) => e.toPayload()).toList(),
       );
       loading.value = false;

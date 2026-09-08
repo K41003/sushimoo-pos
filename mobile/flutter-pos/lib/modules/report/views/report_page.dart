@@ -28,15 +28,38 @@ class ReportPage extends GetView<ReportController> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _card('Penjualan Hari Ini', controller.daily['sales'] ?? 0),
-              SizedBox(height: 10.h),
-              _card('Order Hari Ini', controller.daily['orders'] ?? 0, isCurrency: false),
-              SizedBox(height: 10.h),
-              _card('Tunai Hari Ini', controller.daily['cash'] ?? 0),
-              SizedBox(height: 10.h),
-              _card('QRIS Hari Ini', controller.daily['qris'] ?? 0),
-              SizedBox(height: 10.h),
-              _card('Pengeluaran Hari Ini', controller.daily['expenses'] ?? 0),
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  final isWide = constraints.maxWidth >= 600;
+                  if (!isWide) {
+                    return Column(
+                      children: [
+                        _card('Penjualan Hari Ini', controller.daily['sales'] ?? 0),
+                        SizedBox(height: 10.h),
+                        _card('Order Hari Ini', controller.daily['orders'] ?? 0, isCurrency: false),
+                        SizedBox(height: 10.h),
+                        _card('Tunai Hari Ini', controller.daily['cash'] ?? 0),
+                        SizedBox(height: 10.h),
+                        _card('QRIS Hari Ini', controller.daily['qris'] ?? 0),
+                        SizedBox(height: 10.h),
+                        _card('Pengeluaran Hari Ini', controller.daily['expenses'] ?? 0),
+                      ],
+                    );
+                  }
+                  final halfWidth = (constraints.maxWidth - 12.w) / 2;
+                  return Wrap(
+                    spacing: 12.w,
+                    runSpacing: 10.h,
+                    children: [
+                      SizedBox(width: halfWidth, child: _card('Penjualan Hari Ini', controller.daily['sales'] ?? 0)),
+                      SizedBox(width: halfWidth, child: _card('Order Hari Ini', controller.daily['orders'] ?? 0, isCurrency: false)),
+                      SizedBox(width: halfWidth, child: _card('Tunai Hari Ini', controller.daily['cash'] ?? 0)),
+                      SizedBox(width: halfWidth, child: _card('QRIS Hari Ini', controller.daily['qris'] ?? 0)),
+                      SizedBox(width: halfWidth, child: _card('Pengeluaran Hari Ini', controller.daily['expenses'] ?? 0)),
+                    ],
+                  );
+                },
+              ),
               SizedBox(height: 24.h),
               GlassPanel(
                 radius: AppDimensions.radiusLg,

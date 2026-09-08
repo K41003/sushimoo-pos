@@ -1,4 +1,4 @@
-﻿import 'num_util.dart';
+import 'num_util.dart';
 import 'ingredient.dart';
 
 class Stock {

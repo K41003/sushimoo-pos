@@ -146,6 +146,12 @@ class MyApp extends StatelessWidget {
       designSize: designSize,
       minTextAdapt: true,
       splitScreenMode: true,
+      fontSizeResolver: (fontSize, instance) {
+        // Clamps font scaling factor between 0.85 and 1.25 so fonts never
+        // shrink too small on compact tablets/phones or explode on large screens.
+        final scale = instance.scaleText.clamp(0.85, 1.25);
+        return fontSize * scale;
+      },
       builder: (_, __) => GetMaterialApp(
         title: 'SUSHIMOO POS',
         debugShowCheckedModeBanner: false,

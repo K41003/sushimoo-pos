@@ -45,17 +45,18 @@ class PosProductTile extends StatelessWidget {
             ),
           ),
           Padding(
-            padding: EdgeInsets.fromLTRB(14.r, 12.r, 14.r, 14.r),
+            padding: EdgeInsets.fromLTRB(10.w, 8.h, 10.w, 10.h),
             child: Column(
+              mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   product.namaProduk,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: TextStyle(fontSize: 14.5.sp, fontWeight: FontWeight.w700, color: AppColors.ink),
+                  style: TextStyle(fontSize: 13.5.sp, fontWeight: FontWeight.w700, color: AppColors.ink),
                 ),
-                SizedBox(height: 6.h),
+                SizedBox(height: 4.h),
                 Row(
                   children: [
                     Expanded(
@@ -67,14 +68,14 @@ class PosProductTile extends StatelessWidget {
                       ),
                     ),
                     Container(
-                      width: 30.r,
-                      height: 30.r,
+                      width: 28.r,
+                      height: 28.r,
                       decoration: BoxDecoration(
                         gradient: AppColors.salmonGradient,
                         borderRadius: BorderRadius.circular(AppDimensions.radiusSm.r),
                         boxShadow: AppColors.shadowSalmon,
                       ),
-                      child: Icon(Icons.add, size: 18.sp, color: Colors.white),
+                      child: Icon(Icons.add, size: 16.sp, color: Colors.white),
                     ),
                   ],
                 ),

@@ -41,130 +41,159 @@ class PosPage extends GetView<PosController> {
     return AppScaffold(
       title: 'POS',
       currentRoute: '/pos',
-      body: GetX<PosController>(
-        builder: (c) {
-          // CORRECTION: `Responsive.isLandscapeTablet` no longer exists
-          // — orientation is now locked per device at startup, so
-          // "tablet" and "tablet in landscape" are the same state.
-          // `_landscape`/`_portrait` here are kept as method names for
-          // minimal diff, but now correctly mean "tablet layout" /
-          // "phone layout" rather than literal orientation.
-          return Responsive.classOf(context) == DeviceClass.tablet
-              ? _landscape(context, c)
-              : _portrait(context, c);
-        },
-      ),
+      body: Responsive.classOf(context) == DeviceClass.tablet
+          ? _landscape(context, controller)
+          : _portrait(context, controller),
     );
   }
 
   Widget _landscape(BuildContext context, PosController c) {
-    return Row(
-      children: [
-        Expanded(
-          flex: 3,
-          child: _menuPanel(context, c, crossAxisCount: 4),
-        ),
-        SizedBox(
-          width: 400.w,
-          child: Padding(
-            padding: EdgeInsets.fromLTRB(0, 4.h, AppDimensions.sm.w, AppDimensions.sm.h),
-            child: GlassPanel(
-              radius: AppDimensions.radiusXl,
-              padding: EdgeInsets.zero,
-              opacity: 0.5,
-              child: _cart(context, c),
-            ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final totalWidth = constraints.maxWidth;
+        // Proportionally scale cart between 320 and 390 logical px
+        final cartWidth = (totalWidth * 0.35).clamp(320.0, 390.0);
+        return Obx(
+          () => Row(
+            children: [
+              Expanded(
+                child: _menuPanel(context, c),
+              ),
+              SizedBox(
+                width: cartWidth,
+                child: Padding(
+                  padding: EdgeInsets.fromLTRB(0, 4.h, AppDimensions.sm.w, AppDimensions.sm.h),
+                  child: GlassPanel(
+                    radius: AppDimensions.radiusXl,
+                    padding: EdgeInsets.zero,
+                    opacity: 0.5,
+                    child: _cart(context, c),
+                  ),
+                ),
+              ),
+            ],
           ),
-        ),
-      ],
+        );
+      },
     );
   }
 
   Widget _portrait(BuildContext context, PosController c) {
-    return Stack(
-      children: [
-        Column(
-          children: [
-            _mobileHeader(context),
-            _searchBar(context, c),
-            if (!c.isSearching) _categoryStrip(context, c),
-            Expanded(child: _menuGrid(context, c, crossAxisCount: 2)),
-          ],
-        ),
-        Positioned(
-          right: AppDimensions.md.w,
-          bottom: AppDimensions.md.h,
-          child: Container(
-            decoration: BoxDecoration(
-              gradient: AppColors.salmonGradient,
-              borderRadius: BorderRadius.circular(AppDimensions.radiusFull.r),
-              boxShadow: AppColors.shadowSalmon,
-            ),
-            child: Material(
-              color: Colors.transparent,
-              child: InkWell(
-                onTap: () => _showCartSheet(context, c),
+    return Obx(
+      () => Stack(
+        children: [
+          Column(
+            children: [
+              _mobileHeader(context),
+              _searchBar(context, c),
+              if (!c.isSearching) _categoryStrip(context, c),
+              Expanded(child: _menuGrid(context, c, explicitColumns: 2)),
+            ],
+          ),
+          Positioned(
+            right: AppDimensions.md.w,
+            bottom: AppDimensions.md.h,
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: AppColors.salmonGradient,
                 borderRadius: BorderRadius.circular(AppDimensions.radiusFull.r),
-                child: Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 14.h),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(Icons.shopping_bag_outlined, color: Colors.white, size: 20),
-                      SizedBox(width: 8.w),
-                      Text(
-                        'Cart (${c.cart.length})',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 14.sp,
+                boxShadow: AppColors.shadowSalmon,
+              ),
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: () => _showCartSheet(context, c),
+                  borderRadius: BorderRadius.circular(AppDimensions.radiusFull.r),
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 14.h),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.shopping_bag_outlined, color: Colors.white, size: 20),
+                        SizedBox(width: 8.w),
+                        Text(
+                          'Cart (${c.cart.length})',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14.sp,
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               ),
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
-  Widget _menuGrid(BuildContext context, PosController c, {required int crossAxisCount}) {
+  Widget _menuGrid(BuildContext context, PosController c, {int? explicitColumns}) {
     if (c.loading.value) return const AppLoading();
     if (c.products.isEmpty) {
       return c.isSearching ? _emptySearch(context) : _emptyMenu(context);
     }
-    return GridView.builder(
-      padding: EdgeInsets.fromLTRB(AppDimensions.lg.w, AppDimensions.xs.h, AppDimensions.lg.w, AppDimensions.lg.h),
-      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: crossAxisCount,
-        childAspectRatio: crossAxisCount > 2 ? 0.92 : 0.88,
-        crossAxisSpacing: AppDimensions.md.w,
-        mainAxisSpacing: AppDimensions.md.h,
-      ),
-      itemCount: c.products.length,
-      itemBuilder: (_, i) => PosProductTile(
-        product: c.products[i],
-        onTap: () => c.addToCart(c.products[i]),
-      ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final availableWidth = constraints.maxWidth;
+        // Each product tile needs around 165-190px of width for comfortable readability
+        final cols = explicitColumns ??
+            Responsive.columnsForWidth(
+              availableWidth,
+              itemMinWidth: 165.0,
+              min: 2,
+              max: 5,
+            );
+        // Compute dynamic aspect ratio so tile height is balanced with width
+        final tileWidth = (availableWidth - (cols - 1) * AppDimensions.md.w) / cols;
+        // Ideal tile height: tileWidth * 1.14, clamped between 180 and 235
+        final tileHeight = (tileWidth * 1.14).clamp(180.0, 235.0);
+        final childAspectRatio = tileWidth / tileHeight;
+
+        return GridView.builder(
+          padding: EdgeInsets.fromLTRB(
+            AppDimensions.sm.w,
+            AppDimensions.xs.h,
+            AppDimensions.sm.w,
+            AppDimensions.lg.h,
+          ),
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: cols,
+            childAspectRatio: childAspectRatio,
+            crossAxisSpacing: AppDimensions.md.w,
+            mainAxisSpacing: AppDimensions.md.h,
+          ),
+          itemCount: c.products.length,
+          itemBuilder: (_, i) => PosProductTile(
+            product: c.products[i],
+            onTap: () => c.addToCart(c.products[i]),
+          ),
+        );
+      },
     );
   }
 
-  Widget _menuPanel(BuildContext context, PosController c, {required int crossAxisCount}) {
-    return Column(
-      children: [
-        _menuHeader(context, c, crossAxisCount: crossAxisCount),
-        _searchBar(context, c),
-        if (!c.isSearching && crossAxisCount > 2) _categoryStrip(context, c, dense: true),
-        Expanded(
-          child: Padding(
-            padding: EdgeInsets.symmetric(horizontal: AppDimensions.md.w),
-            child: _menuGrid(context, c, crossAxisCount: crossAxisCount),
-          ),
-        ),
-      ],
+  Widget _menuPanel(BuildContext context, PosController c, {int? crossAxisCount}) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isWide = constraints.maxWidth >= 500;
+        return Column(
+          children: [
+            _menuHeader(context, c, crossAxisCount: crossAxisCount ?? (isWide ? 4 : 2)),
+            _searchBar(context, c),
+            if (!c.isSearching && isWide) _categoryStrip(context, c, dense: true),
+            Expanded(
+              child: Padding(
+                padding: EdgeInsets.symmetric(horizontal: AppDimensions.sm.w),
+                child: _menuGrid(context, c, explicitColumns: crossAxisCount),
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -552,10 +581,7 @@ class PosPage extends GetView<PosController> {
           borderRadius: BorderRadius.vertical(top: Radius.circular(AppDimensions.radiusXl.r)),
           child: GlassBackground(
             showBlobs: false,
-            // Wrapped in its own GetX so the bottom sheet (a separate
-            // route/overlay) keeps updating live as cart/category state
-            // changes, since it's built outside the page's main GetX scope.
-            child: GetX<PosController>(builder: (c2) => _cart(context, c2)),
+            child: Obx(() => _cart(context, c)),
           ),
         ),
       ),

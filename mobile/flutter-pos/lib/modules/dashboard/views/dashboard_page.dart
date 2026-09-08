@@ -73,27 +73,18 @@ class DashboardPage extends GetView<DashboardController> {
           _header(context, 'Dashboard', 'Ringkasan performa hari ini'),
           SizedBox(height: AppDimensions.xl.h),
           LayoutBuilder(builder: (context, constraints) {
-            // Reads the *content area* width (post-sidebar, if any) via
-            // LayoutBuilder rather than MediaQuery, so this stays
-            // accurate on the landscape-tablet rail layout too — but the
-            // breakpoints themselves now match Responsive.wideBreakpoint
-            // / tabletBreakpoint instead of the ad-hoc 900/560 values
-            // this previously used (which had no 3-column tier at all,
-            // jumping straight from 1 to 2 to 4).
             final w = constraints.maxWidth;
-            final cols = w >= Responsive.wideBreakpoint
-                ? 4
-                : w >= 700
-                    ? 3
-                    : w >= 420
-                        ? 2
-                        : 1;
-            // Fewer columns -> each card is relatively taller for its
-            // width (same icon/value/label stack, less horizontal room
-            // per card at 1-2 columns than at 3-4), so a single static
-            // ratio overflowed at low column counts. Lower ratio = taller
-            // card for the same width.
-            final aspectRatio = cols >= 3 ? 1.5 : (cols == 2 ? 1.25 : 2.2);
+            // 4 cards in total: on tablet screens (w >= 780), show all 4 in a row.
+            // On smaller/medium screens (w >= 400), show a balanced 2x2 grid (2 cols).
+            // On very small screens (w < 400), show 1 col.
+            final cols = w >= 780 ? 4 : (w >= 360 ? 2 : 1);
+            final targetHeight = cols >= 3 ? 140.0 : (cols == 2 ? 135.0 : 115.0);
+            final aspectRatio = Responsive.aspectRatioFor(
+              availableWidth: w,
+              columns: cols,
+              targetHeight: targetHeight,
+              spacing: AppDimensions.md.w,
+            );
             return GridView.count(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
@@ -198,11 +189,14 @@ class DashboardPage extends GetView<DashboardController> {
           SizedBox(height: AppDimensions.xl.h),
           LayoutBuilder(builder: (context, constraints) {
             final w = constraints.maxWidth;
-            final cols = w >= 700 ? 3 : (w >= 420 ? 2 : 1);
-            // See admin grid above for why this can't be a single static
-            // ratio: fewer columns means each StatCard is relatively
-            // taller-content for its width.
-            final aspectRatio = cols >= 3 ? 1.6 : (cols == 2 ? 1.25 : 2.2);
+            final cols = w >= 660 ? 3 : (w >= 360 ? 2 : 1);
+            final targetHeight = cols >= 3 ? 140.0 : (cols == 2 ? 135.0 : 115.0);
+            final aspectRatio = Responsive.aspectRatioFor(
+              availableWidth: w,
+              columns: cols,
+              targetHeight: targetHeight,
+              spacing: AppDimensions.md.w,
+            );
             return GridView.count(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),

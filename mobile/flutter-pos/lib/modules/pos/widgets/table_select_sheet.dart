@@ -63,7 +63,7 @@ class _TableCardState extends State<_TableCard> {
         curve: Curves.easeOut,
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 160),
-          padding: EdgeInsets.symmetric(vertical: 14.h, horizontal: 10.w),
+          padding: EdgeInsets.symmetric(vertical: 8.h, horizontal: 6.w),
           decoration: BoxDecoration(
             gradient: selected ? AppColors.salmonGradient : null,
             color: selected ? null : Colors.white.withValues(alpha: 0.55),
@@ -74,54 +74,57 @@ class _TableCardState extends State<_TableCard> {
             ),
             boxShadow: selected ? AppColors.shadowSalmon : null,
           ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Stack(
-                clipBehavior: Clip.none,
-                children: [
-                  Icon(
-                    Icons.table_restaurant_rounded,
-                    size: 26.sp,
-                    color: selected ? Colors.white : AppColors.inkFaint,
-                  ),
-                  Positioned(
-                    top: -2,
-                    right: -4,
-                    child: Container(
-                      width: 8.r,
-                      height: 8.r,
-                      decoration: BoxDecoration(
-                        color: statusColor,
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: selected ? AppColors.salmon : Colors.white,
-                          width: 1.5,
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    Icon(
+                      Icons.table_restaurant_rounded,
+                      size: 26.sp,
+                      color: selected ? Colors.white : AppColors.inkFaint,
+                    ),
+                    Positioned(
+                      top: -2,
+                      right: -4,
+                      child: Container(
+                        width: 8.r,
+                        height: 8.r,
+                        decoration: BoxDecoration(
+                          color: statusColor,
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: selected ? AppColors.salmon : Colors.white,
+                            width: 1.5,
+                          ),
                         ),
                       ),
                     ),
+                  ],
+                ),
+                SizedBox(height: 4.h),
+                Text(
+                  widget.table.nomorMeja,
+                  style: TextStyle(
+                    fontSize: 14.sp,
+                    fontWeight: FontWeight.w800,
+                    color: selected ? Colors.white : AppColors.ink,
                   ),
-                ],
-              ),
-              SizedBox(height: 6.h),
-              Text(
-                widget.table.nomorMeja,
-                style: TextStyle(
-                  fontSize: 15.sp,
-                  fontWeight: FontWeight.w800,
-                  color: selected ? Colors.white : AppColors.ink,
                 ),
-              ),
-              SizedBox(height: 2.h),
-              Text(
-                '${widget.table.kapasitas} kursi',
-                style: TextStyle(
-                  fontSize: 10.5.sp,
-                  fontWeight: FontWeight.w600,
-                  color: selected ? Colors.white.withValues(alpha: 0.9) : AppColors.inkFaint,
+                SizedBox(height: 2.h),
+                Text(
+                  '${widget.table.kapasitas} kursi',
+                  style: TextStyle(
+                    fontSize: 10.5.sp,
+                    fontWeight: FontWeight.w600,
+                    color: selected ? Colors.white.withValues(alpha: 0.9) : AppColors.inkFaint,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -213,16 +216,16 @@ class TableSelectSheet extends StatelessWidget {
                       // (where this dialog's ConstrainedBox itself
                       // shrinks to fit the screen) 4 fixed columns made
                       // each table card too cramped to tap comfortably.
-                      final cols = constraints.maxWidth >= 380
+                      final cols = constraints.maxWidth >= 420
                           ? 4
-                          : (constraints.maxWidth >= 260 ? 3 : 2);
+                          : (constraints.maxWidth >= 280 ? 3 : 2);
                       return GridView.builder(
                         shrinkWrap: true,
                         gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                           crossAxisCount: cols,
                           crossAxisSpacing: 10.w,
                           mainAxisSpacing: 10.h,
-                          childAspectRatio: 0.85,
+                          childAspectRatio: 0.78,
                         ),
                         itemCount: tables.length,
                         itemBuilder: (_, i) {

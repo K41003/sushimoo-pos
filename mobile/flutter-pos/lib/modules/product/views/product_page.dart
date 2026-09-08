@@ -69,26 +69,35 @@ class ProductPage extends GetView<ProductController> {
                 if (controller.items.isEmpty) {
                   return const AppEmptyState(message: 'Belum ada produk');
                 }
-                // Fixed column count per Responsive breakpoint tier,
-                // replacing the previous `maxCrossAxisExtent: 240.w` —
-                // that extent was computed against the tablet-landscape
-                // design size, so on a narrow phone it silently produced
-                // more/smaller columns than intended instead of a clean
-                // 2-column phone grid.
-                return GridView.builder(
-                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: Responsive.gridColumns(context, max: 5),
-                    mainAxisSpacing: 14.h,
-                    crossAxisSpacing: 14.w,
-                    childAspectRatio: 1.1,
-                  ),
-                  itemCount: controller.items.length,
-                  itemBuilder: (context, index) {
-                    final p = controller.items[index];
-                    return ProductCardWidget(
-                      product: p,
-                      onTap: () => controller.openForm(p),
-                      onDelete: () => controller.delete(p.idProduk),
+                return LayoutBuilder(
+                  builder: (context, constraints) {
+                    final availableWidth = constraints.maxWidth;
+                    final cols = Responsive.columnsForWidth(
+                      availableWidth,
+                      itemMinWidth: 170.0,
+                      min: 2,
+                      max: 5,
+                    );
+                    final tileWidth = (availableWidth - (cols - 1) * 14.w) / cols;
+                    final tileHeight = (tileWidth * 1.15).clamp(180.0, 240.0);
+                    final childAspectRatio = tileWidth / tileHeight;
+
+                    return GridView.builder(
+                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: cols,
+                        mainAxisSpacing: 14.h,
+                        crossAxisSpacing: 14.w,
+                        childAspectRatio: childAspectRatio,
+                      ),
+                      itemCount: controller.items.length,
+                      itemBuilder: (context, index) {
+                        final p = controller.items[index];
+                        return ProductCardWidget(
+                          product: p,
+                          onTap: () => controller.openForm(p),
+                          onDelete: () => controller.delete(p.idProduk),
+                        );
+                      },
                     );
                   },
                 );

@@ -1,4 +1,4 @@
-﻿import 'num_util.dart';
+import 'num_util.dart';
 import 'category.dart';
 import 'ingredient.dart';
 

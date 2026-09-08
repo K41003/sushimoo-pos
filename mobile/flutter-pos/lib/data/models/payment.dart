@@ -1,4 +1,4 @@
-﻿import 'num_util.dart';
+import 'num_util.dart';
 class PaymentMethod {
   final int idMetode;
   final String namaMetode;

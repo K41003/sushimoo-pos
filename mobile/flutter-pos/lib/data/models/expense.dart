@@ -1,4 +1,4 @@
-﻿import 'num_util.dart';
+import 'num_util.dart';
 class Expense {
   final int idPengeluaran;
   final int idShift;

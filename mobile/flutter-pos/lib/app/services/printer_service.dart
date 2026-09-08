@@ -52,7 +52,7 @@ class PrinterService extends GetxService {
     final lines = <String>[
       '=== SUSHIMOO KITCHEN ===',
       'Invoice: ${trx.invoiceNumber}',
-      'Table: ${trx.table?.nomorMeja ?? "-"}',
+      'Table: ${trx.table?.nomorMeja ?? (trx.idMeja == null ? "TAKEAWAY" : "-")}',
       'Time: ${trx.tanggal}',
       '------------------------',
       ...trx.details

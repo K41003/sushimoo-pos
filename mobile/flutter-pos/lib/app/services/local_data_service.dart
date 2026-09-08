@@ -300,7 +300,7 @@ class LocalDataService extends GetxService {
   Future<Transaction> createTransaction({
     required int shiftId,
     required int userId,
-    required int tableId,
+    int? tableId,
     required List<Map<String, dynamic>> items, // [{id_produk, qty, harga, catatan?}]
   }) async {
     final now = DateTime.now();
@@ -334,7 +334,9 @@ class LocalDataService extends GetxService {
       });
     }
 
-    await setTableStatus(tableId, 'occupied');
+    if (tableId != null) {
+      await setTableStatus(tableId, 'occupied');
+    }
 
     return (await getTransactionById(txId))!;
   }
@@ -389,7 +391,10 @@ class LocalDataService extends GetxService {
             ))
         .toList();
 
-    final tableRows = await _db.query('meja', where: 'id_meja = ?', whereArgs: [row['id_meja']]);
+    final rawTableId = row['id_meja'] as int?;
+    final tableRows = rawTableId != null
+        ? await _db.query('meja', where: 'id_meja = ?', whereArgs: [rawTableId])
+        : <Map<String, dynamic>>[];
     final table = tableRows.isNotEmpty ? TableModel.fromJson(tableRows.first) : null;
 
     final userRows = await _db.query('users', where: 'id_user = ?', whereArgs: [row['id_user']]);
@@ -426,7 +431,7 @@ class LocalDataService extends GetxService {
       invoiceNumber: row['invoice_number'] as String,
       idShift: row['id_shift'] as int,
       idUser: row['id_user'] as int,
-      idMeja: row['id_meja'] as int,
+      idMeja: rawTableId,
       tanggal: row['tanggal'] as String,
       total: (row['total'] as num).toDouble(),
       status: row['status'] as String,

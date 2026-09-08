@@ -1,4 +1,4 @@
-﻿import 'num_util.dart';
+import 'num_util.dart';
 import 'product.dart';
 import 'table.dart';
 import 'user.dart';
@@ -45,7 +45,7 @@ class Transaction {
   final String invoiceNumber;
   final int idShift;
   final int idUser;
-  final int idMeja;
+  final int? idMeja;
   final String tanggal;
   final double total;
   final String status;
@@ -59,7 +59,7 @@ class Transaction {
     required this.invoiceNumber,
     required this.idShift,
     required this.idUser,
-    required this.idMeja,
+    this.idMeja,
     required this.tanggal,
     required this.total,
     required this.status,
@@ -74,7 +74,7 @@ class Transaction {
         invoiceNumber: json['invoice_number'] as String,
         idShift: json['id_shift'] as int,
         idUser: json['id_user'] as int,
-        idMeja: json['id_meja'] as int,
+        idMeja: json['id_meja'] as int?,
         tanggal: json['tanggal'] as String,
         total: parseDouble(json['total']),
         status: json['status'] as String,
